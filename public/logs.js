@@ -3,8 +3,8 @@ const USER_NAME = 'GlocTower';
 const initLocalStorageCell = (key, initialValue, valueTransformer) => {
 	let value;
 	const setValue = (newValue) => {
-		localStorage.setItem(key, newValue ?? '');
 		value = newValue ? newValue : initialValue;
+		localStorage.setItem(key, value ?? '');
 	};
 	const getValue = () => {
 		return valueTransformer ? valueTransformer(value) : value;
