@@ -75,14 +75,17 @@
 
 * {
   box-sizing: border-box;
+  position: relative;
   padding: 0;
   margin: 0;
 }
 
 html,
-body {
+body,
+#__next {
   max-width: 100vw;
   overflow-x: hidden;
+  height: 100vh;
 }
 
 body {
@@ -96,7 +99,7 @@ body {
 }
 
 a {
-  color: inherit;
+  /*color: inherit;*/
   text-decoration: none;
 }
 

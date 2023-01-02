@@ -1,0 +1,363 @@
+import React from 'react';
+import Page from '@/components/Page';
+import { GetServerSideProps, NextPage } from 'next';
+import Error from 'next/error';
+import styled from 'styled-components';
+import { setCurrentPage, setItemsPerPage, setPageCount, usePaginationStore } from '@/stores/store-pagination';
+import { TMessage } from '@/pages/api/messages';
+
+interface ILogsPageProps {
+	url: string;
+	error?: string;
+}
+
+const dateFormatter = Intl.DateTimeFormat('ru-RU', {
+	day: '2-digit',
+	month: '2-digit',
+	year: 'numeric',
+	hour: '2-digit',
+	minute: '2-digit'
+});
+
+const Container = styled.div`
+	display: flex;
+	flex-direction: column;
+`;
+
+const LogsContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	padding: 0 0 0 300px;
+`;
+
+const ControlsContainer = styled.div`
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 300px;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	background: #0f0f0f;
+	border-right: 1px solid rgba(255, 255, 255, 0.2);
+	padding: 8px;
+	overflow-y: auto;
+
+	#message-count, #update-time {
+		width: 40px;
+		text-align: center;
+	}
+
+	#message-count::-webkit-outer-spin-button,
+	#message-count::-webkit-inner-spin-button,
+	#update-time::-webkit-outer-spin-button,
+	#update-time::-webkit-inner-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+	}
+`;
+
+const ControlsInputs = styled.div`
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+`;
+
+const MessageList = styled.div`
+	display: flex;
+	flex-direction: column;
+	padding: 0 8px 8px;
+`;
+
+const Message = styled.div`
+	display: flex;
+	align-items: center;
+	padding: 2px 0;
+	gap: 8px;
+
+	&:not(:last-child) {
+		border-top: 1px solid rgba(255, 255, 255, 0.2);
+	}
+`;
+
+const Time = styled.span`
+	> span {
+		color: #9560E6;
+	}
+`;
+
+const GlobalChat = styled.span`
+	> span {
+		color: #fa0;
+	}
+`;
+
+const LocalChat = styled.span`
+	> span {
+		color: #CBFB2D;
+	}
+`;
+
+const PlayerName = styled.span`
+	color: #777;
+
+	> span:not([class]) {
+		color: #fff;
+	}
+`;
+
+const PaginationContainer = styled.div`
+	position: fixed;
+	bottom: 8px;
+	right: 8px;
+	display: flex;
+	align-items: center;
+	padding: 8px;
+	gap: 8px;
+	background: rgba(0, 0, 0, 0.8);
+	border-radius: 4px;
+`;
+
+const PaginationButton = styled.button`
+	cursor: pointer;
+`;
+
+const PaginationText = styled.span`
+	display: flex;
+	width: 100px;
+	height: 100%;
+	align-items: center;
+	justify-content: center;
+`;
+
+const Pagination: React.FC = () => {
+	const { currentPage, pageCount } = usePaginationStore();
+
+	return (
+		<PaginationContainer>
+			<PaginationButton onClick={ () => {
+				const newPage = currentPage <= 0 ? 0 : currentPage - 1;
+				setCurrentPage(newPage);
+			} }>◀</PaginationButton>
+			<PaginationText>Страница { currentPage + 1 }</PaginationText>
+			<PaginationButton onClick={ () => {
+				const newPage = currentPage >= (pageCount - 1) ? pageCount - 1 : currentPage + 1;
+				setCurrentPage(newPage);
+			} }>▶</PaginationButton>
+		</PaginationContainer>
+	);
+};
+
+interface IWatchListProps {
+	name: string;
+	displayName: string;
+	initialWatches: string[];
+	weight: number;
+}
+
+const WatchList: React.FC<IWatchListProps> = ({
+	name,
+	displayName,
+	initialWatches,
+	weight
+}) => {
+	return (
+		<div className="watch-list">
+			<span className="watch-list__label">${ displayName }</span>
+			<div className="watch-list__controls">
+				<input type="text" className="watch-list__input"
+				       title="Введите за чем следить и нажмите Ender.\nИли перетащите ник/команду в список ниже."/>
+			</div>
+			<div className="watch-list__items"></div>
+		</div>
+	);
+};
+
+const decline = (n: number, titles: string[]) => {
+	return titles[(n % 10 === 1 && n % 100 !== 11) ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2];
+};
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const LogsPage: NextPage<ILogsPageProps> = ({
+	url,
+	error
+}) => {
+
+	const { currentPage, itemsPerPage } = usePaginationStore();
+	const [ messages, setMessages ] = React.useState<TMessage[]>([]);
+
+	const [ updateDelayValue, setUpdateDelayValue ] = React.useState<string>('5');
+	const [ messageCountValue, setMessageCountValue ] = React.useState<string>(itemsPerPage.toString());
+	const [ updateDelay, setUpdateDelay ] = React.useState<number>(5);
+
+	const delayRef = React.useRef<number>(updateDelay);
+	const messageCountRef = React.useRef<number>(itemsPerPage);
+	const currentPageRef = React.useRef<number>(currentPage);
+	const cancelRef = React.useRef<Function | null>(null);
+
+	const fetchMessages = async () => {
+		const content = await fetch(`/api/messages`, {
+			method: 'POST',
+			body: JSON.stringify({
+				url,
+				count: messageCountRef.current,
+				page: currentPageRef.current
+			})
+		});
+		const data = await content.json();
+		setMessages(data.messages);
+		setPageCount(data.pagination.pageCount);
+	};
+
+	const update = () => {
+		let cancelled = false;
+
+		const loop = async () => {
+			try {
+				if (!cancelled) {
+					console.log('Request: ', messageCountRef.current);
+					console.log(currentPageRef.current);
+					console.log(delayRef.current);
+					await fetchMessages();
+					await delay(delayRef.current * 1000);
+					await loop();
+				}
+			} catch (e) {
+			}
+		};
+
+		loop();
+
+		return () => {
+			cancelled = true;
+		};
+	};
+
+	const reFetch = () => {
+		cancelRef.current?.();
+		cancelRef.current = update();
+	};
+
+	React.useEffect(() => {
+		currentPageRef.current = currentPage;
+		delayRef.current = updateDelay;
+		messageCountRef.current = itemsPerPage;
+		reFetch();
+	}, [ currentPage, updateDelay, itemsPerPage ]);
+
+	return (
+		<Page>
+			<Container>
+				{
+					error ? (
+						<Error statusCode={ 404 }/>
+					) : (
+						<>
+							<LogsContainer>
+								<ControlsContainer>
+									{/*<label className="checkbox"*/ }
+									{/*       title="Загружать логи с учетом нового дня (по времени компьютера)">*/ }
+									{/*	<input type="checkbox" id="actual-logs" checked={ true }/>*/ }
+									{/*	<span>Показывать актуальные логи</span>*/ }
+									{/*</label>*/ }
+									<ControlsInputs>
+										<div>
+											Показывать{ ' ' }
+											<input type="number" id="message-count" min="0" max="500"
+											       step="1"
+											       value={ messageCountValue }
+											       onChange={ (e) => {
+												       setMessageCountValue(e.target.value);
+											       } }
+											       onBlur={ () => {
+												       setItemsPerPage(parseInt(messageCountValue, 10) || 500);
+											       } }
+											/>
+											{ ' ' }
+											<span>{ decline(itemsPerPage, [ 'сообщение', 'сообщения', 'сообщений' ]) }.</span>
+										</div>
+										<div>
+											Обновлять каждые:{ ' ' }
+											<input type="number" id="update-time"
+											       value={ updateDelayValue } min="1"
+											       step="1"
+											       onChange={ (e) => {
+													   setUpdateDelayValue(e.target.value);
+											       } }
+											       onBlur={ () => {
+												       setUpdateDelay(parseInt(updateDelayValue, 10) || 5);
+											       } }
+											/>
+											{ ' ' }
+											<span>{ decline(updateDelay, [ 'секунду', 'секунды', 'секунд' ]) }.</span>
+										</div>
+									</ControlsInputs>
+								</ControlsContainer>
+								<MessageList>
+									{
+										messages.map(message => (
+											message.parsedData?.isCommand ? (
+												<Message key={ message.id } title={ JSON.stringify(message) }>
+													<Time>[<span>{ message.parsedData?.time }</span>]</Time>
+													<PlayerName>{ message.parsedData?.playerName }</PlayerName>
+													issued server command:
+													<span>{ message.parsedData?.command }</span>
+												</Message>
+											) : (
+												<Message key={ message.id } title={ JSON.stringify(message) }>
+													<Time>[<span>{ message.parsedData?.time }</span>]</Time>
+													{ message.parsedData?.chatType || message.parsedData?.isWorldChat && (
+														message.parsedData?.chatType === 'G' || message.parsedData?.isWorldChat ? (
+															<GlobalChat>[<span>G</span>]</GlobalChat>
+														) : (
+															<LocalChat>[<span>L</span>]</LocalChat>
+														)
+													) }
+													<PlayerName>{ message.parsedData?.playerName }{ message.parsedData?.isPlayerChat && ':' }</PlayerName>
+													<span>{ message.parsedData?.messageContent }</span>
+												</Message>
+											)
+										))
+									}
+								</MessageList>
+								<Pagination/>
+							</LogsContainer>
+						</>
+					)
+				}
+			</Container>
+		</Page>
+	);
+};
+
+export default LogsPage;
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+	if (!context.params) {
+		return {
+			props: {
+				error: '404 Not found.'
+			}
+		};
+	}
+
+	const filesUrl = decodeURIComponent(context.params.url as string);
+
+	try {
+		return {
+			props: {
+				url: filesUrl,
+				messages: []
+			}
+		};
+	} catch (e) {
+		console.error(e);
+		return {
+			props: {
+				error: '404 Not found.'
+			}
+		};
+	}
+};
