@@ -21,5 +21,5 @@ const handler = async (
 export default handler;
 
 export const config = {
-	runtime: 'node'
+	runtime: 'nodejs'
 };
