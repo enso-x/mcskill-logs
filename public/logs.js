@@ -24,6 +24,7 @@ const decline = (n, titles) => {
 	'use strict';
 
 	let lines = [];
+	let cancelLoopRef = null;
 
 	const parser = new DOMParser();
 	const $element = (htmlText) => {
@@ -336,6 +337,9 @@ const decline = (n, titles) => {
 			clearLogList();
 			saveWatchList();
 			update();
+			if (cancelLoopRef !== null) {
+				cancelLoopRef();
+			}
 			fetchLogs();
 		};
 		const addWatchItem = (item) => {
@@ -558,19 +562,31 @@ const decline = (n, titles) => {
 		processLogText(logText);
 	};
 
-	const fetchLogs = async () => {
-		const now = new Date();
-		const messageCount = getMessageCount();
-		const fileName = actualLogsCheck.checked ? `${ dateFormatter.format(now).replaceAll('.', '-') }.txt` : window.updateUrl.split("/").pop();
-		const fileURL = '/api/logs?url=' + encodeURIComponent(logsURLBase + fileName);
-		const response = await fetch(fileURL);
-		const text = await response.text();
-		lines = text.split('\n').filter(Boolean);
-		pageCount = Math.ceil(lines.length / messageCount);
-		updateLogContent();
+	const fetchLogs = () => {
+		let cancelled = false;
 
-		await delay(getUpdateTime() * 1000);
-		await fetchLogs();
+		const update = async () => {
+			if (!cancelled) {
+				const now = new Date();
+				const messageCount = getMessageCount();
+				const fileName = actualLogsCheck.checked ? `${ dateFormatter.format(now).replaceAll('.', '-') }.txt` : window.updateUrl.split("/").pop();
+				const fileURL = '/api/logs?url=' + encodeURIComponent(logsURLBase + fileName);
+				const response = await fetch(fileURL);
+				const text = await response.text();
+				lines = text.split('\n').filter(Boolean);
+				pageCount = Math.ceil(lines.length / messageCount);
+				updateLogContent();
+
+				await delay(getUpdateTime() * 1000);
+				await update();
+			}
+		};
+
+		update();
+
+		return () => {
+			cancelled = true;
+		}
 	};
-	await fetchLogs();
+	cancelLoopRef = fetchLogs();
 })();
