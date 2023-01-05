@@ -38,28 +38,30 @@ const FileList = styled.ul`
 `;
 
 const FileItem = styled.li`
-	display: grid;
-	grid-template-columns: 1fr 200px;
-	grid-auto-rows: 1fr;
-
-	background: linear-gradient(to bottom, #444, #222);
-	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
-	color: #fff;
-	cursor: pointer;
-
-	&:hover {
-		filter: brightness(1.2);
-	}
-
-	&:active {
-		background: linear-gradient(to bottom, #222, #111);
-		box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
-	}
-	
-	a, span {
-		display: flex;
+	a {
+		display: grid;
+		grid-template-columns: 1fr 140px;
+		grid-auto-rows: 1fr;
 		padding: 4px 8px;
+		gap: 24px;
+
+		background: linear-gradient(to bottom, #444, #222);
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
 		color: #fff;
+		cursor: pointer;
+
+		&:hover {
+			filter: brightness(1.2);
+		}
+
+		&:active {
+			background: linear-gradient(to bottom, #222, #111);
+			box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+		}
+		
+		span:last-child {
+			text-align: right;
+		}
 	}
 	
 	&:not(:last-child) {
@@ -101,11 +103,21 @@ const FilesPage: NextPage<IFilesPageProps> = ({
 					) : (
 						<FileListWrapper>
 							<FileList>
+								<FileItem>
+									<a onClick={() => {
+										history.back();
+									}}>
+										<span>../</span>
+										<span></span>
+									</a>
+								</FileItem>
 								{
 									links.map(link => (
 										<FileItem key={ link.link }>
-											<a href={ link.link.endsWith('.txt') ? `/logs/${ encodeURIComponent(url + link.link) }` : `/files/${ encodeURIComponent(url + link.link) }` }>{ link.link }</a>
-											<span>{ dateFormatter.format(new Date(link.date)) }</span>
+											<a href={ link.link.endsWith('.txt') ? `/logs/${ encodeURIComponent(url + link.link) }` : `/files/${ encodeURIComponent(url + link.link) }` }>
+												<span>{ link.link }</span>
+												<span>{ dateFormatter.format(new Date(link.date)) }</span>
+											</a>
 										</FileItem>
 									))
 								}

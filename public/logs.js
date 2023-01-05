@@ -266,7 +266,7 @@ const decline = (n, titles) => {
         <div id="root">
             <div class="controls">
                 <label class="checkbox" title="Загружать логи с учетом нового дня (по времени компьютера)">
-                    <input type="checkbox" id="actual-logs" checked="checked"/>
+                    <input type="checkbox" id="actual-logs"/>
                     <span>Показывать актуальные логи</span>
                 </label>
                 <div class="controls__inputs">
@@ -340,7 +340,7 @@ const decline = (n, titles) => {
 			if (cancelLoopRef !== null) {
 				cancelLoopRef();
 			}
-			fetchLogs();
+			cancelLoopRef = fetchLogs();
 		};
 		const addWatchItem = (item) => {
 			watchItems.push(item);
@@ -586,7 +586,7 @@ const decline = (n, titles) => {
 
 		return () => {
 			cancelled = true;
-		}
+		};
 	};
 	cancelLoopRef = fetchLogs();
 })();
