@@ -503,7 +503,7 @@ const decline = (n, titles) => {
 	};
 
 	const processLogText = (text) => {
-		if (oldLog === text) {
+		if (oldLog === text && !filterValue) {
 			return;
 		}
 		oldLog = text;
