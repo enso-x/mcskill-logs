@@ -24,6 +24,7 @@ const decline = (n, titles) => {
 	'use strict';
 
 	let lines = [];
+	let filterValue = '';
 	let cancelLoopRef = null;
 
 	const parser = new DOMParser();
@@ -151,6 +152,10 @@ const decline = (n, titles) => {
                 gap: 8px;
             }
             
+            #player-search {
+                width: 100%;
+            }
+            
             #actual-logs {
                 margin: 0;
             }
@@ -276,6 +281,11 @@ const decline = (n, titles) => {
                     <div>
                         Обновлять каждые: <input type="number" id="update-time" value="${ getUpdateTime() ?? 2 }" min="1" step="1"/> <span id="update-time-decline">${ decline(getUpdateTime(), [ 'секунду', 'секунды', 'секунд' ]) }</span>.
                     </div>
+                    <div>
+                        <br/>
+                        Поиск по игроку:<br/>
+                        <input type="text" id="player-search"/>
+					</div>
                 </div>
             </div>
             <div class="list"></div>
@@ -289,6 +299,12 @@ const decline = (n, titles) => {
 	const controls = root.querySelector('.controls');
 	const list = root.querySelector('.list');
 	const actualLogsCheck = root.querySelector('#actual-logs');
+	const playerSearchInput = root.querySelector('#player-search');
+	playerSearchInput.addEventListener('input', (e) => {
+		filterValue = e.target.value;
+		setCurrentPage(0);
+		updateLogContent();
+	});
 	const messageCountInput = root.querySelector('#message-count');
 	const messageCountDecline = root.querySelector('#message-count-decline');
 	messageCountInput.addEventListener('input', () => {
@@ -493,6 +509,9 @@ const decline = (n, titles) => {
 		oldLog = text;
 		list.innerHTML = text.split('\n').map(line => {
 			let newLine;
+			if (filterValue.length > 0 && !line.toLowerCase().includes(filterValue.toLowerCase())) {
+				return '';
+			}
 			if (line.includes('issued')) {
 				const executedContent = (/(?:\[(?<time>(\d{2}:\d{2}(?::\d{2})?))]\s)?(?<playerName>[A-Za-z0-9_]{3,}) issued server command: (?<command>\/.*)/gi).exec(line);
 				if (!executedContent) {

@@ -22,6 +22,80 @@ const FileListWrapper = styled.div`
 	border-radius: 8px;
 	border: 1px solid #0f0f0f;
 	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+	max-height: 100%;
+`;
+
+const FileListWrapperOverflow = styled.div`
+	display: flex;
+	flex-direction: column;
+	background: linear-gradient(to bottom, #222, #111);
+	border-radius: 4px;
+	border: 1px solid #0f0f0f;
+	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.2);
+	overflow: hidden;
+	overflow-y: auto;
+
+	&::-webkit-scrollbar {
+		padding: 10px 0;
+		width: 12px;
+		height: 12px;
+	}
+
+	&::-webkit-scrollbar:vertical {
+		border-left: 1px #111 solid;
+		background: linear-gradient(to right, #424242, #242424);
+		box-shadow: inset 1px 0 0 rgba(255,255,255,.1);
+	}
+
+	&::-webkit-scrollbar:horizontal {
+		border-top: 1px #111 solid;
+		background: linear-gradient(to bottom, #424242, #242424);
+		box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+	}
+
+	&::-webkit-scrollbar-track {
+		background: #242424;
+		box-shadow: inset -1px 0 1px rgba(0,0,0,.5);
+		border-radius: 99em;
+		border: 1px #111 solid;
+	}
+
+	&::-webkit-scrollbar-button:vertical {
+		background: linear-gradient(to right, #424242, #242424);
+		box-shadow: inset 1px 0 0 rgba(255,255,255,.1);
+		border-left: 1px #111 solid;
+		height: 6px;
+	}
+
+	&::-webkit-scrollbar-button:horizontal {
+		background: linear-gradient(to bottom, #424242, #242424);
+		box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+		border-top: 1px #111 solid;
+		height: 6px;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: linear-gradient(to right, #424242, #363636);
+		border-radius: 99em;
+		border: 1px #111 solid;
+		box-shadow: inset 1px 1px 0 rgba(255,255,255,.1), 0 1px 1px rgba(0,0,0,.5);
+	}
+
+	&::-webkit-scrollbar-thumb:vertical {
+		background: linear-gradient(to right, #424242, #363636);
+	}
+
+	&::-webkit-scrollbar-thumb:horizontal {
+		background: linear-gradient(to bottom, #424242, #363636);
+	}
+
+	&::-webkit-scrollbar-corner {
+		border: 1px #111 solid;
+		border-bottom: none;
+		border-right: none;
+		background: linear-gradient(90deg, #424242, #242424);
+		box-shadow: inset 1px 1px 0 rgba(255,255,255,.1);
+	}
 `;
 
 const FileList = styled.ul`
@@ -29,12 +103,7 @@ const FileList = styled.ul`
 	display: flex;
 	flex-direction: column;
 	font: 14px monospace;
-	background: linear-gradient(to bottom, #222, #111);
 	//width: 320px;
-	border-radius: 4px;
-	border: 1px solid #0f0f0f;
-	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.2);
-	overflow: hidden;
 `;
 
 const FileItem = styled.li`
@@ -102,26 +171,28 @@ const FilesPage: NextPage<IFilesPageProps> = ({
 						error
 					) : (
 						<FileListWrapper>
-							<FileList>
-								<FileItem>
-									<a onClick={() => {
-										history.back();
-									}}>
-										<span>../</span>
-										<span></span>
-									</a>
-								</FileItem>
-								{
-									links.map(link => (
-										<FileItem key={ link.link }>
-											<a href={ link.link.endsWith('.txt') ? `/logs/${ encodeURIComponent(url + link.link) }` : `/files/${ encodeURIComponent(url + link.link) }` }>
-												<span>{ link.link }</span>
-												<span>{ dateFormatter.format(new Date(link.date)) }</span>
-											</a>
-										</FileItem>
-									))
-								}
-							</FileList>
+							<FileListWrapperOverflow>
+								<FileList>
+									<FileItem>
+										<a onClick={() => {
+											history.back();
+										}}>
+											<span>../</span>
+											<span></span>
+										</a>
+									</FileItem>
+									{
+										links.map(link => (
+											<FileItem key={ link.link }>
+												<a href={ link.link.endsWith('.txt') ? `/logs/${ encodeURIComponent(url + link.link) }` : `/files/${ encodeURIComponent(url + link.link) }` }>
+													<span>{ link.link }</span>
+													<span>{ dateFormatter.format(new Date(link.date)) }</span>
+												</a>
+											</FileItem>
+										))
+									}
+								</FileList>
+							</FileListWrapperOverflow>
 						</FileListWrapper>
 					)
 				}
