@@ -152,7 +152,7 @@ const decline = (n, titles) => {
                 gap: 8px;
             }
             
-            #player-search {
+            #text-search-input {
                 width: 100%;
             }
             
@@ -283,8 +283,8 @@ const decline = (n, titles) => {
                     </div>
                     <div>
                         <br/>
-                        Поиск по игроку:<br/>
-                        <input type="text" id="player-search"/>
+                        Фильтр по тексту:<br/>
+                        <input type="text" id="text-search-input"/>
 					</div>
                 </div>
             </div>
@@ -299,8 +299,8 @@ const decline = (n, titles) => {
 	const controls = root.querySelector('.controls');
 	const list = root.querySelector('.list');
 	const actualLogsCheck = root.querySelector('#actual-logs');
-	const playerSearchInput = root.querySelector('#player-search');
-	playerSearchInput.addEventListener('input', (e) => {
+	const textSearchInput = root.querySelector('#text-search-input');
+	textSearchInput.addEventListener('input', (e) => {
 		filterValue = e.target.value;
 		setCurrentPage(0);
 		updateLogContent();
@@ -503,15 +503,16 @@ const decline = (n, titles) => {
 	};
 
 	const processLogText = (text) => {
-		if (oldLog === text && !filterValue) {
+		if (oldLog === text || !text) { // && !filterValue
 			return;
 		}
 		oldLog = text;
 		list.innerHTML = text.split('\n').map(line => {
 			let newLine;
-			if (filterValue.length > 0 && !line.toLowerCase().includes(filterValue.toLowerCase())) {
-				return '';
-			}
+			// console.log(line);
+			// if (filterValue.length > 0 && !line.toLowerCase().includes(filterValue.toLowerCase())) {
+			// 	return '';
+			// }
 			if (line.includes('issued')) {
 				const executedContent = (/(?:\[(?<time>(\d{2}:\d{2}(?::\d{2})?))]\s)?(?<playerName>[A-Za-z0-9_]{3,}) issued server command: (?<command>\/.*)/gi).exec(line);
 				if (!executedContent) {
@@ -575,9 +576,11 @@ const decline = (n, titles) => {
 	const updateLogContent = () => {
 		const messageCount = getMessageCount();
 		const currentPage = getCurrentPage();
-		const rangeFrom = (lines.length - messageCount * (currentPage + 1));
-		const rangeTo = (lines.length - messageCount * currentPage);
-		const logText = lines.slice(rangeFrom <= 0 ? 0 : rangeFrom, rangeTo).join('\n');
+		const filteredLines = lines.filter(value => filterValue.length > 0 ? value.toLowerCase().includes(filterValue.toLowerCase()) : true);
+		const rangeFrom = (filteredLines.length - messageCount * (currentPage + 1));
+		const rangeTo = (filteredLines.length - messageCount * currentPage);
+		const logText = filteredLines.slice(rangeFrom <= 0 ? 0 : rangeFrom, rangeTo).join('\n');
+		pageCount = Math.ceil(filteredLines.length / messageCount);
 		processLogText(logText);
 	};
 
@@ -587,13 +590,11 @@ const decline = (n, titles) => {
 		const update = async () => {
 			if (!cancelled) {
 				const now = new Date();
-				const messageCount = getMessageCount();
 				const fileName = actualLogsCheck.checked ? `${ dateFormatter.format(now).replaceAll('.', '-') }.txt` : window.updateUrl.split("/").pop();
 				const fileURL = '/api/logs?url=' + encodeURIComponent(logsURLBase + fileName);
 				const response = await fetch(fileURL);
 				const text = await response.text();
 				lines = text.split('\n').filter(Boolean);
-				pageCount = Math.ceil(lines.length / messageCount);
 				updateLogContent();
 
 				await delay(getUpdateTime() * 1000);
