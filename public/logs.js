@@ -503,16 +503,16 @@ const decline = (n, titles) => {
 	};
 
 	const processLogText = (text) => {
-		if (oldLog === text || !text) { // && !filterValue
+		if (!text) {
+			list.innerHTML = '';
+			return;
+		}
+		if (oldLog === text) {
 			return;
 		}
 		oldLog = text;
 		list.innerHTML = text.split('\n').map(line => {
 			let newLine;
-			// console.log(line);
-			// if (filterValue.length > 0 && !line.toLowerCase().includes(filterValue.toLowerCase())) {
-			// 	return '';
-			// }
 			if (line.includes('issued')) {
 				const executedContent = (/(?:\[(?<time>(\d{2}:\d{2}(?::\d{2})?))]\s)?(?<playerName>[A-Za-z0-9_]{3,}) issued server command: (?<command>\/.*)/gi).exec(line);
 				if (!executedContent) {
