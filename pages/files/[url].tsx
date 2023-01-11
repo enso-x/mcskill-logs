@@ -182,7 +182,7 @@ const FilesPage: NextPage<IFilesPageProps> = ({
 										</a>
 									</FileItem>
 									{
-										links.map(link => (
+										links.sort((a, b) => new Date(a.date) > new Date(b.date) ? -1 : 1).map(link => (
 											<FileItem key={ link.link }>
 												<a href={ link.link.endsWith('.txt') ? `/logs/${ encodeURIComponent(url + link.link) }` : `/files/${ encodeURIComponent(url + link.link) }` }>
 													<span>{ link.link }</span>
