@@ -20,6 +20,68 @@ const decline = (n, titles) => {
 	return titles[(n % 10 === 1 && n % 100 !== 11) ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2]
 };
 
+const timePattern = (group = null) => `\\[(?${group ? `<${group}>` : ':'}\\d{2}:\\d{2}(?::\\d{2})?)]`;
+const namePattern = (group = null) => `(?${group ? `<${group}>` : ':'}[A-Za-z_0-9]+)`;
+
+const logType = {
+	chat: new RegExp(`${timePattern()} ${namePattern()}: (?:.*)\\n?`, 'i'),
+	connection: new RegExp(`${timePattern()} ${namePattern()} (?:(?:logged in)|(?:left the game))\\n?`, 'i'),
+	death: new RegExp(`${timePattern()} - ${namePattern()} (?:.*)(?:\\n\\s{4}- .*x?\\d*)+`, 'i'),
+	items: new RegExp(`${timePattern()} ${namePattern()} (?:(?:drop)|(?:pickup)): .*\\n`, 'i'),
+	legendarySpawn: new RegExp(`${timePattern()} ${namePattern()} - ${namePattern()}\\n?`, 'i'),
+	pokemonTrade: new RegExp(`${timePattern()} Игрок ${namePattern()} обменял покемона ${namePattern()} на покемона ${namePattern()} игрока ${namePattern()}`, 'i')
+};
+
+const parsers = {
+	chat: new RegExp(`${timePattern()} ${namePattern()}: (?:.*)\\n?`, 'i'),
+	connection: new RegExp(`${timePattern()} ${namePattern()} (?:(?:logged in)|(?:left the game))\\n?`, 'i'),
+	death: (text) => {
+		return text.split('\n').filter(Boolean).reduce((acc, next) => {
+			if (next.startsWith('[')) {
+				const { time, playerName, reason } = new RegExp(`${timePattern('time')} - ${namePattern('playerName')} (?<reason>.+)`, 'i').exec(next).groups;
+				acc.push({
+					death: {
+						time,
+						playerName,
+						reason,
+						original: next
+					},
+					items: []
+				});
+			}
+			if (next.startsWith(' ')) {
+				const expReg = /Experience: (?<exp>\d+)/i;
+				const itemReg = /(?<itemName>[A-Z_\:0-9]+) \((?<itemID>[\:0-9]+)\) x(?<amount>\d+)/i;
+				const itemLine = next.trim().slice(2);
+				const death = acc.at(-1);
+				if (!death) return acc;
+				if (expReg.test(itemLine)) {
+					const { exp } = expReg.exec(itemLine).groups;
+					death.items.push({
+						type: 'exp',
+						amount: exp,
+						original: next
+					});
+				}
+				if (itemReg.test(itemLine)) {
+					const { itemName, itemID, amount } = itemReg.exec(itemLine).groups;
+					death.items.push({
+						type: 'item',
+						itemID,
+						itemName,
+						amount,
+						original: next
+					});
+				}
+			}
+			return acc;
+		}, []);
+	},
+	items: new RegExp(`${timePattern()} ${namePattern()} (?:(?:drop)|(?:pickup)): .*\\n`, 'i'),
+	legendarySpawn: new RegExp(`${timePattern()} ${namePattern()} - ${namePattern()}\\n?`, 'i'),
+	pokemonTrade: new RegExp(`${timePattern()} Игрок ${namePattern()} обменял покемона ${namePattern()} на покемона ${namePattern()} игрока ${namePattern()}`, 'i')
+};
+
 (async () => {
 	'use strict';
 
@@ -215,12 +277,53 @@ const decline = (n, titles) => {
             .line {
                 display: flex;
                 align-items: center;
+                flex-wrap: wrap;
                 padding: 2px 0;
                 gap: 8px;
             }
     
             .line:not(:last-child) {
                 border-top: 1px solid rgba(255, 255, 255, 0.2);
+            }
+            
+            .line\\:vertical {
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: center;
+                padding: 4px 0;
+            }
+            
+            .line > span {
+                flex-shrink: 0;
+            }
+            
+            .inventory {
+                display: flex;
+                flex-wrap: wrap;
+                border: 12px solid transparent;
+                border-image: url("/inventory-border.png") 12;
+                background: #c6c6c6;
+                background-clip: content-box;
+                max-width: 456px;
+                
+            }
+            
+            .inventory__item {
+                position: relative;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 36px;
+                height: 36px;
+                background: url("/inventory-slot.png") no-repeat;
+                cursor: pointer;
+            }
+            
+            .inventory__item > .amount {
+                position: absolute;
+                bottom: 0;
+                right: 4px;
+                text-shadow: 1px 1px #000;
             }
     
             .global-chat > span {
@@ -498,8 +601,8 @@ const decline = (n, titles) => {
 		});
 	};
 
-	const wrappedLine = (content, original = '') => {
-		return `<span class="line" ${original ? `title="${ original }"` : ''}>${ content }</span>`;
+	const wrappedLine = (content, original = '', vertical = false) => {
+		return `<span class="line ${vertical ? 'line:vertical' : ''}" ${original ? `title="${ original }"` : ''}>${ content }</span>`;
 	};
 
 	const processLogText = (text) => {
@@ -573,16 +676,44 @@ const decline = (n, titles) => {
 		});
 	};
 
-	const updateLogContent = () => {
-		const messageCount = getMessageCount();
-		const currentPage = getCurrentPage();
-		const filteredLines = lines.filter(value => filterValue.length > 0 ? value.toLowerCase().includes(filterValue.toLowerCase()) : true);
-		const rangeFrom = (filteredLines.length - messageCount * (currentPage + 1));
-		const rangeTo = (filteredLines.length - messageCount * currentPage);
-		const logText = filteredLines.slice(rangeFrom <= 0 ? 0 : rangeFrom, rangeTo).join('\n');
-		pageCount = Math.ceil(filteredLines.length / messageCount);
-		processLogText(logText);
+	const processParsedData = (data) => {
+		list.innerHTML = data.reduce((template, item) => {
+			const { death, items } = item;
+			const processedPlayerName = processPlayerName(death.playerName);
+
+			template += wrappedLine(`
+				<div>
+	                <span class="time">[<span>${ death.time }</span>]</span>
+	                <span class="player-name">${ processedPlayerName }</span>
+	                <span>${ death.reason }</span>
+                </div>
+                <div class="inventory">${ items.reduce((itemsTemplate, itemData) => {
+					itemsTemplate += `<span class="inventory__item" title="${itemData.itemName || 'Experience'}" onclick="navigator.clipboard.writeText('${itemData.type === 'exp' ? `/xp ${itemData.amount} ${death.playerName}` : `/give ${death.playerName} ${itemData.itemName} ${itemData.amount}`}');"><img src="${itemData.type === 'exp' ? '/exp-icon.png' : '/unknown-icon.png'}" alt="${itemData.type === 'exp' ? 'Experience' : 'Unknown'} item"><span class="amount">${itemData.amount}</span></span>`;
+					return itemsTemplate;
+				}, '') }</div>
+            `, death.original, true);
+
+			return template;
+		}, '');
 	};
+
+	const updateLogContent = () => {
+		if (logType.death.test(text)) {
+			const parsedData = parsers.death(text);
+			processParsedData(parsedData);
+		} else {
+			const messageCount = getMessageCount();
+			const currentPage = getCurrentPage();
+			const filteredLines = lines.filter(value => filterValue.length > 0 ? value.toLowerCase().includes(filterValue.toLowerCase()) : true);
+			const rangeFrom = (filteredLines.length - messageCount * (currentPage + 1));
+			const rangeTo = (filteredLines.length - messageCount * currentPage);
+			const logText = filteredLines.slice(rangeFrom <= 0 ? 0 : rangeFrom, rangeTo).join('\n');
+			pageCount = Math.ceil(filteredLines.length / messageCount);
+			processLogText(logText);
+		}
+	};
+
+	let text = '';
 
 	const fetchLogs = () => {
 		let cancelled = false;
@@ -593,7 +724,8 @@ const decline = (n, titles) => {
 				const fileName = actualLogsCheck.checked ? `${ dateFormatter.format(now).replaceAll('.', '-') }.txt` : window.updateUrl.split("/").pop();
 				const fileURL = '/api/logs?url=' + encodeURIComponent(logsURLBase + fileName);
 				const response = await fetch(fileURL);
-				const text = await response.text();
+				text = await response.text();
+
 				lines = text.split('\n').filter(Boolean);
 				updateLogContent();
 
