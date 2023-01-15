@@ -605,6 +605,17 @@ const parsers = {
 		return `<span class="line ${vertical ? 'line:vertical' : ''}" ${original ? `title="${ original }"` : ''}>${ content }</span>`;
 	};
 
+	const setupDragListeners = () => {
+		setTimeout(function () {
+			list.querySelectorAll('.draggable').forEach(element => {
+				element.addEventListener('dragstart', (e) => {
+					e.dataTransfer.setData('text/plain', e.target.dataset.name);
+					return true;
+				});
+			});
+		});
+	};
+
 	const processLogText = (text) => {
 		if (!text) {
 			list.innerHTML = '';
@@ -666,14 +677,7 @@ const parsers = {
 
 			return newLine;
 		}).join('');
-		setTimeout(function () {
-			list.querySelectorAll('.draggable').forEach(element => {
-				element.addEventListener('dragstart', (e) => {
-					e.dataTransfer.setData('text/plain', e.target.dataset.name);
-					return true;
-				});
-			});
-		});
+		setupDragListeners();
 	};
 
 	const processParsedData = (data) => {
@@ -695,6 +699,7 @@ const parsers = {
 
 			return template;
 		}, '');
+		setupDragListeners();
 	};
 
 	const updateLogContent = () => {
