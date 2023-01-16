@@ -21,7 +21,7 @@ const updateLoop = (url: string) => {
 		delete runningLoops[url];
 		delete cachedData[url];
 		delete timeoutIDs[timeoutKey];
-	}, 30 * 1000);
+	}, 5 * 1000);
 };
 
 const initFetchDataLoop = (url: string) => {
