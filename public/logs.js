@@ -21,7 +21,7 @@ const decline = (n, titles) => {
 };
 
 const timePattern = (group = null) => `\\[(?${group ? `<${group}>` : ':'}\\d{2}:\\d{2}(?::\\d{2})?)]`;
-const namePattern = (group = null) => `(?${group ? `<${group}>` : ':'}[A-Za-z_0-9]+)`;
+const namePattern = (group = null) => `(?${group ? `<${group}>` : ':'}[A-Za-z_0-9- ']+)`;
 
 const logType = {
 	chat: new RegExp(`${timePattern()} ${namePattern()}: (?:.*)\\n?`, 'i'),
@@ -206,14 +206,14 @@ const renderTemplates = {
                 <span class="player-name">${ processedPlayerName1 }</span>
                 обменял покемона
                 <span style="display: inline-flex;">
-                    <a target="_blank" href="https://pixelmonmod.com/wiki/${ pokemonName1.toLowerCase() }">
-                        <img style="width: 112px; margin: 0 -10px; image-rendering: pixelated;" title="${ pokemonName1 }" src="https://img.pokemondb.net/sprites/sword-shield/icon/${ pokemonName1.toLowerCase() }.png" alt="${ pokemonName1 }">
+                    <a target="_blank" href="https://pixelmonmod.com/wiki/${ pokemonName1.toLowerCase().replaceAll(/\s(\w)/gi, (...matches) => `_${matches[1].toUpperCase()}`) }">
+                        <img style="width: 112px; margin: 0 -10px; image-rendering: pixelated;" title="${ pokemonName1 }" src="https://img.pokemondb.net/sprites/sword-shield/icon/${ pokemonName1.toLowerCase().replaceAll('\'', '').replaceAll(' ', '-') }.png" alt="${ pokemonName1 }">
                     </a>
                 </span>
                 на покемона
                 <span style="display: inline-flex;">
-                    <a target="_blank" href="https://pixelmonmod.com/wiki/${ pokemonName2.toLowerCase() }">
-                        <img style="width: 112px; margin: 0 -10px; image-rendering: pixelated;" title="${ pokemonName2 }" src="https://img.pokemondb.net/sprites/sword-shield/icon/${ pokemonName2.toLowerCase() }.png" alt="${ pokemonName2 }">
+                    <a target="_blank" href="https://pixelmonmod.com/wiki/${ pokemonName2.toLowerCase().replaceAll(/\s(\w)/gi, (...matches) => `_${matches[1].toUpperCase()}`) }">
+                        <img style="width: 112px; margin: 0 -10px; image-rendering: pixelated;" title="${ pokemonName2 }" src="https://img.pokemondb.net/sprites/sword-shield/icon/${ pokemonName2.toLowerCase().replaceAll('\'', '').replaceAll(' ', '-') }.png" alt="${ pokemonName2 }">
                     </a>
                 </span>
                 игрока
