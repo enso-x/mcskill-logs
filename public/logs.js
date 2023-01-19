@@ -183,8 +183,8 @@ const renderTemplates = {
 			template += wrappedLine(`
                 <span class="time">[<span>${ time }</span>]</span>
                 <span style="display: inline-flex;">
-                    <a target="_blank" href="https://pixelmonmod.com/wiki/${ pokemonName.toLowerCase() }">
-                        <img style="width: 112px; image-rendering: pixelated;" title="${ pokemonName }" src="https://img.pokemondb.net/sprites/sword-shield/icon/${ pokemonName.toLowerCase() }.png" alt="${ pokemonName }">
+                    <a target="_blank" href="https://pixelmonmod.com/wiki/${ pokemonName.toLowerCase().replaceAll(/\s(\w)/gi, (...matches) => `_${matches[1].toUpperCase()}`) }">
+                        <img style="width: 112px; image-rendering: pixelated;" title="${ pokemonName }" src="https://img.pokemondb.net/sprites/sword-shield/icon/${ pokemonName.toLowerCase().replaceAll('\'', '').replaceAll(' ', '-') }.png" alt="${ pokemonName }">
                     </a>
                 </span>
                  - 
