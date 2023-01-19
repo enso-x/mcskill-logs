@@ -27,7 +27,7 @@ const logType = {
 	chat: new RegExp(`${timePattern()} ${namePattern()}: (?:.*)\\n?`, 'i'),
 	connection: new RegExp(`${timePattern()} ${namePattern()} (?:(?:logged in)|(?:left the game))\\n?`, 'i'),
 	death: new RegExp(`${timePattern()} - ${namePattern()} (?:.*)(?:\\n\\s{4}- .*x?\\d*)+`, 'i'),
-	items: new RegExp(`${timePattern()} ${namePattern()} (?:(?:drop)|(?:pickup)): .*\\n`, 'i'),
+	items: new RegExp(`${timePattern()} ${namePattern()} (?:(?:drop)|(?:pickup)): .*\\n?`, 'i'),
 	legendarySpawn: new RegExp(`${timePattern()} ${namePattern()} - ${namePattern()}\\n?`, 'i'),
 	pokemonTrade: new RegExp(`${timePattern()} Игрок ${namePattern()} обменял покемона ${namePattern()} на покемона ${namePattern()} игрока ${namePattern()}`, 'i')
 };
@@ -77,9 +77,152 @@ const parsers = {
 			return acc;
 		}, []);
 	},
-	items: new RegExp(`${timePattern()} ${namePattern()} (?:(?:drop)|(?:pickup)): .*\\n`, 'i'),
-	legendarySpawn: new RegExp(`${timePattern()} ${namePattern()} - ${namePattern()}\\n?`, 'i'),
-	pokemonTrade: new RegExp(`${timePattern()} Игрок ${namePattern()} обменял покемона ${namePattern()} на покемона ${namePattern()} игрока ${namePattern()}`, 'i')
+	items: (text) => {
+		return text.split('\n').filter(Boolean).reduce((acc, next) => {
+			const { time, playerName, actionType, item } = new RegExp(`${timePattern('time')} ${namePattern('playerName')} (?<actionType>(?:drop)|(?:pickup)): (?<item>.*)\\n?`, 'i').exec(next).groups;
+			acc.push({
+				time,
+				playerName,
+				actionType,
+				item,
+				original: next
+			});
+			return acc;
+		}, []);
+	},
+	legendarySpawn: (text) => {
+		return text.split('\n').filter(Boolean).reduce((acc, next) => {
+			const { time, pokemonName, playerName } = new RegExp(`${timePattern('time')} ${namePattern('pokemonName')} - ${namePattern('playerName')}\\n?`, 'i').exec(next).groups;
+			acc.push({
+				time,
+				pokemonName,
+				playerName,
+				original: next
+			});
+			return acc;
+		}, []);
+	},
+	pokemonTrade: (text) => {
+		return text.split('\n').filter(Boolean).reduce((acc, next) => {
+			const { time, playerName1, pokemonName1, pokemonName2, playerName2 } = new RegExp(`${timePattern('time')} Игрок ${namePattern('playerName1')} обменял покемона ${namePattern('pokemonName1')} на покемона ${namePattern('pokemonName2')} игрока ${namePattern('playerName2')}`, 'i').exec(next).groups;
+			acc.push({
+				time,
+				playerName1,
+				pokemonName1,
+				playerName2,
+				pokemonName2,
+				original: next
+			});
+			return acc;
+		}, []);
+	}
+};
+
+const filters = {
+	death: (data, filter) => {
+		return data.filter(value => filter.length > 0 ? value.death.original.toLowerCase().includes(filter.toLowerCase()) : true);
+	},
+	items: (data, filter) => {
+		return data.filter(value => filter.length > 0 ? value.original.toLowerCase().includes(filter.toLowerCase()) : true);
+	},
+	legendarySpawn: (data, filter) => {
+		return data.filter(value => filter.length > 0 ? value.original.toLowerCase().includes(filter.toLowerCase()) : true);
+	},
+	pokemonTrade: (data, filter) => {
+		return data.filter(value => filter.length > 0 ? value.original.toLowerCase().includes(filter.toLowerCase()) : true);
+	},
+};
+
+const wrappedLine = (content, original = '', vertical = false) => {
+	return `<span class="line ${vertical ? 'line:vertical' : ''}" ${original ? `title="${ original }"` : ''}>${ content }</span>`;
+};
+
+const renderTemplates = {
+	death: (data, processPlayerName) => {
+		return data.reduce((template, item) => {
+			const { death, items } = item;
+			const processedPlayerName = processPlayerName(death.playerName);
+
+			template += wrappedLine(`
+				<div>
+	                <span class="time">[<span>${ death.time }</span>]</span>
+	                <span class="player-name">${ processedPlayerName }</span>
+	                <span>${ death.reason }</span>
+                </div>
+                <div class="inventory">${ items.reduce((itemsTemplate, itemData) => {
+				itemsTemplate += `<span class="inventory__item" title="${itemData.itemName || 'Experience'}" onclick="navigator.clipboard.writeText('${itemData.type === 'exp' ? `/xp ${itemData.amount} ${death.playerName}` : `/give ${death.playerName} ${itemData.itemName} ${itemData.amount}`}');"><img src="${itemData.type === 'exp' ? '/exp-icon.png' : '/unknown-icon.png'}" alt="${itemData.type === 'exp' ? 'Experience' : 'Unknown'} item"><span class="amount">${itemData.amount}</span></span>`;
+				return itemsTemplate;
+			}, '') }</div>
+            `, death.original, true);
+
+			return template;
+		}, '');
+	},
+	items: (data, processPlayerName) => {
+		return data.reduce((template, itemData) => {
+			const { time, playerName, actionType, item, original } = itemData;
+			const processedPlayerName = processPlayerName(playerName);
+
+			template += wrappedLine(`
+				<div>
+	                <span class="time">[<span>${ time }</span>]</span>
+	                <span class="player-name">${ processedPlayerName }</span>
+	                <span>${actionType}</span>
+	                <span>${item}</span>
+                </div>
+            `, original);
+
+			return template;
+		}, '');
+	},
+	legendarySpawn: (data, processPlayerName) => {
+		return data.reduce((template, item) => {
+			const { time, pokemonName, playerName, original } = item;
+			const processedPlayerName = processPlayerName(playerName);
+
+			template += wrappedLine(`
+                <span class="time">[<span>${ time }</span>]</span>
+                <span style="display: inline-flex;">
+                    <a target="_blank" href="https://pixelmonmod.com/wiki/${ pokemonName.toLowerCase() }">
+                        <img style="width: 112px; image-rendering: pixelated;" title="${ pokemonName }" src="https://img.pokemondb.net/sprites/sword-shield/icon/${ pokemonName.toLowerCase() }.png" alt="${ pokemonName }">
+                    </a>
+                </span>
+                 - 
+                <span class="player-name">${ processedPlayerName }</span>
+            `, original);
+
+			return template;
+		}, '');
+	},
+	pokemonTrade: (data, processPlayerName) => {
+		return data.reduce((template, item) => {
+			const { time, playerName1, pokemonName1, playerName2, pokemonName2, original } = item;
+			const processedPlayerName1 = processPlayerName(playerName1);
+			const processedPlayerName2 = processPlayerName(playerName2);
+
+			template += wrappedLine(`
+                <span class="time">[<span>${ time }</span>]</span>
+                Игрок
+                <span class="player-name">${ processedPlayerName1 }</span>
+                обменял покемона
+                <span style="display: inline-flex;">
+                    <a target="_blank" href="https://pixelmonmod.com/wiki/${ pokemonName1.toLowerCase() }">
+                        <img style="width: 112px; margin: 0 -10px; image-rendering: pixelated;" title="${ pokemonName1 }" src="https://img.pokemondb.net/sprites/sword-shield/icon/${ pokemonName1.toLowerCase() }.png" alt="${ pokemonName1 }">
+                    </a>
+                </span>
+                на покемона
+                <span style="display: inline-flex;">
+                    <a target="_blank" href="https://pixelmonmod.com/wiki/${ pokemonName2.toLowerCase() }">
+                        <img style="width: 112px; margin: 0 -10px; image-rendering: pixelated;" title="${ pokemonName2 }" src="https://img.pokemondb.net/sprites/sword-shield/icon/${ pokemonName2.toLowerCase() }.png" alt="${ pokemonName2 }">
+                    </a>
+                </span>
+                игрока
+                <span class="player-name">${ processedPlayerName2 }</span>.
+            `, original);
+
+			return template;
+		}, '');
+	},
 };
 
 (async () => {
@@ -189,18 +332,43 @@ const parsers = {
     
             .controls {
                 position: fixed;
-                top: 0;
-                left: 0;
-                width: 300px;
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                gap: 16px;
-                background: #0f0f0f;
-                border-right: 1px solid rgba(255, 255, 255, 0.2);
-                padding: 8px;
-                overflow-y: auto;
+			    top: 0;
+			    left: 0;
+			    width: 300px;
+			    height: 100%;
+			    display: flex;
+			    flex-direction: column;
+			    gap: 16px;
+			    background: linear-gradient(225deg, #164f38, #0e1c15 40%, #080a0a 80%);
+			    box-shadow: inset -2px 0 4px rgb(0 0 0 / 40%);
+			    padding: 8px;
+			    overflow-y: auto;
+			    font-family: 'Exo 2', sans-serif;
             }
+            
+            .controls::-webkit-scrollbar {
+			    width: 12px;
+			}
+			
+			/*.controls::-webkit-scrollbar-track {*/
+			/*	background: rgba(0,0,0,0.5);*/
+			/*	background-clip: content-box;*/
+			/*    border: solid 4px transparent;*/
+			/*    border-radius: 6px;*/
+			/*}*/
+			
+			.controls::-webkit-scrollbar-thumb {
+			    width: 6px;
+			    border: 4px solid transparent;
+			    background-color: rgba(255, 255, 255, 0);
+			    background-clip: content-box;
+			    border-radius: 6px;
+			    transition: background-color 0.2s ease-in-out;
+			}
+			
+			.controls:hover::-webkit-scrollbar-thumb {
+			    background-color: rgba(255, 255, 255, .1);
+			}
             
             .controls__inputs {
                 display: flex;
@@ -216,6 +384,7 @@ const parsers = {
             
             #text-search-input {
                 width: 100%;
+				margin-top: 8px;
             }
             
             #actual-logs {
@@ -223,7 +392,7 @@ const parsers = {
             }
             
             #message-count, #update-time {
-                width: 40px;
+                width: 60px;
                 text-align: center;
             }
             #message-count::-webkit-outer-spin-button,
@@ -232,12 +401,17 @@ const parsers = {
             #update-time::-webkit-inner-spin-button {
                 -webkit-appearance: none;
                 margin: 0;
+                display: none;
             }
     
             .watch-list {
                 display: flex;
                 flex-direction: column;
-                gap: 4px;
+                gap: 8px;
+                background: linear-gradient(325deg, #00000061, #00000038);
+			    padding: 8px;
+			    border-radius: 8px;
+			    box-shadow: 0 0 2px 1px rgb(255 255 255 / 10%);
             }
     
             .watch-list__controls {
@@ -254,43 +428,56 @@ const parsers = {
                 flex-direction: column;
                 gap: 4px;
                 min-height: 24px;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                padding: 4px;
-                border-radius: 4px;
-                background: #222;
+			    padding: 8px;
+			    border-radius: 6px;
+			    background: rgba(0,0,0,0.3);
+			    box-shadow: inset 0 2px 8px rgb(0 0 0 / 30%);
             }
     
             .watch-list__button-remove {
-                border: 1px solid #FF0147;
-                border-radius: 4px;
-                background: transparent;
-                color: #FF0147;
-                cursor: pointer;
+                font-family: 'Exo 2', sans-serif;
+                border: 1px solid #781111;
+			    border-radius: 4px;
+			    background: linear-gradient(148deg, #3a0000 20%, #b92323);
+			    padding: 4px 8px;
+			    color: rgba(255,255,255,0.8);
+			    cursor: pointer;
+            }
+            
+            .list-container {
+                background: linear-gradient(160deg, #459866, #1e422c 20%, #090a0a);
+			    height: 100vh;
+			    overflow-y: auto;
             }
     
             .list {
                 display: flex;
-                flex-direction: column-reverse;
-                padding: 0 8px 8px;
+			    flex-direction: column-reverse;
+			    padding: 8px;
+			    gap: 4px;
+			    font-family: 'Exo 2', sans-serif;
+                font-variant-numeric: tabular-nums;
             }
     
             .line {
                 display: flex;
                 align-items: center;
                 flex-wrap: wrap;
-                padding: 2px 0;
                 gap: 8px;
+                background: linear-gradient(135deg, rgba(0,0,0,0.2), rgba(0,0,0,0.4));
+			    border-radius: 8px;
+			    padding: 8px 16px;
             }
     
-            .line:not(:last-child) {
+            /*.line:not(:last-child) {
                 border-top: 1px solid rgba(255, 255, 255, 0.2);
-            }
+            }*/
             
             .line\\:vertical {
                 flex-direction: column;
                 align-items: flex-start;
                 justify-content: center;
-                padding: 4px 0;
+                padding: 8px 16px;
             }
             
             .line > span {
@@ -324,6 +511,21 @@ const parsers = {
                 bottom: 0;
                 right: 4px;
                 text-shadow: 1px 1px #000;
+            }
+            
+            input[type="text"], input[type="number"] {
+                background: rgba(0,0,0,0.3);
+			    border: none;
+			    padding: 8px 16px;
+			    border-radius: 8px;
+			    box-shadow: 0 0 2px 1px rgb(255 255 255 / 10%);
+			    transition: box-shadow 0.2s ease-in-out;
+			    font-family: 'Exo 2', sans-serif;
+            }
+            
+            input[type="text"]:focus-visible, input[type="number"]:focus-visible {
+                outline: none;
+                box-shadow: 0 0 2px 2px #378364a6;
             }
     
             .global-chat > span {
@@ -379,10 +581,10 @@ const parsers = {
                 </label>
                 <div class="controls__inputs">
                     <div>
-                        Показывать <input type="number" id="message-count" min="0" max="500" step="1" value="${ getMessageCount() ?? 500 }"/> <span id="message-count-decline">${ decline(getMessageCount(), [ 'сообщение', 'сообщения', 'сообщений' ]) }</span>.
+                        Показывать&nbsp;&nbsp;<input type="number" id="message-count" min="0" max="500" step="1" value="${ getMessageCount() ?? 500 }"/>&nbsp;&nbsp;<span id="message-count-decline">${ decline(getMessageCount(), [ 'сообщение', 'сообщения', 'сообщений' ]) }</span>.
                     </div>
                     <div>
-                        Обновлять каждые: <input type="number" id="update-time" value="${ getUpdateTime() ?? 2 }" min="1" step="1"/> <span id="update-time-decline">${ decline(getUpdateTime(), [ 'секунду', 'секунды', 'секунд' ]) }</span>.
+                        Обновлять каждые:&nbsp;&nbsp;<input type="number" id="update-time" value="${ getUpdateTime() ?? 2 }" min="1" step="1"/>&nbsp;&nbsp;<span id="update-time-decline">${ decline(getUpdateTime(), [ 'секунду', 'секунды', 'секунд' ]) }</span>.
                     </div>
                     <div>
                         <br/>
@@ -391,7 +593,9 @@ const parsers = {
 					</div>
                 </div>
             </div>
-            <div class="list"></div>
+            <div class="list-container">
+                <div class="list"></div>
+			</div>
             <div class="pagination">
                 <button class="pagination__button" id="page-prev">◀</button>
                 <span class="pagination__text" id="page-text">Страница ${ getCurrentPage() + 1 }</span>
@@ -601,10 +805,6 @@ const parsers = {
 		});
 	};
 
-	const wrappedLine = (content, original = '', vertical = false) => {
-		return `<span class="line ${vertical ? 'line:vertical' : ''}" ${original ? `title="${ original }"` : ''}>${ content }</span>`;
-	};
-
 	const setupDragListeners = () => {
 		setTimeout(function () {
 			list.querySelectorAll('.draggable').forEach(element => {
@@ -680,42 +880,52 @@ const parsers = {
 		setupDragListeners();
 	};
 
-	const processParsedData = (data) => {
-		list.innerHTML = data.reduce((template, item) => {
-			const { death, items } = item;
-			const processedPlayerName = processPlayerName(death.playerName);
+	const paginate = (data) => {
+		const messageCount = getMessageCount();
+		const currentPage = getCurrentPage();
 
-			template += wrappedLine(`
-				<div>
-	                <span class="time">[<span>${ death.time }</span>]</span>
-	                <span class="player-name">${ processedPlayerName }</span>
-	                <span>${ death.reason }</span>
-                </div>
-                <div class="inventory">${ items.reduce((itemsTemplate, itemData) => {
-					itemsTemplate += `<span class="inventory__item" title="${itemData.itemName || 'Experience'}" onclick="navigator.clipboard.writeText('${itemData.type === 'exp' ? `/xp ${itemData.amount} ${death.playerName}` : `/give ${death.playerName} ${itemData.itemName} ${itemData.amount}`}');"><img src="${itemData.type === 'exp' ? '/exp-icon.png' : '/unknown-icon.png'}" alt="${itemData.type === 'exp' ? 'Experience' : 'Unknown'} item"><span class="amount">${itemData.amount}</span></span>`;
-					return itemsTemplate;
-				}, '') }</div>
-            `, death.original, true);
+		const rangeFrom = (data.length - messageCount * (currentPage + 1));
+		const rangeTo = (data.length - messageCount * currentPage);
+		pageCount = Math.ceil(data.length / messageCount);
 
-			return template;
-		}, '');
-		setupDragListeners();
+		return data.slice(rangeFrom <= 0 ? 0 : rangeFrom, rangeTo);
 	};
 
 	const updateLogContent = () => {
 		if (logType.death.test(text)) {
 			const parsedData = parsers.death(text);
-			processParsedData(parsedData);
-		} else {
-			const messageCount = getMessageCount();
-			const currentPage = getCurrentPage();
-			const filteredLines = lines.filter(value => filterValue.length > 0 ? value.toLowerCase().includes(filterValue.toLowerCase()) : true);
-			const rangeFrom = (filteredLines.length - messageCount * (currentPage + 1));
-			const rangeTo = (filteredLines.length - messageCount * currentPage);
-			const logText = filteredLines.slice(rangeFrom <= 0 ? 0 : rangeFrom, rangeTo).join('\n');
-			pageCount = Math.ceil(filteredLines.length / messageCount);
-			processLogText(logText);
+			const filteredData = filters.death(parsedData, filterValue);
+			list.innerHTML = renderTemplates.death(filteredData, processPlayerName);
+			setupDragListeners();
+			return;
 		}
+		if (logType.items.test(text)) {
+			const parsedData = parsers.items(text);
+			const filteredData = filters.items(parsedData, filterValue);
+			const paginatedData = paginate(filteredData);
+			list.innerHTML = renderTemplates.items(paginatedData, processPlayerName);
+			setupDragListeners();
+			return;
+		}
+		if (logType.legendarySpawn.test(text)) {
+			const parsedData = parsers.legendarySpawn(text);
+			const filteredData = filters.legendarySpawn(parsedData, filterValue);
+			list.innerHTML = renderTemplates.legendarySpawn(filteredData, processPlayerName);
+			setupDragListeners();
+			return;
+		}
+		if (logType.pokemonTrade.test(text)) {
+			const parsedData = parsers.pokemonTrade(text);
+			const filteredData = filters.pokemonTrade(parsedData, filterValue);
+			const paginatedData = paginate(filteredData);
+			list.innerHTML = renderTemplates.pokemonTrade(paginatedData, processPlayerName);
+			setupDragListeners();
+			return;
+		}
+
+		const filteredLines = lines.filter(value => filterValue.length > 0 ? value.toLowerCase().includes(filterValue.toLowerCase()) : true);
+		const paginatedData = paginate(filteredLines);
+		processLogText(paginatedData.join('\n'));
 	};
 
 	let text = '';
