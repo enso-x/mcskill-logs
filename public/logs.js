@@ -21,7 +21,9 @@ const decline = (n, titles) => {
 };
 
 const timePattern = (group = null) => `\\[(?${group ? `<${group}>` : ':'}\\d{2}:\\d{2}(?::\\d{2})?)]`;
-const namePattern = (group = null) => `(?${group ? `<${group}>` : ':'}[A-Za-z_0-9- ']+)`;
+const namePattern = (group = null) => `(?${group ? `<${group}>` : ':'}[A-Za-z_0-9- '.]+)`;
+
+const imageCache = {};
 
 const logType = {
 	chat: new RegExp(`${timePattern()} ${namePattern()}: (?:.*)\\n?`, 'i'),
@@ -138,7 +140,7 @@ const wrappedLine = (content, original = '', vertical = false) => {
 };
 
 const renderTemplates = {
-	death: (data, processPlayerName) => {
+	death: async (data, processPlayerName) => {
 		return data.reduce((template, item) => {
 			const { death, items } = item;
 			const processedPlayerName = processPlayerName(death.playerName);
@@ -158,7 +160,7 @@ const renderTemplates = {
 			return template;
 		}, '');
 	},
-	items: (data, processPlayerName) => {
+	items: async (data, processPlayerName) => {
 		return data.reduce((template, itemData) => {
 			const { time, playerName, actionType, item, original } = itemData;
 			const processedPlayerName = processPlayerName(playerName);
@@ -175,7 +177,7 @@ const renderTemplates = {
 			return template;
 		}, '');
 	},
-	legendarySpawn: (data, processPlayerName) => {
+	legendarySpawn: async (data, processPlayerName) => {
 		return data.reduce((template, item) => {
 			const { time, pokemonName, playerName, original } = item;
 			const processedPlayerName = processPlayerName(playerName);
@@ -194,11 +196,37 @@ const renderTemplates = {
 			return template;
 		}, '');
 	},
-	pokemonTrade: (data, processPlayerName) => {
-		return data.reduce((template, item) => {
+	pokemonTrade: async (data, processPlayerName) => {
+		let template = '';
+
+		for (let item of data) {
 			const { time, playerName1, pokemonName1, playerName2, pokemonName2, original } = item;
 			const processedPlayerName1 = processPlayerName(playerName1);
 			const processedPlayerName2 = processPlayerName(playerName2);
+
+			const tryLoadPokemonSprite = (name) => new Promise(async (res) => {
+				const formatted = name.toLowerCase().replaceAll('\'', '').replaceAll('.', '').replaceAll(' ', '-');
+				if (imageCache[formatted]) {
+					res(imageCache[formatted]);
+					return;
+				}
+				try {
+					const img = new Image();
+					const url1 = `https://img.pokemondb.net/sprites/sword-shield/icon/${ formatted }.png`;
+					const url2 = `https://img.pokemondb.net/sprites/scarlet-violet/icon/${ formatted }.png`;
+					img.onerror = () => {
+						img.src = url2;
+					};
+					img.onload = () => {
+						imageCache[formatted] = img.src;
+						res(img.src);
+					};
+					img.src = url1;
+				} catch(e) {}
+			});
+
+			const pokemon1Image = await tryLoadPokemonSprite(pokemonName1);
+			const pokemon2Image = await tryLoadPokemonSprite(pokemonName2);
 
 			template += wrappedLine(`
                 <span class="time">[<span>${ time }</span>]</span>
@@ -207,21 +235,21 @@ const renderTemplates = {
                 обменял покемона
                 <span style="display: inline-flex;">
                     <a target="_blank" href="https://pixelmonmod.com/wiki/${ pokemonName1.toLowerCase().replaceAll(/\s(\w)/gi, (...matches) => `_${matches[1].toUpperCase()}`) }">
-                        <img style="width: 112px; margin: 0 -10px; image-rendering: pixelated;" title="${ pokemonName1 }" src="https://img.pokemondb.net/sprites/sword-shield/icon/${ pokemonName1.toLowerCase().replaceAll('\'', '').replaceAll(' ', '-') }.png" alt="${ pokemonName1 }">
+                        <img style="width: 112px; margin: 0 -10px; image-rendering: pixelated;" title="${ pokemonName1 }" src="${ pokemon1Image }" alt="${ pokemonName1 }">
                     </a>
                 </span>
                 на покемона
                 <span style="display: inline-flex;">
                     <a target="_blank" href="https://pixelmonmod.com/wiki/${ pokemonName2.toLowerCase().replaceAll(/\s(\w)/gi, (...matches) => `_${matches[1].toUpperCase()}`) }">
-                        <img style="width: 112px; margin: 0 -10px; image-rendering: pixelated;" title="${ pokemonName2 }" src="https://img.pokemondb.net/sprites/sword-shield/icon/${ pokemonName2.toLowerCase().replaceAll('\'', '').replaceAll(' ', '-') }.png" alt="${ pokemonName2 }">
+                        <img style="width: 112px; margin: 0 -10px; image-rendering: pixelated;" title="${ pokemonName2 }" src="${ pokemon2Image }" alt="${ pokemonName2 }">
                     </a>
                 </span>
                 игрока
                 <span class="player-name">${ processedPlayerName2 }</span>.
             `, original);
+		}
 
-			return template;
-		}, '');
+		return template;
 	},
 };
 
@@ -891,11 +919,11 @@ const renderTemplates = {
 		return data.slice(rangeFrom <= 0 ? 0 : rangeFrom, rangeTo);
 	};
 
-	const updateLogContent = () => {
+	const updateLogContent = async () => {
 		if (logType.death.test(text)) {
 			const parsedData = parsers.death(text);
 			const filteredData = filters.death(parsedData, filterValue);
-			list.innerHTML = renderTemplates.death(filteredData, processPlayerName);
+			list.innerHTML = await renderTemplates.death(filteredData, processPlayerName);
 			setupDragListeners();
 			return;
 		}
@@ -903,14 +931,14 @@ const renderTemplates = {
 			const parsedData = parsers.items(text);
 			const filteredData = filters.items(parsedData, filterValue);
 			const paginatedData = paginate(filteredData);
-			list.innerHTML = renderTemplates.items(paginatedData, processPlayerName);
+			list.innerHTML = await renderTemplates.items(paginatedData, processPlayerName);
 			setupDragListeners();
 			return;
 		}
 		if (logType.legendarySpawn.test(text)) {
 			const parsedData = parsers.legendarySpawn(text);
 			const filteredData = filters.legendarySpawn(parsedData, filterValue);
-			list.innerHTML = renderTemplates.legendarySpawn(filteredData, processPlayerName);
+			list.innerHTML = await renderTemplates.legendarySpawn(filteredData, processPlayerName);
 			setupDragListeners();
 			return;
 		}
@@ -918,7 +946,7 @@ const renderTemplates = {
 			const parsedData = parsers.pokemonTrade(text);
 			const filteredData = filters.pokemonTrade(parsedData, filterValue);
 			const paginatedData = paginate(filteredData);
-			list.innerHTML = renderTemplates.pokemonTrade(paginatedData, processPlayerName);
+			list.innerHTML = await renderTemplates.pokemonTrade(paginatedData, processPlayerName);
 			setupDragListeners();
 			return;
 		}
