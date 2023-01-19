@@ -21,7 +21,7 @@ const decline = (n, titles) => {
 };
 
 const timePattern = (group = null) => `\\[(?${group ? `<${group}>` : ':'}\\d{2}:\\d{2}(?::\\d{2})?)]`;
-const namePattern = (group = null) => `(?${group ? `<${group}>` : ':'}[A-Za-z_0-9- '.]+)`;
+const namePattern = (group = null) => `(?${group ? `<${group}>` : ':'}[A-Za-z_0-9- '.é]+)`;
 
 const imageCache = {};
 
@@ -205,7 +205,7 @@ const renderTemplates = {
 			const processedPlayerName2 = processPlayerName(playerName2);
 
 			const tryLoadPokemonSprite = (name) => new Promise(async (res) => {
-				const formatted = name.toLowerCase().replaceAll('\'', '').replaceAll('.', '').replaceAll(' ', '-');
+				const formatted = name.toLowerCase().replaceAll('\'', '').replaceAll('.', '').replaceAll(' ', '-').replaceAll('é', 'e');
 				if (imageCache[formatted]) {
 					res(imageCache[formatted]);
 					return;
