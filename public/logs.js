@@ -179,7 +179,6 @@ const renderTemplates = {
 		return data.reduce((template, item) => {
 			const { time, pokemonName, playerName, original } = item;
 			const processedPlayerName = processPlayerName(playerName);
-			console.log(pokemonName);
 
 			template += wrappedLine(`
                 <span class="time">[<span>${ time }</span>]</span>
