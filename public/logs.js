@@ -95,7 +95,7 @@ const parsers = {
 			const { time, pokemonName, playerName } = new RegExp(`${timePattern('time')} ${namePattern('pokemonName')} - ${namePattern('playerName')}\\n?`, 'i').exec(next).groups;
 			acc.push({
 				time,
-				pokemonName,
+				pokemonName: pokemonName.replaceAll(/([a-z])([A-Z])/g, (...matches) => `${matches[1]} ${matches[2]}`),
 				playerName,
 				original: next
 			});
@@ -179,6 +179,7 @@ const renderTemplates = {
 		return data.reduce((template, item) => {
 			const { time, pokemonName, playerName, original } = item;
 			const processedPlayerName = processPlayerName(playerName);
+			console.log(pokemonName);
 
 			template += wrappedLine(`
                 <span class="time">[<span>${ time }</span>]</span>
