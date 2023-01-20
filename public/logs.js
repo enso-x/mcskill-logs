@@ -337,7 +337,7 @@ const renderTemplates = {
             .pagination {
                 position: fixed;
                 bottom: 8px;
-                right: 8px;
+                right: 24px;
                 display: flex;
                 align-items: center;
                 padding: 8px;
@@ -347,12 +347,12 @@ const renderTemplates = {
             }
             
             .pagination__button {
-                cursor: pointer;
+                font-size: 10px;
             }
             
             .pagination__text {
                 display: flex;
-                width: 100px;
+                width: 160px;
                 height: 100%;
                 align-items: center;
                 justify-content: center;
@@ -410,6 +410,34 @@ const renderTemplates = {
                 gap: 8px;
             }
             
+            .checkbox__handle {
+                display: inline-flex;
+            }
+            
+            .checkbox__handle input {
+                display: none;
+            }
+            
+            .checkbox__box {
+                position: relative;
+                display: inline-flex;
+                justify-content: center;
+                align-items: center;
+                width: 20px;
+                height: 20px;
+                background: rgba(0, 0, 0, 0.3);
+			    border: none;
+			    border-radius: 4px;
+			    box-shadow: 0 0 2px 1px rgb(255 255 255 / 10%);
+			    transition: box-shadow 0.2s ease-in-out;
+			    cursor: pointer;
+            }
+            
+            .checkbox__handle input:checked + .checkbox__box {
+                background: rgba(0, 0, 0, 0.3) url("/tick_green_modern.svg") center center no-repeat;
+                background-size: 80% 80%;
+            }
+            
             #text-search-input {
                 width: 100%;
 				margin-top: 8px;
@@ -461,15 +489,33 @@ const renderTemplates = {
 			    background: rgba(0,0,0,0.3);
 			    box-shadow: inset 0 2px 8px rgb(0 0 0 / 30%);
             }
-    
-            .watch-list__button-remove {
+            
+            .button {
                 font-family: 'Exo 2', sans-serif;
-                border: 1px solid #781111;
+                border: 1px solid #747474;
 			    border-radius: 4px;
-			    background: linear-gradient(148deg, #3a0000 20%, #b92323);
+			    background: linear-gradient(148deg, #3e3e3e 20%, #b9b9b9);
 			    padding: 4px 8px;
 			    color: rgba(255,255,255,0.8);
 			    cursor: pointer;
+            }
+            
+            .button:hover {
+                filter: brightness(1.2);
+            }
+            
+            .button:active {
+                filter: brightness(0.6);
+            }
+            
+            .button\\:green {
+                border: 1px solid #117835;
+                background: linear-gradient(148deg, #003a27 20%, #23b96d);
+            }
+    
+            .button\\:red {
+                border: 1px solid #781111;
+                background: linear-gradient(148deg, #3a0000 20%, #b92323);
             }
             
             .list-container {
@@ -603,10 +649,14 @@ const renderTemplates = {
 	const root = $element(`
         <div id="root">
             <div class="controls">
-                <label class="checkbox" title="Загружать логи с учетом нового дня (по времени компьютера)">
-                    <input type="checkbox" id="actual-logs"/>
-                    <span>Показывать актуальные логи</span>
-                </label>
+                <div class="checkbox" title="Загружать логи с учетом нового дня (по времени компьютера)">
+                    <label class="checkbox__handle">
+	                    <input type="checkbox" id="actual-logs"/>
+	                    <span class="checkbox__box"></span>
+	                </label>
+	                <span class="checkbox__label">Показывать актуальные логи</span>
+				</div>
+                
                 <div class="controls__inputs">
                     <div>
                         Показывать&nbsp;&nbsp;<input type="number" id="message-count" min="0" max="500" step="1" value="${ getMessageCount() ?? 500 }"/>&nbsp;&nbsp;<span id="message-count-decline">${ decline(getMessageCount(), [ 'сообщение', 'сообщения', 'сообщений' ]) }</span>.
@@ -625,9 +675,11 @@ const renderTemplates = {
                 <div class="list"></div>
 			</div>
             <div class="pagination">
-                <button class="pagination__button" id="page-prev">◀</button>
-                <span class="pagination__text" id="page-text">Страница ${ getCurrentPage() + 1 }</span>
-                <button class="pagination__button" id="page-next">▶</button>
+                <button class="button button:green pagination__button" id="page-first">◀◀</button>
+                <button class="button button:green pagination__button" id="page-prev">◀</button>
+                <span class="pagination__text" id="page-text">Страница ${ getCurrentPage() + 1 }/1</span>
+                <button class="button button:green pagination__button" id="page-next">▶</button>
+                <button class="button button:green pagination__button" id="page-last">▶▶</button>
             </div>
         </div>
     `);
@@ -655,10 +707,20 @@ const renderTemplates = {
 	});
 	const paginationText = root.querySelector('#page-text');
 	const updatePage = (newPage) => {
-		paginationText.innerHTML = `Страница ${ newPage + 1 }`;
+		paginationText.innerHTML = `Страница ${ newPage + 1 }/${ pageCount }`;
 		setCurrentPage(newPage);
 		updateLogContent();
 	};
+	const setPageCount = (count) => {
+		if (count && count > 0) {
+			pageCount = count;
+			paginationText.innerHTML = `Страница ${ getCurrentPage() + 1 }/${ pageCount }`;
+		}
+	};
+	const firstPageButton = root.querySelector('#page-first');
+	firstPageButton.addEventListener('click', () => {
+		updatePage(0);
+	});
 	const prevPageButton = root.querySelector('#page-prev');
 	prevPageButton.addEventListener('click', () => {
 		const currentPage = getCurrentPage();
@@ -670,6 +732,10 @@ const renderTemplates = {
 		const currentPage = getCurrentPage();
 		const newPage = currentPage >= (pageCount - 1) ? pageCount - 1 : currentPage + 1;
 		updatePage(newPage);
+	});
+	const lastPageButton = root.querySelector('#page-last');
+	lastPageButton.addEventListener('click', () => {
+		updatePage(pageCount - 1);
 	});
 	document.querySelector('#app-root').append(root);
 
@@ -745,7 +811,7 @@ const renderTemplates = {
 			watchListItems.innerHTML = '';
 			watchItems.forEach(watchName => {
 				const watchRemoveButton = $element(`
-                    <button type="button" class="watch-list__button-remove">
+                    <button type="button" class="button button:red">
                         ${ watchName }
                     </button>
                 `);
@@ -914,7 +980,7 @@ const renderTemplates = {
 
 		const rangeFrom = (data.length - messageCount * (currentPage + 1));
 		const rangeTo = (data.length - messageCount * currentPage);
-		pageCount = Math.ceil(data.length / messageCount);
+		setPageCount(Math.ceil(data.length / messageCount));
 
 		return data.slice(rangeFrom <= 0 ? 0 : rangeFrom, rangeTo);
 	};
