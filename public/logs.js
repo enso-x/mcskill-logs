@@ -120,18 +120,33 @@ const parsers = {
 	}
 };
 
+const getRegexp = (string) => {
+	let reg;
+	try {
+		reg = new RegExp(string);
+	} catch(e) {
+		reg = false;
+	}
+	return reg;
+};
+
+const doTestValue = (value, filter) => {
+	const reg = getRegexp(filter);
+	return filter.length > 0 ? (value.toLowerCase().includes(filter.toLowerCase()) || (reg && reg.test(value))) : true;
+};
+
 const filters = {
 	death: (data, filter) => {
-		return data.filter(value => filter.length > 0 ? value.death.original.toLowerCase().includes(filter.toLowerCase()) : true);
+		return data.filter(value => doTestValue(value.death.original, filter));
 	},
 	items: (data, filter) => {
-		return data.filter(value => filter.length > 0 ? value.original.toLowerCase().includes(filter.toLowerCase()) : true);
+		return data.filter(value => doTestValue(value.original, filter));
 	},
 	legendarySpawn: (data, filter) => {
-		return data.filter(value => filter.length > 0 ? value.original.toLowerCase().includes(filter.toLowerCase()) : true);
+		return data.filter(value => doTestValue(value.original, filter));
 	},
 	pokemonTrade: (data, filter) => {
-		return data.filter(value => filter.length > 0 ? value.original.toLowerCase().includes(filter.toLowerCase()) : true);
+		return data.filter(value => doTestValue(value.original, filter));
 	},
 };
 
@@ -356,6 +371,7 @@ const renderTemplates = {
                 height: 100%;
                 align-items: center;
                 justify-content: center;
+                font-family: 'Exo 2', sans-serif;
             }
     
             .controls {
