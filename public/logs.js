@@ -136,6 +136,9 @@ const doTestValue = (value, filter) => {
 };
 
 const filters = {
+	chat: (data, filter) => {
+		return data.filter(value => doTestValue(value, filter));
+	},
 	death: (data, filter) => {
 		return data.filter(value => doTestValue(value.death.original, filter));
 	},
@@ -1033,7 +1036,7 @@ const renderTemplates = {
 			return;
 		}
 
-		const filteredLines = lines.filter(value => filterValue.length > 0 ? value.toLowerCase().includes(filterValue.toLowerCase()) : true);
+		const filteredLines = filters.chat(lines, filterValue);
 		const paginatedData = paginate(filteredLines);
 		processLogText(paginatedData.join('\n'));
 	};
