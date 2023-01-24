@@ -120,10 +120,14 @@ const parsers = {
 	}
 };
 
-const getRegexp = (string) => {
+const getRegexp = (filter) => {
+	if (!filter) {
+		return false;
+	}
+
 	let reg;
 	try {
-		reg = new RegExp(string);
+		reg = new RegExp(filter);
 	} catch(e) {
 		reg = false;
 	}
