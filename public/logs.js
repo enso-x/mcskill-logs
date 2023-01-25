@@ -365,6 +365,14 @@ const getDaysBetweenDates = (date1, date2) => {
 (async () => {
 	'use strict';
 
+	await fetch('/api/logs-between');
+	const socket = io();
+
+	socket.on('connect', () => {
+		console.log('connected');
+	})
+
+	let socketData = [];
 	let lines = [];
 	let filterValue = '';
 	let cancelLoopRef = null;
@@ -874,21 +882,23 @@ const getDaysBetweenDates = (date1, date2) => {
 				}
 				list.innerHTML = '';
 				const days = getDaysBetweenDates(...dates);
-				const response = await fetch(`/api/logs-between`, {
-					method: 'POST',
-					headers: {
-						'content-type': 'application/json'
-					},
-					body: JSON.stringify({
-						urlBase: logsURLBase,
-						dates: days.map(day => dateFormatter.format(day).replaceAll('.', '-'))
-					})
-				});
-				text = await response.json();
-				await updateLogContent();
+				socketData = [];
+				socket.emit('get-logs-between-days', JSON.stringify({
+					urlBase: logsURLBase,
+					dates: days.map(day => dateFormatter.format(day).replaceAll('.', '-'))
+				}));
 			}
 			return value;
 		}
+	});
+
+	socket.on('logs-between-part', data => {
+		socketData.push(JSON.parse(data));
+	});
+
+	socket.on('logs-between-end', async () => {
+		text = [...socketData];
+		await updateLogContent();
 	});
 
 	const clearLogList = () => {
