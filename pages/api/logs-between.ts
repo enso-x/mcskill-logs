@@ -14,9 +14,12 @@ const handler = async (
 
 	const { urlBase, dates } = req.body;
 
-	const requests = dates.map(async (date: string) => ({date: date, response: await fetch(`${urlBase}${date}.txt`)}));
-
 	const result = [];
+
+	const requests = dates.map(async (date: string) => ({
+		date: date,
+		response: await fetch(`${ urlBase }${ date }.txt`)
+	}));
 
 	for await (let request of requests) {
 		if (request.response.status === 200) {
@@ -39,5 +42,8 @@ const handler = async (
 export default handler;
 
 export const config = {
-	runtime: 'nodejs'
+	runtime: 'nodejs',
+	api: {
+		responseLimit: false,
+	},
 };
