@@ -29,6 +29,7 @@ const LogsPage: NextPage<ILogsPageProps> = ({
 						<>
 							<div id="app-root"></div>
 							<script type="text/javascript" dangerouslySetInnerHTML={{__html: `window.updateUrl = '${ url }';`}}/>
+							<Script src="/datepicker.js"/>
 							<Script src="/logs.js"/>
 						</>
 					)

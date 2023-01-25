@@ -21,7 +21,8 @@ const decline = (n, titles) => {
 };
 
 const timePattern = (group = null) => `\\[(?${group ? `<${group}>` : ':'}\\d{2}:\\d{2}(?::\\d{2})?)]`;
-const namePattern = (group = null) => `(?${group ? `<${group}>` : ':'}[A-Za-z_0-9- '.é]+)`;
+const namePattern = (group = null) => `(?${group ? `<${group}>` : ':'}[A-Za-z_0-9-]+)`;
+const pokemonNamePattern = (group = null) => `(?${group ? `<${group}>` : ':'}[A-Za-z_0-9- '.é]+)`;
 
 const imageCache = {};
 
@@ -30,19 +31,39 @@ const logType = {
 	connection: new RegExp(`${timePattern()} ${namePattern()} (?:(?:logged in)|(?:left the game))\\n?`, 'i'),
 	death: new RegExp(`${timePattern()} - ${namePattern()} (?:.*)(?:\\n\\s{4}- .*x?\\d*)+`, 'i'),
 	items: new RegExp(`${timePattern()} ${namePattern()} (?:(?:drop)|(?:pickup)): .*\\n?`, 'i'),
-	legendarySpawn: new RegExp(`${timePattern()} ${namePattern()} - ${namePattern()}\\n?`, 'i'),
-	pokemonTrade: new RegExp(`${timePattern()} Игрок ${namePattern()} обменял покемона ${namePattern()} на покемона ${namePattern()} игрока ${namePattern()}`, 'i')
+	legendarySpawn: new RegExp(`${timePattern()} ${pokemonNamePattern()} - ${namePattern()}\\n?`, 'i'),
+	pokemonTrade: new RegExp(`${timePattern()} Игрок ${namePattern()} обменял покемона ${pokemonNamePattern()} на покемона ${pokemonNamePattern()} игрока ${namePattern()}`, 'i')
 };
 
 const parsers = {
-	chat: new RegExp(`${timePattern()} ${namePattern()}: (?:.*)\\n?`, 'i'),
+	chat: (text, date) => {
+		return text.split('\n').filter(Boolean).reduce((acc, next) => {
+			if (next.includes('issued')) {
+				const executedContent = (/(?:\[(?<time>(\d{2}:\d{2}(?::\d{2})?))]\s)?(?<playerName>[A-Za-z0-9_]{3,}) issued server command: (?<command>\/.*)/gi).exec(next);
+				acc.push({
+					...(executedContent.groups),
+					original: next,
+					date: date
+				});
+			} else {
+				const executedContent = (/(?:\[(?<time>(\d{2}:\d{2}(?::\d{2})?))]\s)?(?:\[(?<chatType>[GL])]\s)?(?:(?<playerName>[A-Za-z0-9_]{3,})(?<playerChat>:)?\s)?(?<worldChat>!)?(?<messageContent>.*)/gi).exec(next);
+				acc.push({
+					...(executedContent.groups),
+					original: next,
+					date: date
+				});
+			}
+			return acc;
+		}, []);
+	},
 	connection: new RegExp(`${timePattern()} ${namePattern()} (?:(?:logged in)|(?:left the game))\\n?`, 'i'),
-	death: (text) => {
+	death: (text, date) => {
 		return text.split('\n').filter(Boolean).reduce((acc, next) => {
 			if (next.startsWith('[')) {
 				const { time, playerName, reason } = new RegExp(`${timePattern('time')} - ${namePattern('playerName')} (?<reason>.+)`, 'i').exec(next).groups;
 				acc.push({
 					death: {
+						date,
 						time,
 						playerName,
 						reason,
@@ -79,10 +100,11 @@ const parsers = {
 			return acc;
 		}, []);
 	},
-	items: (text) => {
+	items: (text, date) => {
 		return text.split('\n').filter(Boolean).reduce((acc, next) => {
 			const { time, playerName, actionType, item } = new RegExp(`${timePattern('time')} ${namePattern('playerName')} (?<actionType>(?:drop)|(?:pickup)): (?<item>.*)\\n?`, 'i').exec(next).groups;
 			acc.push({
+				date,
 				time,
 				playerName,
 				actionType,
@@ -92,10 +114,11 @@ const parsers = {
 			return acc;
 		}, []);
 	},
-	legendarySpawn: (text) => {
+	legendarySpawn: (text, date) => {
 		return text.split('\n').filter(Boolean).reduce((acc, next) => {
-			const { time, pokemonName, playerName } = new RegExp(`${timePattern('time')} ${namePattern('pokemonName')} - ${namePattern('playerName')}\\n?`, 'i').exec(next).groups;
+			const { time, pokemonName, playerName } = new RegExp(`${timePattern('time')} ${pokemonNamePattern('pokemonName')} - ${namePattern('playerName')}\\n?`, 'i').exec(next).groups;
 			acc.push({
+				date,
 				time,
 				pokemonName: pokemonName.replaceAll(/([a-z])([A-Z])/g, (...matches) => `${matches[1]} ${matches[2]}`),
 				playerName,
@@ -104,10 +127,11 @@ const parsers = {
 			return acc;
 		}, []);
 	},
-	pokemonTrade: (text) => {
+	pokemonTrade: (text, date) => {
 		return text.split('\n').filter(Boolean).reduce((acc, next) => {
-			const { time, playerName1, pokemonName1, pokemonName2, playerName2 } = new RegExp(`${timePattern('time')} Игрок ${namePattern('playerName1')} обменял покемона ${namePattern('pokemonName1')} на покемона ${namePattern('pokemonName2')} игрока ${namePattern('playerName2')}`, 'i').exec(next).groups;
+			const { time, playerName1, pokemonName1, pokemonName2, playerName2 } = new RegExp(`${timePattern('time')} Игрок ${namePattern('playerName1')} обменял покемона ${pokemonNamePattern('pokemonName1')} на покемона ${pokemonNamePattern('pokemonName2')} игрока ${namePattern('playerName2')}`, 'i').exec(next).groups;
 			acc.push({
+				date,
 				time,
 				playerName1,
 				pokemonName1,
@@ -141,7 +165,7 @@ const doTestValue = (value, filter) => {
 
 const filters = {
 	chat: (data, filter) => {
-		return data.filter(value => doTestValue(value, filter));
+		return data.filter(value => doTestValue(value.original, filter));
 	},
 	death: (data, filter) => {
 		return data.filter(value => doTestValue(value.death.original, filter));
@@ -162,6 +186,57 @@ const wrappedLine = (content, original = '', vertical = false) => {
 };
 
 const renderTemplates = {
+	chat: async (data, processPlayerName, processTextPart, processTextStyles) => {
+		return data.reduce((template, item) => {
+			if (item.original.includes('issued')) {
+				const {
+					original,
+					date,
+					time,
+					playerName,
+					command
+				} = item;
+				const processedPlayerName = processPlayerName(playerName);
+				const processedText = processTextPart('issued server command:');
+				const processedCommand = processTextPart(command);
+				template += wrappedLine(`
+                    ${date ? `<span class="time">[<span>${ date.replaceAll('-', '.') }</span>]</span>` : ''}
+                    <span class="time">[<span>${ time }</span>]</span>
+                    <span class="player-name">${ processedPlayerName }</span>
+                    <span>${ processedText }</span>
+                    <span class="draggable" draggable="true" data-name="${ command }">${ processedCommand }</span>
+                `, original);
+			} else {
+				const {
+					original,
+					date,
+					time,
+					chatType,
+					playerName,
+					playerChat,
+					worldChat,
+					messageContent
+				} = item;
+				const processedPlayerName = processPlayerName(playerName);
+				const processedContent = processTextStyles(processTextPart(messageContent));
+				template += wrappedLine(`
+					${date ? `<span class="time">[<span>${ date.replaceAll('-', '.') }</span>]</span>` : ''}
+                    <span class="time">[<span>${ time }</span>]</span>
+                    ${ chatType || worldChat ? (
+					chatType === 'G' || worldChat ? (
+						`<span class="global-chat">[<span>G</span>]</span>`
+					) : (
+						`<span class="local-chat">[<span>L</span>]</span>`
+					)
+				) : '' }
+                    <span class="player-name">${ processedPlayerName }${ playerChat ? ':' : '' }</span>
+                    <span>${ processedContent }</span>
+                `, original);
+			}
+
+			return template;
+		}, '');
+	},
 	death: async (data, processPlayerName) => {
 		return data.reduce((template, item) => {
 			const { death, items } = item;
@@ -169,6 +244,7 @@ const renderTemplates = {
 
 			template += wrappedLine(`
 				<div>
+					${death.date ? `<span class="time">[<span>${ death.date.replaceAll('-', '.') }</span>]</span>` : ''}
 	                <span class="time">[<span>${ death.time }</span>]</span>
 	                <span class="player-name">${ processedPlayerName }</span>
 	                <span>${ death.reason }</span>
@@ -184,11 +260,12 @@ const renderTemplates = {
 	},
 	items: async (data, processPlayerName) => {
 		return data.reduce((template, itemData) => {
-			const { time, playerName, actionType, item, original } = itemData;
+			const { date, time, playerName, actionType, item, original } = itemData;
 			const processedPlayerName = processPlayerName(playerName);
 
 			template += wrappedLine(`
 				<div>
+					${date ? `<span class="time">[<span>${ date.replaceAll('-', '.') }</span>]</span>` : ''}
 	                <span class="time">[<span>${ time }</span>]</span>
 	                <span class="player-name">${ processedPlayerName }</span>
 	                <span>${actionType}</span>
@@ -201,10 +278,11 @@ const renderTemplates = {
 	},
 	legendarySpawn: async (data, processPlayerName) => {
 		return data.reduce((template, item) => {
-			const { time, pokemonName, playerName, original } = item;
+			const { date, time, pokemonName, playerName, original } = item;
 			const processedPlayerName = processPlayerName(playerName);
 
 			template += wrappedLine(`
+				${date ? `<span class="time">[<span>${ date.replaceAll('-', '.') }</span>]</span>` : ''}
                 <span class="time">[<span>${ time }</span>]</span>
                 <span style="display: inline-flex;">
                     <a target="_blank" href="https://pixelmonmod.com/wiki/${ pokemonName.toLowerCase().replaceAll(/\s(\w)/gi, (...matches) => `_${matches[1].toUpperCase()}`) }">
@@ -222,7 +300,7 @@ const renderTemplates = {
 		let template = '';
 
 		for (let item of data) {
-			const { time, playerName1, pokemonName1, playerName2, pokemonName2, original } = item;
+			const { date, time, playerName1, pokemonName1, playerName2, pokemonName2, original } = item;
 			const processedPlayerName1 = processPlayerName(playerName1);
 			const processedPlayerName2 = processPlayerName(playerName2);
 
@@ -251,6 +329,7 @@ const renderTemplates = {
 			const pokemon2Image = await tryLoadPokemonSprite(pokemonName2);
 
 			template += wrappedLine(`
+				${date ? `<span class="time">[<span>${ date.replaceAll('-', '.') }</span>]</span>` : ''}
                 <span class="time">[<span>${ time }</span>]</span>
                 Игрок
                 <span class="player-name">${ processedPlayerName1 }</span>
@@ -273,6 +352,14 @@ const renderTemplates = {
 
 		return template;
 	},
+};
+
+const getDaysBetweenDates = (date1, date2) => {
+	const result = [];
+	for (let day = date1; day <= date2; day.setDate(day.getDate()+1)) {
+		result.push(new Date(day));
+	}
+	return result;
 };
 
 (async () => {
@@ -624,6 +711,10 @@ const renderTemplates = {
                 outline: none;
                 box-shadow: 0 0 2px 2px #378364a6;
             }
+            
+            #date-search-input {
+                display: none;
+            }
     
             .global-chat > span {
                 color: #fa0;
@@ -691,6 +782,11 @@ const renderTemplates = {
                         <br/>
                         Фильтр по тексту:<br/>
                         <input type="text" id="text-search-input"/>
+					</div>
+                    <div>
+                        <br/>
+                        Искать за промежуток:<br/>
+                        <input type="text" id="date-search-input" autocomplete="off"/>
 					</div>
                 </div>
             </div>
@@ -761,6 +857,39 @@ const renderTemplates = {
 		updatePage(pageCount - 1);
 	});
 	document.querySelector('#app-root').append(root);
+	const dateRangeInput = root.querySelector('#date-search-input');
+	const datepicker = new Datepicker(dateRangeInput, {
+		inline: true,
+		multiple: true,
+		ranged: true,
+		separator: ':',
+		toValue: async (...data) => {
+			const [ value, dates ] = data;
+			if (dates.length === 1 && dateFormatter.format(dates[0]) === dateFormatter.format(new Date())) {
+				cancelLoopRef = fetchLogs();
+			}
+			if (dates.length > 1) {
+				if (cancelLoopRef !== null) {
+					cancelLoopRef();
+				}
+				list.innerHTML = '';
+				const days = getDaysBetweenDates(...dates);
+				const response = await fetch(`/api/logs-between`, {
+					method: 'POST',
+					headers: {
+						'content-type': 'application/json'
+					},
+					body: JSON.stringify({
+						urlBase: logsURLBase,
+						dates: days.map(day => dateFormatter.format(day).replaceAll('.', '-'))
+					})
+				});
+				text = await response.json();
+				await updateLogContent();
+			}
+			return value;
+		}
+	});
 
 	const clearLogList = () => {
 		oldLog = '';
@@ -933,72 +1062,8 @@ const renderTemplates = {
 		});
 	};
 
-	const processLogText = (text) => {
-		if (!text) {
-			list.innerHTML = '';
-			return;
-		}
-		if (oldLog === text) {
-			return;
-		}
-		oldLog = text;
-		list.innerHTML = text.split('\n').map(line => {
-			let newLine;
-			if (line.includes('issued')) {
-				const executedContent = (/(?:\[(?<time>(\d{2}:\d{2}(?::\d{2})?))]\s)?(?<playerName>[A-Za-z0-9_]{3,}) issued server command: (?<command>\/.*)/gi).exec(line);
-				if (!executedContent) {
-					return wrappedLine(line, line);
-				}
-				const {
-					time,
-					playerName,
-					command
-				} = executedContent.groups;
-				const processedPlayerName = processPlayerName(playerName);
-				const processedText = processTextPart('issued server command:');
-				const processedCommand = processTextPart(command);
-				newLine = wrappedLine(`
-                    <span class="time">[<span>${ time }</span>]</span>
-                    <span class="player-name">${ processedPlayerName }</span>
-                    <span>${ processedText }</span>
-                    <span class="draggable" draggable="true" data-name="${ command }">${ processedCommand }</span>
-                `, line);
-			} else {
-				const executedContent = (/(?:\[(?<time>(\d{2}:\d{2}(?::\d{2})?))]\s)?(?:\[(?<chatType>[GL])]\s)?(?:(?<playerName>[A-Za-z0-9_]{3,})(?<playerChat>:)?\s)?(?<worldChat>!)?(?<messageContent>.*)/gi).exec(line);
-				if (!executedContent) {
-					return wrappedLine(line);
-				}
-				const {
-					time,
-					chatType,
-					playerName,
-					playerChat,
-					worldChat,
-					messageContent
-				} = executedContent.groups;
-				const processedPlayerName = processPlayerName(playerName);
-				const processedContent = processTextStyles(processTextPart(messageContent));
-				newLine = wrappedLine(`
-                    <span class="time">[<span>${ time }</span>]</span>
-                    ${ chatType || worldChat ? (
-					chatType === 'G' || worldChat ? (
-						`<span class="global-chat">[<span>G</span>]</span>`
-					) : (
-						`<span class="local-chat">[<span>L</span>]</span>`
-					)
-				) : '' }
-                    <span class="player-name">${ processedPlayerName }${ playerChat ? ':' : '' }</span>
-                    <span>${ processedContent }</span>
-                `, line);
-			}
-
-			return newLine;
-		}).join('');
-		setupDragListeners();
-	};
-
-	const paginate = (data) => {
-		const messageCount = getMessageCount();
+	const paginate = (data, limit) => {
+		const messageCount = limit ?? getMessageCount();
 		const currentPage = getCurrentPage();
 
 		const rangeFrom = (data.length - messageCount * (currentPage + 1));
@@ -1008,41 +1073,45 @@ const renderTemplates = {
 		return data.slice(rangeFrom <= 0 ? 0 : rangeFrom, rangeTo);
 	};
 
-	const updateLogContent = async () => {
+	const detectTextType = (text) => {
 		if (logType.death.test(text)) {
-			const parsedData = parsers.death(text);
-			const filteredData = filters.death(parsedData, filterValue);
-			list.innerHTML = await renderTemplates.death(filteredData, processPlayerName);
-			setupDragListeners();
-			return;
+			return 'death';
 		}
 		if (logType.items.test(text)) {
-			const parsedData = parsers.items(text);
-			const filteredData = filters.items(parsedData, filterValue);
-			const paginatedData = paginate(filteredData);
-			list.innerHTML = await renderTemplates.items(paginatedData, processPlayerName);
-			setupDragListeners();
-			return;
+			return 'items';
 		}
 		if (logType.legendarySpawn.test(text)) {
-			const parsedData = parsers.legendarySpawn(text);
-			const filteredData = filters.legendarySpawn(parsedData, filterValue);
-			list.innerHTML = await renderTemplates.legendarySpawn(filteredData, processPlayerName);
-			setupDragListeners();
-			return;
+			return 'legendarySpawn';
 		}
 		if (logType.pokemonTrade.test(text)) {
-			const parsedData = parsers.pokemonTrade(text);
-			const filteredData = filters.pokemonTrade(parsedData, filterValue);
-			const paginatedData = paginate(filteredData);
-			list.innerHTML = await renderTemplates.pokemonTrade(paginatedData, processPlayerName);
+			return 'pokemonTrade';
+		}
+		return 'chat';
+	};
+
+	const updateLogContent = async () => {
+		list.innerHTML = '';
+		let textType = 'chat';
+		if (text instanceof Array) {
+			let result = [];
+			for (let part of text) {
+				if (part.text.length) {
+					textType = detectTextType(part.text);
+					const parsedData = parsers[textType](part.text, part.date);
+					result = [...result, ...filters[textType](parsedData, filterValue)];
+				}
+			}
+			const paginatedData = paginate(result, (textType === 'death' || textType === 'pokemonTrade') ? 50 : getMessageCount());
+			list.innerHTML += await renderTemplates[textType](paginatedData, processPlayerName, processTextPart, processTextStyles);
 			setupDragListeners();
 			return;
 		}
-
-		const filteredLines = filters.chat(lines, filterValue);
-		const paginatedData = paginate(filteredLines);
-		processLogText(paginatedData.join('\n'));
+		textType = detectTextType(text);
+		const parsedData = parsers[textType](text);
+		const filteredData = filters[textType](parsedData, filterValue);
+		const paginatedData = paginate(filteredData, (textType === 'death' || textType === 'pokemonTrade') ? 50 : getMessageCount());
+		list.innerHTML += await renderTemplates[textType](paginatedData, processPlayerName, processTextPart, processTextStyles);
+		setupDragListeners();
 	};
 
 	let text = '';
