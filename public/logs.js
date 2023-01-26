@@ -715,6 +715,12 @@ const getDaysBetweenDates = (date1, date2) => {
             #date-search-input {
                 display: none;
             }
+            
+            .preloader-container {
+                display: flex;
+			    height: calc(100vh - 16px);
+			    align-self: center;
+            }
     
             .global-chat > span {
                 color: #fa0;
@@ -760,6 +766,10 @@ const getDaysBetweenDates = (date1, date2) => {
 
 	document.head.appendChild(styles);
 
+	const getPreloaderTemplate = () => {
+		return `<div class="preloader-container"><img src="/preloader.svg"/></div>`;
+	};
+
 	const root = $element(`
         <div id="root">
             <div class="controls">
@@ -791,7 +801,9 @@ const getDaysBetweenDates = (date1, date2) => {
                 </div>
             </div>
             <div class="list-container">
-                <div class="list"></div>
+                <div class="list">
+                    ${ getPreloaderTemplate() }
+				</div>
 			</div>
             <div class="pagination">
                 <button class="button button:green pagination__button" id="page-first">◀◀</button>
@@ -872,7 +884,7 @@ const getDaysBetweenDates = (date1, date2) => {
 				if (cancelLoopRef !== null) {
 					cancelLoopRef();
 				}
-				list.innerHTML = '';
+				list.innerHTML = getPreloaderTemplate();
 				const days = getDaysBetweenDates(...dates);
 				const socketData = [];
 				const requests = days.map(async (date) => ({
@@ -1095,7 +1107,7 @@ const getDaysBetweenDates = (date1, date2) => {
 	};
 
 	const updateLogContent = async () => {
-		list.innerHTML = '';
+		list.innerHTML = getPreloaderTemplate();
 		let textType = 'chat';
 		if (text instanceof Array) {
 			let result = [];
