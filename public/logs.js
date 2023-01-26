@@ -729,6 +729,13 @@ const getDaysBetweenDates = (date1, date2) => {
 			    height: calc(100vh - 16px);
 			    align-self: center;
             }
+            
+            .trade-form {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 8px;
+            }
     
             .global-chat > span {
                 color: #fa0;
@@ -1115,6 +1122,8 @@ const getDaysBetweenDates = (date1, date2) => {
 		return 'chat';
 	};
 
+	let tradeForm;
+
 	const updateLogContent = async () => {
 		list.innerHTML = '';
 		let textType = 'chat';
@@ -1137,6 +1146,29 @@ const getDaysBetweenDates = (date1, date2) => {
 		const filteredData = filters[textType](parsedData, filterValue);
 		const paginatedData = paginate(filteredData, (textType === 'death' || textType === 'pokemonTrade') ? 50 : getMessageCount());
 		list.innerHTML += await renderTemplates[textType](paginatedData, processPlayerName, processTextPart, processTextStyles);
+		if (textType === 'pokemonTrade' && !tradeForm) {
+			tradeForm = $element(`
+				<div class="trade-form">
+					<input type="text" id="trade-from" style="width: 100px;"/>
+					<img src="/trade-icon-color.svg" alt="Trade icon" style="width: 60px;"/>
+					<input type="text" id="trade-to" style="width: 100px;"/>
+				</div>
+			`);
+			const tradeFrom = tradeForm.querySelector('#trade-from');
+			const tradeTo = tradeForm.querySelector('#trade-to');
+			const onPlayerNameInput = (e) => {
+				if (tradeFrom.value.length > 0 || tradeTo.value.length > 0) {
+					filterValue = `(?=.*${ tradeFrom.value })(?=.*${ tradeTo.value })`;
+				} else {
+					filterValue = textSearchInput.value;
+				}
+				setCurrentPage(0);
+				updateLogContent();
+			};
+			tradeFrom.addEventListener('input', onPlayerNameInput);
+			tradeTo.addEventListener('input', onPlayerNameInput);
+			controls.querySelector('.controls__inputs div:nth-child(3)').after(tradeForm);
+		}
 		setupDragListeners();
 	};
 
