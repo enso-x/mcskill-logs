@@ -365,16 +365,6 @@ const getDaysBetweenDates = (date1, date2) => {
 (async () => {
 	'use strict';
 
-	await fetch('/api/socket.io/');
-	const socket = io({
-		path: '/api/socket.io/'
-	});
-
-	socket.on('connect', () => {
-		console.log('connected');
-	});
-
-	let socketData = [];
 	let lines = [];
 	let filterValue = '';
 	let cancelLoopRef = null;
@@ -884,23 +874,26 @@ const getDaysBetweenDates = (date1, date2) => {
 				}
 				list.innerHTML = '';
 				const days = getDaysBetweenDates(...dates);
-				socketData = [];
-				socket.emit('get-logs-between-days', JSON.stringify({
-					urlBase: logsURLBase,
-					dates: days.map(day => dateFormatter.format(day).replaceAll('.', '-'))
+				const socketData = [];
+				const requests = days.map(async (date) => ({
+					date: date,
+					response: await fetch(`/api/logs-between`, {
+						method: 'POST',
+						headers: {
+							'content-type': 'application/json'
+						},
+						body: JSON.stringify({ urlBase: logsURLBase, date: dateFormatter.format(date).replaceAll('.', '-') })
+					})
 				}));
+				for await (let request of requests) {
+					const data = await request.response.json();
+					socketData.push(data);
+				}
+				text = [...socketData];
+				await updateLogContent();
 			}
 			return value;
 		}
-	});
-
-	socket.on('logs-between-part', data => {
-		socketData.push(JSON.parse(data));
-	});
-
-	socket.on('logs-between-end', async () => {
-		text = [...socketData];
-		await updateLogContent();
 	});
 
 	const clearLogList = () => {
