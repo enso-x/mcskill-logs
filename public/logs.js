@@ -366,7 +366,9 @@ const getDaysBetweenDates = (date1, date2) => {
 	'use strict';
 
 	await fetch('/api/socket.io/');
-	const socket = io();
+	const socket = io({
+		path: '/api/socket.io/'
+	});
 
 	socket.on('connect', () => {
 		console.log('connected');
