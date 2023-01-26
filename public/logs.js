@@ -1,3 +1,5 @@
+import './datepicker.js';
+
 const USER_NAME = 'GlocTower';
 
 const initLocalStorageCell = (key, initialValue, valueTransformer) => {
