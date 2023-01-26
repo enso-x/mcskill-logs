@@ -879,6 +879,7 @@ const getDaysBetweenDates = (date1, date2) => {
 			const [ value, dates ] = data;
 			if (dates.length === 1 && dateFormatter.format(dates[0]) === dateFormatter.format(new Date())) {
 				cancelLoopRef = fetchLogs();
+				setCurrentPage(0);
 			}
 			if (dates.length > 1) {
 				if (cancelLoopRef !== null) {
