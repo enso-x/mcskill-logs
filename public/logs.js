@@ -1107,7 +1107,7 @@ const getDaysBetweenDates = (date1, date2) => {
 	};
 
 	const updateLogContent = async () => {
-		list.innerHTML = getPreloaderTemplate();
+		list.innerHTML = '';
 		let textType = 'chat';
 		if (text instanceof Array) {
 			let result = [];
