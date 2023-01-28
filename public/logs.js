@@ -25,14 +25,15 @@ const decline = (n, titles) => {
 const timePattern = (group = null) => `\\[(?${group ? `<${group}>` : ':'}\\d{2}:\\d{2}(?::\\d{2})?)]`;
 const namePattern = (group = null) => `(?${group ? `<${group}>` : ':'}[A-Za-z_0-9-]+)`;
 const pokemonNamePattern = (group = null) => `(?${group ? `<${group}>` : ':'}[A-Za-z_0-9- '.é♂♀]+)`;
+const worldPattern = `(?:\\[(?<world>.*):\\s(?<x>[0-9-]+)\\s(?<y>[0-9-]+)\\s(?<z>[0-9-]+)]\\s?)?`;
 
 const imageCache = {};
 
 const logType = {
-	chat: new RegExp(`${timePattern()} ${namePattern()}: (?:.*)\\n?`, 'i'),
+	chat: new RegExp(`${timePattern()}${worldPattern} ${namePattern()}: (?:.*)\\n?`, 'i'),
 	connection: new RegExp(`${timePattern()} ${namePattern()} (?:(?:logged in)|(?:left the game))\\n?`, 'i'),
-	death: new RegExp(`${timePattern()} - ${namePattern()} (?:.*)(?:\\n\\s{4}- .*x?\\d*)+`, 'i'),
-	items: new RegExp(`${timePattern()} ${namePattern()} (?:(?:drop)|(?:pickup)): .*\\n?`, 'i'),
+	death: new RegExp(`${timePattern()}${worldPattern} - ${namePattern()} (?:.*)(?:\\n\\s{4}- .*x?\\d*)+`, 'i'),
+	items: new RegExp(`${timePattern()}${worldPattern} ${namePattern()} (?:(?:drop)|(?:pickup)): .*\\n?`, 'i'),
 	legendarySpawn: new RegExp(`${timePattern()} ${pokemonNamePattern()} - ${namePattern()}\\n?`, 'i'),
 	pokemonTrade: new RegExp(`${timePattern()} Игрок ${namePattern()} обменял покемона ${pokemonNamePattern()} на покемона ${pokemonNamePattern()} игрока ${namePattern()}`, 'i')
 };
@@ -48,7 +49,7 @@ const parsers = {
 					date: date
 				});
 			} else {
-				const executedContent = (/(?:\[(?<time>(\d{2}:\d{2}(?::\d{2})?))]\s)?(?:\[(?<chatType>[GL])]\s)?(?:(?<playerName>[A-Za-z0-9_]{3,})(?<playerChat>:)?\s)?(?<worldChat>!)?(?<messageContent>.*)/gi).exec(next);
+				const executedContent = (/(?:\[(?<time>(\d{2}:\d{2}(?::\d{2})?))]\s?)?(?:\[(?<world>.*):\s(?<x>[0-9-]+)\s(?<y>[0-9-]+)\s(?<z>[0-9-]+)]\s)?(?:\[(?<chatType>[GL])]\s)?(?:(?<playerName>[A-Za-z0-9_]{3,})(?<playerChat>:)?\s)?(?<worldChat>!)?(?<messageContent>.*)/gi).exec(next);
 				acc.push({
 					...(executedContent.groups),
 					original: next,
@@ -62,10 +63,11 @@ const parsers = {
 	death: (text, date) => {
 		return text.split('\n').filter(Boolean).reduce((acc, next) => {
 			if (next.startsWith('[')) {
-				const { time, playerName, reason } = new RegExp(`${timePattern('time')} - ${namePattern('playerName')} (?<reason>.+)`, 'i').exec(next).groups;
+				const { time, world, x, y, z, playerName, reason } = new RegExp(`${timePattern('time')}${worldPattern} - ${namePattern('playerName')} (?<reason>.+)`, 'i').exec(next).groups;
 				acc.push({
 					death: {
 						date,
+						world, x, y, z,
 						time,
 						playerName,
 						reason,
@@ -104,9 +106,10 @@ const parsers = {
 	},
 	items: (text, date) => {
 		return text.split('\n').filter(Boolean).reduce((acc, next) => {
-			const { time, playerName, actionType, item } = new RegExp(`${timePattern('time')} ${namePattern('playerName')} (?<actionType>(?:drop)|(?:pickup)): (?<item>.*)\\n?`, 'i').exec(next).groups;
+			const { time, world, x, y, z, playerName, actionType, item } = new RegExp(`${timePattern('time')}${worldPattern} ${namePattern('playerName')} (?<actionType>(?:drop)|(?:pickup)): (?<item>.*)\\n?`, 'i').exec(next).groups;
 			acc.push({
 				date,
+				world, x, y, z,
 				time,
 				playerName,
 				actionType,
@@ -213,6 +216,8 @@ const renderTemplates = {
 					original,
 					date,
 					time,
+					world,
+					x, y, z,
 					chatType,
 					playerName,
 					playerChat,
@@ -222,18 +227,21 @@ const renderTemplates = {
 				const processedPlayerName = processPlayerName(playerName);
 				const processedContent = processTextStyles(processTextPart(messageContent));
 				template += wrappedLine(`
-					${date ? `<span class="time">[<span>${ date.replaceAll('-', '.') }</span>]</span>` : ''}
-                    <span class="time">[<span>${ time }</span>]</span>
-                    ${ chatType || worldChat ? (
-					chatType === 'G' || worldChat ? (
-						`<span class="global-chat">[<span>G</span>]</span>`
-					) : (
-						`<span class="local-chat">[<span>L</span>]</span>`
-					)
-				) : '' }
-                    <span class="player-name">${ processedPlayerName }${ playerChat ? ':' : '' }</span>
-                    <span>${ processedContent }</span>
-                `, original);
+					${world ? `<span>Мир: <span class="world" onclick="navigator.clipboard.writeText(\`[name:'${world}', x:${x}, y:${y}, z:${z}]\`)">${ world }</span> <span class="coordinates">{ x: <span class="x">${x}</span>,y:  <span class="y">${y}</span>, z: <span class="z">${z}</span> }</span></span>` : ''}
+					<div>
+						${date ? `<span class="time">[<span>${ date.replaceAll('-', '.') }</span>]</span>` : ''}
+	                    <span class="time">[<span>${ time }</span>]</span>
+	                    ${ chatType || worldChat ? (
+							chatType === 'G' || worldChat ? (
+								`<span class="global-chat">[<span>G</span>]</span>`
+							) : (
+								`<span class="local-chat">[<span>L</span>]</span>`
+							)
+						) : '' }
+	                    <span class="player-name">${ processedPlayerName }${ playerChat ? ':' : '' }</span>
+	                    <span>${ processedContent }</span>
+                    </div>
+                `, original, true);
 			}
 
 			return template;
@@ -242,9 +250,11 @@ const renderTemplates = {
 	death: async (data, processPlayerName) => {
 		return data.reduce((template, item) => {
 			const { death, items } = item;
+			const { world, x, y, z } = death;
 			const processedPlayerName = processPlayerName(death.playerName);
 
 			template += wrappedLine(`
+				${world ? `<span>Мир: <span class="world" onclick="navigator.clipboard.writeText(\`[name:'${world}', x:${x}, y:${y}, z:${z}]\`)">${ world }</span> <span class="coordinates">{ x: <span class="x">${x}</span>,y:  <span class="y">${y}</span>, z: <span class="z">${z}</span> }</span></span>` : ''}
 				<div>
 					${death.date ? `<span class="time">[<span>${ death.date.replaceAll('-', '.') }</span>]</span>` : ''}
 	                <span class="time">[<span>${ death.time }</span>]</span>
@@ -262,10 +272,11 @@ const renderTemplates = {
 	},
 	items: async (data, processPlayerName) => {
 		return data.reduce((template, itemData) => {
-			const { date, time, playerName, actionType, item, original } = itemData;
+			const { date, time, world, x, y, z, playerName, actionType, item, original } = itemData;
 			const processedPlayerName = processPlayerName(playerName);
 
 			template += wrappedLine(`
+				${world ? `<span>Мир: <span class="world" onclick="navigator.clipboard.writeText(\`[name:'${world}', x:${x}, y:${y}, z:${z}]\`)">${ world }</span> <span class="coordinates">{ x: <span class="x">${x}</span>,y:  <span class="y">${y}</span>, z: <span class="z">${z}</span> }</span></span>` : ''}
 				<div>
 					${date ? `<span class="time">[<span>${ date.replaceAll('-', '.') }</span>]</span>` : ''}
 	                <span class="time">[<span>${ time }</span>]</span>
@@ -273,7 +284,7 @@ const renderTemplates = {
 	                <span>${actionType}</span>
 	                <span>${item}</span>
                 </div>
-            `, original);
+            `, original, true);
 
 			return template;
 		}, '');
@@ -665,6 +676,10 @@ const getDaysBetweenDates = (date1, date2) => {
                 border-top: 1px solid rgba(255, 255, 255, 0.2);
             }*/
             
+            .line > span {
+                flex-shrink: 0;
+            }
+            
             .line\\:vertical {
                 flex-direction: column;
                 align-items: flex-start;
@@ -672,8 +687,15 @@ const getDaysBetweenDates = (date1, date2) => {
                 padding: 8px 16px;
             }
             
-            .line > span {
-                flex-shrink: 0;
+            .line\\:vertical > div:not(.inventory) {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .line\\:vertical > div > span {
+                 flex-shrink: 0;
             }
             
             .inventory {
@@ -684,7 +706,6 @@ const getDaysBetweenDates = (date1, date2) => {
                 background: #c6c6c6;
                 background-clip: content-box;
                 max-width: 456px;
-                
             }
             
             .inventory__item {
@@ -735,6 +756,61 @@ const getDaysBetweenDates = (date1, date2) => {
                 justify-content: space-between;
                 align-items: center;
                 margin-top: 8px;
+            }
+            
+            #drop-file-zone {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                margin-top: 8px;
+                gap: 8px;
+			    background: linear-gradient(325deg, #00000061, #00000038);
+			    padding: 8px;
+			    border-radius: 8px;
+			    box-shadow: 0 0 2px 1px rgb(255 255 255 / 10%);
+			    min-height: 140px;
+			    cursor: pointer;
+            }
+            
+            #drop-file-zone input {
+                display: none;
+            }
+            
+            .drop-icon {
+                width: 64px;
+                height: 64px;
+                margin-bottom: 8px;
+                filter: drop-shadow(0 0 1px #fff2) drop-shadow(0 0 1px #fff2);
+            }
+            
+            .drop-icon path {
+                fill: #000d;
+            }
+            
+            #drop-file-zone:hover .drop-icon, #drop-file-zone.hover .drop-icon {
+                filter: drop-shadow(0 0 1px #0aab51) drop-shadow(0 0 1px #0aab51);
+            }
+            
+            #drop-file-zone:hover .drop-icon path, #drop-file-zone.hover .drop-icon path {
+                fill: #123325;
+            }
+            
+            .drop-file-zone__name:hover {
+                color: #a81e1e;
+            }
+            
+            .coordinates {
+                color: #fff !important;
+            }
+            
+            .x, .y, .z {
+                color: #9560E6;
+            }
+            
+            .world {
+                color: #04e573;
+                cursor: pointer;
             }
     
             .global-chat > span {
@@ -813,6 +889,16 @@ const getDaysBetweenDates = (date1, date2) => {
                         Искать за промежуток:<br/>
                         <input type="text" id="date-search-input" autocomplete="off"/>
 					</div>
+					<div>
+						<label id="drop-file-zone">
+							<input type="file"/>
+							<svg class="drop-icon" width="260" height="260" viewBox="0 0 260 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M138.074 3.31123C133.597 -1.10374 126.403 -1.10374 121.926 3.31123L50.4258 73.8112C45.9032 78.2705 45.8519 85.5517 50.3112 90.0743C54.7705 94.5968 62.0518 94.6481 66.5742 90.1888L118.5 38.9893V188.5C118.5 194.851 123.649 200 130 200C136.351 200 141.5 194.851 141.5 188.5V38.9893L193.426 90.1888C197.948 94.6481 205.229 94.5968 209.689 90.0743C214.148 85.5517 214.097 78.2705 209.574 73.8112L138.074 3.31123Z"/>
+								<path d="M24.0154 202.5C24.0051 202.832 24 203.165 24 203.5C24 221.173 38.3269 235.5 56 235.5H204C221.673 235.5 236 221.173 236 203.5C236 203.165 235.995 202.832 235.985 202.5H236V153.5C236 146.873 241.373 141.5 248 141.5C254.627 141.5 260 146.873 260 153.5V204.5H259.966C258.912 235.054 233.811 259.5 203 259.5H56V259.491C25.6478 258.969 1.07654 234.723 0.0344238 204.5H0V153.5C0 146.873 5.37256 141.5 12 141.5C18.6274 141.5 24 146.873 24 153.5V202.5H24.0154Z"/>
+							</svg>
+							<span class="drop-file-zone__text">Выберите/сбросьте файл</span>
+						</label>
+					</div>
                 </div>
             </div>
             <div class="list-container">
@@ -882,6 +968,73 @@ const getDaysBetweenDates = (date1, date2) => {
 	const lastPageButton = root.querySelector('#page-last');
 	lastPageButton.addEventListener('click', () => {
 		updatePage(pageCount - 1);
+	});
+	const dropZone = root.querySelector('#drop-file-zone');
+	const fileInput = dropZone.querySelector('input');
+	const dropText = dropZone.querySelector('.drop-file-zone__text');
+	dropZone.addEventListener('dragover', (e) => {
+		e.preventDefault();
+		if (!dropZone.classList.contains('hover')) {
+			dropZone.classList.add('hover');
+		}
+	});
+	dropZone.addEventListener('dragleave', () => {
+		if (dropZone.classList.contains('hover')) {
+			dropZone.classList.remove('hover');
+		}
+	});
+	const readFile = async (file) => {
+		const reader = new FileReader();
+		reader.addEventListener('load', async () => {
+			if (cancelLoopRef !== null) {
+				cancelLoopRef();
+			}
+			const fileNameToRemove = $element(`<span class="drop-file-zone__name">${file.name}</span>`);
+			fileNameToRemove.addEventListener('click', (e) => {
+				e.preventDefault();
+				fileInput.value = '';
+				dropText.innerHTML = 'Выберите/сбросьте файл';
+				list.innerHTML = getPreloaderTemplate();
+				cancelLoopRef = fetchLogs();
+			});
+			dropText.innerHTML = '';
+			dropText.appendChild(fileNameToRemove);
+			list.innerHTML = getPreloaderTemplate();
+			text = reader.result;
+			await updateLogContent();
+		});
+		reader.readAsText(file);
+	};
+	dropZone.addEventListener('drop', async (e) => {
+		e.preventDefault();
+
+		if (dropZone.classList.contains('hover')) {
+			dropZone.classList.remove('hover');
+		}
+
+		if (e.dataTransfer.items) {
+			for (let item of e.dataTransfer.items) {
+				if (item.kind === 'file') {
+					const file = item.getAsFile();
+					await readFile(file);
+				}
+			}
+		}
+		// else {
+		// 	// Use DataTransfer interface to access the file(s)
+		// 	[...e.dataTransfer.files].forEach((file, i) => {
+		// 	});
+		// }
+	});
+	fileInput.addEventListener('change', (e) => {
+		const target = e.target;
+		const file = target.files?.[0];
+		if (!file) {
+			return;
+		}
+
+		dropText.innerHTML = 'Выберите/сбросьте файл';
+		readFile(file);
 	});
 	document.querySelector('#app-root').append(root);
 	const dateRangeInput = root.querySelector('#date-search-input');
