@@ -1,4 +1,5 @@
 import './datepicker.js';
+import { detectLogType } from './log-types/index.js';
 
 const USER_NAME = 'GlocTower';
 
@@ -20,357 +21,6 @@ const initLocalStorageCell = (key, initialValue, valueTransformer) => {
 
 const decline = (n, titles) => {
 	return titles[(n % 10 === 1 && n % 100 !== 11) ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2]
-};
-
-const timePattern = (group = null) => `\\[(?${group ? `<${group}>` : ':'}\\d{2}:\\d{2}(?::\\d{2})?)]`;
-const namePattern = (group = null) => `(?${group ? `<${group}>` : ':'}[A-Za-z_0-9-]+)`;
-const pokemonNamePattern = (group = null) => `(?${group ? `<${group}>` : ':'}[A-Za-z_0-9- '.é♂♀]+)`;
-const worldPattern = `(?:\\[(?<world>.*):\\s(?<x>[0-9-]+)\\s(?<y>[0-9-]+)\\s(?<z>[0-9-]+)]\\s?)?`;
-
-const imageCache = {};
-
-const logType = {
-	chat: new RegExp(`${timePattern()}${worldPattern} ${namePattern()}: (?:.*)\\n?`, 'i'),
-	connection: new RegExp(`${timePattern()} ${namePattern()} (?:(?:logged in)|(?:left the game))\\n?`, 'i'),
-	death: new RegExp(`${timePattern()}${worldPattern} - ${namePattern()} (?:.*)(?:\\n\\s{4}- .*x?\\d*)+`, 'i'),
-	items: new RegExp(`${timePattern()}${worldPattern} ${namePattern()} (?:(?:drop)|(?:pickup)): .*\\n?`, 'i'),
-	legendarySpawn: new RegExp(`${timePattern()} ${pokemonNamePattern()} - ${namePattern()}\\n?`, 'i'),
-	pokemonTrade: new RegExp(`${timePattern()} Игрок ${namePattern()} обменял покемона ${pokemonNamePattern()} на покемона ${pokemonNamePattern()} игрока ${namePattern()}`, 'i')
-};
-
-const parsers = {
-	chat: (text, date) => {
-		return text.split('\n').filter(Boolean).reduce((acc, next) => {
-			if (next.includes('issued')) {
-				const executedContent = (/(?:\[(?<time>(\d{2}:\d{2}(?::\d{2})?))]\s)?(?<playerName>[A-Za-z0-9_]{3,}) issued server command: (?<command>\/.*)/gi).exec(next);
-				acc.push({
-					...(executedContent.groups),
-					original: next,
-					date: date
-				});
-			} else {
-				const executedContent = (/(?:\[(?<time>(\d{2}:\d{2}(?::\d{2})?))]\s?)?(?:\[(?<world>.*):\s(?<x>[0-9-]+)\s(?<y>[0-9-]+)\s(?<z>[0-9-]+)]\s)?(?:\[(?<chatType>[GL])]\s)?(?:(?<playerName>[A-Za-z0-9_]{3,})(?<playerChat>:)?\s)?(?<worldChat>!)?(?<messageContent>.*)/gi).exec(next);
-				acc.push({
-					...(executedContent.groups),
-					original: next,
-					date: date
-				});
-			}
-			return acc;
-		}, []);
-	},
-	connection: new RegExp(`${timePattern()} ${namePattern()} (?:(?:logged in)|(?:left the game))\\n?`, 'i'),
-	death: (text, date) => {
-		return text.split('\n').filter(Boolean).reduce((acc, next) => {
-			if (next.startsWith('[')) {
-				const { time, world, x, y, z, playerName, reason } = new RegExp(`${timePattern('time')}${worldPattern} - ${namePattern('playerName')} (?<reason>.+)`, 'i').exec(next).groups;
-				acc.push({
-					death: {
-						date,
-						world, x, y, z,
-						time,
-						playerName,
-						reason,
-						original: next
-					},
-					items: []
-				});
-			}
-			if (next.startsWith(' ')) {
-				const expReg = /Experience: (?<exp>\d+)/i;
-				const itemReg = /(?<itemName>[A-Z_\:0-9]+) \((?<itemID>[\:0-9]+)\) x(?<amount>\d+)/i;
-				const itemLine = next.trim().slice(2);
-				const death = acc.at(-1);
-				if (!death) return acc;
-				if (expReg.test(itemLine)) {
-					const { exp } = expReg.exec(itemLine).groups;
-					death.items.push({
-						type: 'exp',
-						amount: exp,
-						original: next
-					});
-				}
-				if (itemReg.test(itemLine)) {
-					const { itemName, itemID, amount } = itemReg.exec(itemLine).groups;
-					death.items.push({
-						type: 'item',
-						itemID,
-						itemName,
-						amount,
-						original: next
-					});
-				}
-			}
-			return acc;
-		}, []);
-	},
-	items: (text, date) => {
-		return text.split('\n').filter(Boolean).reduce((acc, next) => {
-			const { time, world, x, y, z, playerName, actionType, item } = new RegExp(`${timePattern('time')}${worldPattern} ${namePattern('playerName')} (?<actionType>(?:drop)|(?:pickup)): (?<item>.*)\\n?`, 'i').exec(next).groups;
-			acc.push({
-				date,
-				world, x, y, z,
-				time,
-				playerName,
-				actionType,
-				item,
-				original: next
-			});
-			return acc;
-		}, []);
-	},
-	legendarySpawn: (text, date) => {
-		return text.split('\n').filter(Boolean).reduce((acc, next) => {
-			const { time, pokemonName, playerName } = new RegExp(`${timePattern('time')} ${pokemonNamePattern('pokemonName')} - ${namePattern('playerName')}\\n?`, 'i').exec(next).groups;
-			acc.push({
-				date,
-				time,
-				pokemonName: pokemonName.replaceAll(/([a-z])([A-Z])/g, (...matches) => `${matches[1]} ${matches[2]}`),
-				playerName,
-				original: next
-			});
-			return acc;
-		}, []);
-	},
-	pokemonTrade: (text, date) => {
-		return text.split('\n').filter(Boolean).reduce((acc, next) => {
-			const { time, playerName1, pokemonName1, pokemonName2, playerName2 } = new RegExp(`${timePattern('time')} Игрок ${namePattern('playerName1')} обменял покемона ${pokemonNamePattern('pokemonName1')} на покемона ${pokemonNamePattern('pokemonName2')} игрока ${namePattern('playerName2')}`, 'i').exec(next).groups;
-			acc.push({
-				date,
-				time,
-				playerName1,
-				pokemonName1,
-				playerName2,
-				pokemonName2,
-				original: next
-			});
-			return acc;
-		}, []);
-	}
-};
-
-const getRegexp = (filter) => {
-	if (!filter) {
-		return false;
-	}
-
-	let reg;
-	try {
-		reg = new RegExp(filter);
-	} catch(e) {
-		reg = false;
-	}
-	return reg;
-};
-
-const doTestValue = (value, filter) => {
-	const reg = getRegexp(filter);
-	return filter.length > 0 ? (value.toLowerCase().includes(filter.toLowerCase()) || (reg && reg.test(value))) : true;
-};
-
-const filters = {
-	chat: (data, filter) => {
-		return data.filter(value => doTestValue(value.original, filter));
-	},
-	death: (data, filter) => {
-		return data.filter(value => doTestValue(value.death.original, filter));
-	},
-	items: (data, filter) => {
-		return data.filter(value => doTestValue(value.original, filter));
-	},
-	legendarySpawn: (data, filter) => {
-		return data.filter(value => doTestValue(value.original, filter));
-	},
-	pokemonTrade: (data, filter) => {
-		return data.filter(value => doTestValue(value.original, filter));
-	},
-};
-
-const wrappedLine = (content, original = '', vertical = false) => {
-	return `<span class="line ${vertical ? 'line:vertical' : ''}" ${original ? `title="${ original }"` : ''}>${ content }</span>`;
-};
-
-const renderTemplates = {
-	chat: async (data, processPlayerName, processTextPart, processTextStyles) => {
-		return data.reduce((template, item) => {
-			if (item.original.includes('issued')) {
-				const {
-					original,
-					date,
-					time,
-					playerName,
-					command
-				} = item;
-				const processedPlayerName = processPlayerName(playerName);
-				const processedText = processTextPart('issued server command:');
-				const processedCommand = processTextPart(command);
-				template += wrappedLine(`
-                    ${date ? `<span class="time">[<span>${ date.replaceAll('-', '.') }</span>]</span>` : ''}
-                    <span class="time">[<span>${ time }</span>]</span>
-                    <span class="player-name">${ processedPlayerName }</span>
-                    <span>${ processedText }</span>
-                    <span class="draggable" draggable="true" data-name="${ command }">${ processedCommand }</span>
-                `, original);
-			} else {
-				const {
-					original,
-					date,
-					time,
-					world,
-					x, y, z,
-					chatType,
-					playerName,
-					playerChat,
-					worldChat,
-					messageContent
-				} = item;
-				const processedPlayerName = processPlayerName(playerName);
-				const processedContent = processTextStyles(processTextPart(messageContent));
-				template += wrappedLine(`
-					${world ? `<span>Мир: <span class="world" onclick="navigator.clipboard.writeText(\`[name:'${world}', x:${x}, y:${y}, z:${z}]\`)">${ world }</span> <span class="coordinates">{ x: <span class="x">${x}</span>,y:  <span class="y">${y}</span>, z: <span class="z">${z}</span> }</span></span>` : ''}
-					<div>
-						${date ? `<span class="time">[<span>${ date.replaceAll('-', '.') }</span>]</span>` : ''}
-	                    <span class="time">[<span>${ time }</span>]</span>
-	                    ${ chatType || worldChat ? (
-							chatType === 'G' || worldChat ? (
-								`<span class="global-chat">[<span>G</span>]</span>`
-							) : (
-								`<span class="local-chat">[<span>L</span>]</span>`
-							)
-						) : '' }
-	                    <span class="player-name">${ processedPlayerName }${ playerChat ? ':' : '' }</span>
-	                    <span>${ processedContent }</span>
-                    </div>
-                `, original, true);
-			}
-
-			return template;
-		}, '');
-	},
-	death: async (data, processPlayerName) => {
-		return data.reduce((template, item) => {
-			const { death, items } = item;
-			const { world, x, y, z } = death;
-			const processedPlayerName = processPlayerName(death.playerName);
-
-			template += wrappedLine(`
-				${world ? `<span>Мир: <span class="world" onclick="navigator.clipboard.writeText(\`[name:'${world}', x:${x}, y:${y}, z:${z}]\`)">${ world }</span> <span class="coordinates">{ x: <span class="x">${x}</span>,y:  <span class="y">${y}</span>, z: <span class="z">${z}</span> }</span></span>` : ''}
-				<div>
-					${death.date ? `<span class="time">[<span>${ death.date.replaceAll('-', '.') }</span>]</span>` : ''}
-	                <span class="time">[<span>${ death.time }</span>]</span>
-	                <span class="player-name">${ processedPlayerName }</span>
-	                <span>${ death.reason }</span>
-                </div>
-                <div class="inventory">${ items.reduce((itemsTemplate, itemData) => {
-				itemsTemplate += `<span class="inventory__item" title="${itemData.itemName || 'Experience'}" onclick="navigator.clipboard.writeText('${itemData.type === 'exp' ? `/xp ${itemData.amount} ${death.playerName}` : `/give ${death.playerName} ${itemData.itemName} ${itemData.amount}`}');"><img src="${itemData.type === 'exp' ? '/exp-icon.png' : '/unknown-icon.png'}" alt="${itemData.type === 'exp' ? 'Experience' : 'Unknown'} item"><span class="amount">${itemData.amount}</span></span>`;
-				return itemsTemplate;
-			}, '') }</div>
-            `, death.original, true);
-
-			return template;
-		}, '');
-	},
-	items: async (data, processPlayerName) => {
-		return data.reduce((template, itemData) => {
-			const { date, time, world, x, y, z, playerName, actionType, item, original } = itemData;
-			const processedPlayerName = processPlayerName(playerName);
-
-			template += wrappedLine(`
-				${world ? `<span>Мир: <span class="world" onclick="navigator.clipboard.writeText(\`[name:'${world}', x:${x}, y:${y}, z:${z}]\`)">${ world }</span> <span class="coordinates">{ x: <span class="x">${x}</span>,y:  <span class="y">${y}</span>, z: <span class="z">${z}</span> }</span></span>` : ''}
-				<div>
-					${date ? `<span class="time">[<span>${ date.replaceAll('-', '.') }</span>]</span>` : ''}
-	                <span class="time">[<span>${ time }</span>]</span>
-	                <span class="player-name">${ processedPlayerName }</span>
-	                <span>${actionType}</span>
-	                <span>${item}</span>
-                </div>
-            `, original, true);
-
-			return template;
-		}, '');
-	},
-	legendarySpawn: async (data, processPlayerName) => {
-		return data.reduce((template, item) => {
-			const { date, time, pokemonName, playerName, original } = item;
-			const processedPlayerName = processPlayerName(playerName);
-
-			template += wrappedLine(`
-				${date ? `<span class="time">[<span>${ date.replaceAll('-', '.') }</span>]</span>` : ''}
-                <span class="time">[<span>${ time }</span>]</span>
-                <span style="display: inline-flex;">
-                    <a target="_blank" href="https://pixelmonmod.com/wiki/${ pokemonName.toLowerCase().replaceAll(/\s(\w)/gi, (...matches) => `_${matches[1].toUpperCase()}`) }">
-                        <img style="width: 112px; image-rendering: pixelated;" title="${ pokemonName }" src="https://img.pokemondb.net/sprites/sword-shield/icon/${ pokemonName.toLowerCase().replaceAll('\'', '').replaceAll(' ', '-') }.png" alt="${ pokemonName }">
-                    </a>
-                </span>
-                 - 
-                <span class="player-name">${ processedPlayerName }</span>
-            `, original);
-
-			return template;
-		}, '');
-	},
-	pokemonTrade: async (data, processPlayerName) => {
-		let template = '';
-
-		for (let item of data) {
-			const { date, time, playerName1, pokemonName1, playerName2, pokemonName2, original } = item;
-			const processedPlayerName1 = processPlayerName(playerName1);
-			const processedPlayerName2 = processPlayerName(playerName2);
-
-			const tryLoadPokemonSprite = (name) => new Promise(async (res) => {
-				const formatted = name.toLowerCase()
-					.replaceAll('\'', '')
-					.replaceAll('♂', '-m')
-					.replaceAll('♀', '-f')
-					.replaceAll('.', '')
-					.replaceAll(' ', '-')
-					.replaceAll('é', 'e');
-				if (imageCache[formatted]) {
-					res(imageCache[formatted]);
-					return;
-				}
-				try {
-					const img = new Image();
-					const url1 = `https://img.pokemondb.net/sprites/sword-shield/icon/${ formatted }.png`;
-					const url2 = `https://img.pokemondb.net/sprites/scarlet-violet/icon/${ formatted }.png`;
-					img.onerror = () => {
-						img.src = url2;
-					};
-					img.onload = () => {
-						imageCache[formatted] = img.src;
-						res(img.src);
-					};
-					img.src = url1;
-				} catch(e) {}
-			});
-
-			const pokemon1Image = await tryLoadPokemonSprite(pokemonName1);
-			const pokemon2Image = await tryLoadPokemonSprite(pokemonName2);
-
-			template += wrappedLine(`
-				${date ? `<span class="time">[<span>${ date.replaceAll('-', '.') }</span>]</span>` : ''}
-                <span class="time">[<span>${ time }</span>]</span>
-                Игрок
-                <span class="player-name">${ processedPlayerName1 }</span>
-                обменял покемона
-                <span style="display: inline-flex;">
-                    <a target="_blank" href="https://pixelmonmod.com/wiki/${ pokemonName1.toLowerCase().replaceAll(/\s(\w)/gi, (...matches) => `_${matches[1].toUpperCase()}`) }">
-                        <img style="width: 112px; margin: 0 -10px; image-rendering: pixelated;" title="${ pokemonName1 }" src="${ pokemon1Image }" alt="${ pokemonName1 }">
-                    </a>
-                </span>
-                на покемона
-                <span style="display: inline-flex;">
-                    <a target="_blank" href="https://pixelmonmod.com/wiki/${ pokemonName2.toLowerCase().replaceAll(/\s(\w)/gi, (...matches) => `_${matches[1].toUpperCase()}`) }">
-                        <img style="width: 112px; margin: 0 -10px; image-rendering: pixelated;" title="${ pokemonName2 }" src="${ pokemon2Image }" alt="${ pokemonName2 }">
-                    </a>
-                </span>
-                игрока
-                <span class="player-name">${ processedPlayerName2 }</span>.
-            `, original);
-		}
-
-		return template;
-	},
 };
 
 const getDaysBetweenDates = (date1, date2) => {
@@ -1248,58 +898,41 @@ const getDaysBetweenDates = (date1, date2) => {
 		});
 	};
 
-	const paginate = (data, limit) => {
-		const messageCount = limit ?? getMessageCount();
-		const currentPage = getCurrentPage();
-
-		const rangeFrom = (data.length - messageCount * (currentPage + 1));
-		const rangeTo = (data.length - messageCount * currentPage);
-		setPageCount(Math.ceil(data.length / messageCount));
-
-		return data.slice(rangeFrom <= 0 ? 0 : rangeFrom, rangeTo);
-	};
-
-	const detectTextType = (text) => {
-		if (logType.death.test(text)) {
-			return 'death';
-		}
-		if (logType.items.test(text)) {
-			return 'items';
-		}
-		if (logType.legendarySpawn.test(text)) {
-			return 'legendarySpawn';
-		}
-		if (logType.pokemonTrade.test(text)) {
-			return 'pokemonTrade';
-		}
-		return 'chat';
-	};
-
 	let tradeForm;
 
 	const updateLogContent = async () => {
 		list.innerHTML = '';
-		let textType = 'chat';
+
 		if (text instanceof Array) {
 			let result = [];
+			let textType = null;
+			let logInstance = null;
 			for (let part of text) {
 				if (part.text.length) {
-					textType = detectTextType(part.text);
-					const parsedData = parsers[textType](part.text, part.date);
-					result = [...result, ...filters[textType](parsedData, filterValue)];
+					const [logType, log] = detectLogType(part.text);
+					textType = logType;
+					logInstance = log;
+					result = [...result, ...log.filter(part.text, filterValue, part.date)];
 				}
 			}
-			const paginatedData = paginate(result, (textType === 'death' || textType === 'pokemonTrade') ? 50 : getMessageCount());
-			list.innerHTML += await renderTemplates[textType](paginatedData, processPlayerName, processTextPart, processTextStyles);
+			const [ paginatedLogs, newPageCount ] = logInstance.paginate(result, getCurrentPage(), (textType === 'death' || textType === 'pokemonTrade') ? 50 : getMessageCount());
+			setPageCount(newPageCount);
+			const parsedLogs = logInstance.parse(paginatedLogs);
+			list.innerHTML += await logInstance.template(parsedLogs, processPlayerName, processTextPart, processTextStyles);
 			setupDragListeners();
 			return;
 		}
-		textType = detectTextType(text);
-		const parsedData = parsers[textType](text);
-		const filteredData = filters[textType](parsedData, filterValue);
-		const paginatedData = paginate(filteredData, (textType === 'death' || textType === 'pokemonTrade') ? 50 : getMessageCount());
-		list.innerHTML += await renderTemplates[textType](paginatedData, processPlayerName, processTextPart, processTextStyles);
-		if (textType === 'pokemonTrade' && !tradeForm) {
+
+		const [logType, log] = detectLogType(text);
+
+		const filteredLogs = log.filter(text, filterValue);
+		const [ paginatedLogs, newPageCount ] = log.paginate(filteredLogs, getCurrentPage(), (logType === 'death' || logType === 'pokemonTrade') ? 50 : getMessageCount());
+		setPageCount(newPageCount);
+		const parsedLogs = log.parse(paginatedLogs);
+
+		list.innerHTML += await log.template(parsedLogs, processPlayerName, processTextPart, processTextStyles);
+
+		if (logType === 'pokemonTrade' && !tradeForm) {
 			tradeForm = $element(`
 				<div class="trade-form">
 					<input type="text" id="trade-from" style="width: 100px;"/>
