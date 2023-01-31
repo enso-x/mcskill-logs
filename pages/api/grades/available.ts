@@ -2,9 +2,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'node:fs';
 
+type ResponseFile = {
+	name: string;
+	fileName: string;
+};
+
 const handler = async (
 	req: NextApiRequest,
-	res: NextApiResponse<{name: string; fileName: string;}[]>
+	res: NextApiResponse<ResponseFile[]>
 ) => {
 	if (!req.body || !req.body.password || req.body.password !== '3dq6uW89a_') {
 		res.status(401).json([]);
@@ -13,7 +18,7 @@ const handler = async (
 	console.log(process.cwd());
 
 	// const files = fs.readdirSync('data/grades');
-	const result = [];
+	const result: ResponseFile[] = [];
 
 	// for (let file of files) {
 	// 	const response = JSON.parse(fs.readFileSync(`data/grades/${file}`).toString());
