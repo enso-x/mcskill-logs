@@ -6,7 +6,7 @@ const ERROR_RESPONSE: string = '';
 
 const handler = async (
 	req: NextApiRequest,
-	res: NextApiResponse<{ date: string, text: string }>
+	res: NextApiResponse<{ name: string, questions: any[] }>
 ) => {
 	if (!req.body || !req.body.file || !req.body.password || req.body.password !== '3dq6uW89a_') {
 		res.status(404).write(ERROR_RESPONSE);
@@ -14,7 +14,7 @@ const handler = async (
 
 	const { file } = req.body;
 
-	const response = JSON.parse(fs.readFileSync(`data/grades/${file}`).toString());
+	const response = JSON.parse(fs.readFileSync(process.cwd() + `/data/grades/${file}`).toString());
 
 	res.status(200).json(response);
 };
