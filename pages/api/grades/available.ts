@@ -10,6 +10,8 @@ const handler = async (
 		res.status(401).json([]);
 	}
 
+	console.log(fs.readdirSync(__dirname));
+
 	const files = fs.readdirSync('data/grades');
 	const result = [];
 
