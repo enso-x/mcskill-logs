@@ -1,4 +1,4 @@
-import React, { ChangeEventHandler, useState } from 'react';
+import React, { ChangeEventHandler, useState, useMemo } from 'react';
 import Page from '@/components/Page';
 import { NextPage } from 'next';
 
@@ -155,6 +155,14 @@ const InterviewPage: NextPage<void> = () => {
 		setStep('results');
 	};
 
+	const resultPoints = useMemo<number>(() => {
+		return results.reduce((acc, next) => acc + next.points, 0);
+	}, [ results ]);
+
+	const resultPercent = useMemo<string>(() => {
+		return ((100 / questionsCount) * results.reduce((acc, next) => acc + next.points, 0)).toFixed(2);
+	}, [ resultPoints ]);
+
 	return (
 		<Page>
 			<Container>
@@ -240,7 +248,7 @@ const InterviewPage: NextPage<void> = () => {
 										))
 									}
 								</QuestionsBox>
-								<span>Points: { results.reduce((acc, next) => acc + next.points, 0) } / { questionsCount } ( { ((100 / questionsCount) * results.reduce((acc, next) => acc + next.points, 0)).toFixed(2) }% )</span>
+								<span>Points: { resultPoints } / { questionsCount } ( { resultPercent }% )</span>
 							</Box>
 						</Box>
 					)
