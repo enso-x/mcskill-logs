@@ -10,18 +10,18 @@ const handler = async (
 		res.status(401).json([]);
 	}
 
-	console.log(fs.readdirSync(__dirname));
+	console.log(process.cwd());
 
-	const files = fs.readdirSync('data/grades');
+	// const files = fs.readdirSync('data/grades');
 	const result = [];
 
-	for (let file of files) {
-		const response = JSON.parse(fs.readFileSync(`data/grades/${file}`).toString());
-		result.push({
-			name: response.name,
-			fileName: file
-		});
-	}
+	// for (let file of files) {
+	// 	const response = JSON.parse(fs.readFileSync(`data/grades/${file}`).toString());
+	// 	result.push({
+	// 		name: response.name,
+	// 		fileName: file
+	// 	});
+	// }
 
 	res.status(200).json(result);
 };
