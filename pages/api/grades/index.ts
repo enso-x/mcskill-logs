@@ -1,5 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next';
+import fs from 'node:fs';
 
 const ERROR_RESPONSE: string = '';
 
@@ -7,30 +8,19 @@ const handler = async (
 	req: NextApiRequest,
 	res: NextApiResponse<{ date: string, text: string }>
 ) => {
-	if (!req.body || !req.body) {
+	if (!req.body || !req.body.file || !req.body.password || req.body.password !== '3dq6uW89a_') {
 		res.status(404).write(ERROR_RESPONSE);
 	}
 
-	const { urlBase, date } = req.body;
+	const { file } = req.body;
 
-	const response = await fetch(`${ urlBase }${ date }.txt`)
+	console.log(req.body);
 
-	let result;
+	const response = JSON.parse(fs.readFileSync(`./data/grades/${file}`).toString());
 
-	if (response.status === 200) {
-		const text = await response.text();
-		result = {
-			date: date as string,
-			text: text as string
-		};
-	} else {
-		result = {
-			date: date as string,
-			text: ''
-		};
-	}
+	console.log(response);
 
-	res.status(200).json(result);
+	res.status(200).json(response);
 };
 
 export default handler;

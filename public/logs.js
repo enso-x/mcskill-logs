@@ -708,7 +708,7 @@ const getDaysBetweenDates = (date1, date2) => {
 				const socketData = [];
 				const requests = days.map(async (date) => ({
 					date: date,
-					response: await fetch(`/api/logs-between`, {
+					response: await fetch(`/api/logs`, {
 						method: 'POST',
 						headers: {
 							'content-type': 'application/json'
@@ -966,16 +966,20 @@ const getDaysBetweenDates = (date1, date2) => {
 		const update = async () => {
 			if (!cancelled) {
 				const now = new Date();
-				const fileName = actualLogsCheck.checked ? `${ dateFormatter.format(now).replaceAll('.', '-') }.txt` : window.updateUrl.split("/").pop();
-				const fileURL = '/api/logs?url=' + encodeURIComponent(logsURLBase + fileName);
+				const todayFileName = `${dateFormatter.format(now).replaceAll('.', '-')}.txt`;
+				const fileNameFromURL = window.updateUrl.split("/").pop();
+				const fileName = actualLogsCheck.checked ? todayFileName : fileNameFromURL;
+				const fileURL = '/api/logs-update?url=' + encodeURIComponent(logsURLBase + fileName);
 				const response = await fetch(fileURL);
 				text = await response.text();
 
 				lines = text.split('\n').filter(Boolean);
 				updateLogContent();
 
-				await delay(getUpdateTime() * 1000);
-				await update();
+				if (todayFileName === fileNameFromURL) {
+					await delay(getUpdateTime() * 1000);
+					await update();
+				}
 			}
 		};
 
