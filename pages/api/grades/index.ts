@@ -14,11 +14,7 @@ const handler = async (
 
 	const { file } = req.body;
 
-	console.log(req.body);
-
-	const response = JSON.parse(fs.readFileSync(`./data/grades/${file}`).toString());
-
-	console.log(response);
+	const response = JSON.parse(fs.readFileSync(`data/grades/${file}`).toString());
 
 	res.status(200).json(response);
 };

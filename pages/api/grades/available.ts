@@ -10,9 +10,18 @@ const handler = async (
 		res.status(401).json([]);
 	}
 
-	const files = fs.readdirSync('./data/grades');
+	const files = fs.readdirSync('data/grades');
+	const result = [];
 
-	res.status(200).json(files.map(file => ({name: file.split('.')[0], fileName: file})));
+	for (let file of files) {
+		const response = JSON.parse(fs.readFileSync(`data/grades/${file}`).toString());
+		result.push({
+			name: response.name,
+			fileName: file
+		});
+	}
+
+	res.status(200).json(result);
 };
 
 export default handler;
