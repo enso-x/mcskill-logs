@@ -42,6 +42,20 @@ const QuestionsBox = styled(Box)`
 	overflow-y: auto;
 `;
 
+const PointsInput = styled.input.attrs((attrs) => ({
+	type: 'number',
+	step: 0.1,
+	min: 0,
+	...attrs
+}))`
+	&::-webkit-outer-spin-button,
+	&::-webkit-inner-spin-button {
+		/* display: none; <- Crashes Chrome on hover */
+		-webkit-appearance: none;
+		margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+	}
+`;
+
 interface InterviewPageProps {
 	user: DiscordUser | null;
 }
@@ -149,9 +163,17 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 
 	const onCurrentQuestionPointsChange: ChangeEventHandler<HTMLInputElement> = (e) => {
 		setCurrentQuestionPointsValue(e.target.value);
-		if (e.target.value !== '') {
-			setCurrentQuestionPoints(parseFloat(e.target.value));
+
+		if (e.target.value === '') return;
+
+		const value = parseFloat(e.target.value);
+
+		if (isNaN(value)) {
+			setCurrentQuestionPoints(0);
+			return;
 		}
+
+		setCurrentQuestionPoints(value);
 	};
 
 	const onClickNextQuestion = async () => {
@@ -242,7 +264,7 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 										- { questions[currentQuestion].answer }
 									</div>
 									<div>
-										Points: <input type="text" value={ currentQuestionPointsValue }
+										Points: <PointsInput value={ currentQuestionPointsValue }
 										               onChange={ onCurrentQuestionPointsChange }/>
 									</div>
 									{
