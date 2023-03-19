@@ -1,19 +1,62 @@
 import React, { ChangeEventHandler, useState, useMemo, useEffect } from 'react';
-import Page from '@/components/Page';
 import { GetServerSideProps, NextPage } from 'next';
+import { ConfigProvider, theme, Avatar, Button, Select, Input, InputNumber, Card, Space, Table, Typography, Descriptions } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import 'antd/dist/reset.css';
+
+const { darkAlgorithm } = theme;
+const { Title } = Typography;
 
 import styled from 'styled-components';
-import protectedRoute from '../../middleware/protectedRoute';
+import protectedRoute from '@/middleware/protectedRoute';
+import Page from '@/components/Page';
 import { DiscordUser } from '@/types/DiscordUser';
 import Error from 'next/error';
+
+interface IResultsTableData {
+	key: number;
+	question: string;
+	points: number;
+}
+
+const resultTableColumns: ColumnsType<IResultsTableData> = [
+	{
+		title: '№',
+		width: 60,
+		align: 'center',
+		dataIndex: 'key',
+		key: 'key',
+		fixed: 'left'
+	},
+	{
+		title: 'Question',
+		dataIndex: 'question',
+		key: 'question'
+	},
+	{
+		title: 'Points',
+		width: 100,
+		dataIndex: 'points',
+		key: 'points',
+		fixed: 'right'
+	}
+];
 
 const Container = styled.div`
 	height: 100vh;
 	display: flex;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	padding: 16px;
+	background: #141414;
+`;
+
+const ContentContainer = styled.div`
+	display: flex;
+	align-items: center;
 	gap: 16px;
+	padding: 16px;
+	justify-content: normal;
 `;
 
 const dateFormatter = Intl.DateTimeFormat('ru-RU', {
@@ -72,7 +115,7 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 	const [ questionsCount, setQuestionsCount ] = useState<number>(0);
 	const [ questions, setQuestions ] = useState<{ question: string; answer: string; }[]>([]);
 	const [ currentQuestion, setCurrentQuestion ] = useState<number>(0);
-	const [ currentQuestionPointsValue, setCurrentQuestionPointsValue ] = useState<string>('');
+	const [ currentQuestionPointsValue, setCurrentQuestionPointsValue ] = useState<string>('0');
 	const [ currentQuestionPoints, setCurrentQuestionPoints ] = useState<number>(0);
 	const [ results, setResults ] = useState<{ question: string; points: number; }[]>([]);
 
@@ -110,8 +153,8 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 		});
 	}, []);
 
-	const onSelectChange: ChangeEventHandler<HTMLSelectElement> = (e) => {
-		setSelectedGrade(e.target.value);
+	const onSelectChange = (value: string) => {
+		setSelectedGrade(value);
 	};
 
 	const onClickSetup = async () => {
@@ -161,12 +204,12 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 		setCurrentQuestionPointsValue('0');
 	};
 
-	const onCurrentQuestionPointsChange: ChangeEventHandler<HTMLInputElement> = (e) => {
-		setCurrentQuestionPointsValue(e.target.value);
+	const onCurrentQuestionPointsChange = (stringValue: string | null) => {
+		// setCurrentQuestionPointsValue(stringValue);
 
-		if (e.target.value === '') return;
+		if (!stringValue) return;
 
-		const value = parseFloat(e.target.value);
+		const value = parseFloat(stringValue);
 
 		if (isNaN(value)) {
 			setCurrentQuestionPoints(0);
@@ -174,12 +217,15 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 		}
 
 		setCurrentQuestionPoints(value);
+		setCurrentQuestionPointsValue(value.toString());
 	};
 
 	const onClickNextQuestion = async () => {
 		if (currentQuestion < (questionsCount - 1)) {
 			addToResults();
 			setCurrentQuestion(current => current + 1);
+			setCurrentQuestionPoints(0);
+			setCurrentQuestionPointsValue('0');
 		}
 	};
 
@@ -198,10 +244,23 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 	}, [ results ]);
 
 	const resultPercent = useMemo<string>(() => {
-		return ((100 / questionsCount) * results.reduce((acc, next) => acc + next.points, 0)).toFixed(2);
+		return ((100 / questionsCount) * resultPoints).toFixed(2);
 	}, [ resultPoints ]);
 
+	const selectGrades = useMemo(() => {
+		return grades.map(grade => ({
+			value: grade.fileName,
+			label: grade.name
+		}));
+	}, [ grades ]);
+
 	return (
+		<ConfigProvider theme={{
+			algorithm: darkAlgorithm,
+			token: {
+				colorPrimary: '#722ed1',
+			}
+		}}>
 		<Page>
 			{
 				user && !user.access_is_allowed ? (
@@ -211,26 +270,24 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 					</VerticalLayout>
 				) : (
 					<Container>
+						<ContentContainer>
 						{
 							user && (
 								<VerticalLayout>
-									<img src={ `https://cdn.discordapp.com/avatars/${ user.id }/${ user.avatar }.png` }
-									     alt={ user.username }/>
-									<button onClick={ onLogoutClick }>Log out</button>
+									<Avatar src={ `https://cdn.discordapp.com/avatars/${ user.id }/${ user.avatar }.png` } alt={ user.username } size={ 120 } />
+									<Button danger onClick={ onLogoutClick }>Log out</Button>
 								</VerticalLayout>
 							)
 						}
 						{
 							step === 'init' && (
 								<>
-									<select onChange={ onSelectChange }>
-										{
-											grades.map(grade => (
-												<option key={ grade.name } value={ grade.fileName }>{ grade.name }</option>
-											))
-										}
-									</select>
-									<button onClick={ onClickSetup }>Setup</button>
+									<div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+										<Select<string> style={{ width: 200 }} getPopupContainer={() => {
+											return document.body;
+										}} defaultActiveFirstOption defaultValue={ selectedGrade } onChange={ onSelectChange } options={ selectGrades }/>
+									</div>
+									<Button type="primary" onClick={ onClickSetup }>Setup</Button>
 								</>
 							)
 						}
@@ -238,73 +295,77 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 							step === 'settings' && grade && (
 								<Box>
 									<div>
-										Player name: <input type="text" value={ playerName }
+										<Input type="text" value={ playerName } placeholder={ 'Player name' }
 										                    onChange={ onPlayerNameChange }/>
 									</div>
 									<div>
-										Question count: <input type="text" value={ questionsCountValue }
-										                       onChange={ onQuestionCountChange }/> / { grade.questions.length }
+										<Input type="text" value={ questionsCountValue } placeholder={ 'Question count' }
+										                       onChange={ onQuestionCountChange } addonAfter={ `/ ${ grade.questions.length }` } />
 									</div>
-									<button onClick={ onClickBegin }>Begin</button>
+									<Button type="primary" onClick={ onClickBegin }>Begin</Button>
 								</Box>
 							)
 						}
 						{
 							step === 'test' && grade && playerName && questions.length && (
-								<Box>
-									<div>
-										Player name: { playerName }<br/>
-										Grade: { grade.name }<br/>
-										Question: { currentQuestion + 1 } / { questionsCount }<br/>
-									</div>
-									<div>
-										{ questions[currentQuestion].question }
-									</div>
-									<div>
-										- { questions[currentQuestion].answer }
-									</div>
-									<div>
-										Points: <PointsInput value={ currentQuestionPointsValue }
-										               onChange={ onCurrentQuestionPointsChange }/>
-									</div>
-									{
-										currentQuestion < (questionsCount - 1) ? (
-											<button onClick={ onClickNextQuestion }>Next</button>
-										) : (
-											<button onClick={ onClickGetResults }>Get results</button>
-										)
-									}
-								</Box>
+								<Space direction="vertical" size={ 16 }>
+									<Descriptions bordered column={{ xxl: 1, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }}>
+										<Descriptions.Item label="Player name">{ playerName }</Descriptions.Item>
+										<Descriptions.Item label="Grade">{ grade.name }</Descriptions.Item>
+									</Descriptions>
+									<Card title={ `Question: ${ currentQuestion + 1 } / ${ questionsCount }` } bordered>
+										<Descriptions column={{ xxl: 1, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }}>
+											<Descriptions.Item label="Question">{ questions[currentQuestion].question }</Descriptions.Item>
+											<Descriptions.Item label="Answer">{ questions[currentQuestion].answer }</Descriptions.Item>
+										</Descriptions>
+										<Space size={ 16 }>
+											<InputNumber<string> addonBefore="Points"
+											                     stringMode={ true }
+											                     min={ '0' }
+											                     step={ '0.1' }
+											                     controls={ false }
+											                     value={ currentQuestionPointsValue }
+											                     onChange={ onCurrentQuestionPointsChange }
+											/>
+											{
+												currentQuestion < (questionsCount - 1) ? (
+													<Button onClick={ onClickNextQuestion }>Next</Button>
+												) : (
+													<Button type="primary" onClick={ onClickGetResults }>Get results</Button>
+												)
+											}
+										</Space>
+									</Card>
+								</Space>
 							)
 						}
 						{
 							step === 'results' && grade && playerName && results.length && (
-								<Box>
-									<div>
-										Player name: { playerName }<br/>
-										Grade: { grade.name }<br/>
-										Question count: { questionsCount }<br/>
-									</div>
+								<Space direction="vertical" size={ 16 }>
+									<Descriptions bordered column={{ xxl: 1, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }}>
+										<Descriptions.Item label="Player name">{ playerName }</Descriptions.Item>
+										<Descriptions.Item label="Grade">{ grade.name }</Descriptions.Item>
+										<Descriptions.Item label="Question count">{ questionsCount }</Descriptions.Item>
+									</Descriptions>
 									<Box>
-										<span>Results:</span>
-										<QuestionsBox>
-											{
-												results.map((result, i) => (
-													<span
-														key={ result.question }>{ i + 1 }. { result.question }
-														<br/>- points: { result.points }</span>
-												))
-											}
-										</QuestionsBox>
-										<span>Points: { resultPoints } / { questionsCount } ( { resultPercent }% )</span>
+										<Title level={ 3 } style={{ marginBottom: 0 }}>Results</Title>
+										<Table bordered pagination={ false } columns={ resultTableColumns } dataSource={ results.map((result, i) => ({
+											key: i + 1,
+											question: result.question,
+											points: result.points
+										})) } scroll={{ y: 320 }} footer={() => (
+											<span>Points: { resultPoints } / { questionsCount } ( { resultPercent }% )</span>
+										)} />
 									</Box>
-								</Box>
+								</Space>
 							)
 						}
+						</ContentContainer>
 					</Container>
 				)
 			}
 		</Page>
+		</ConfigProvider>
 	);
 };
 
