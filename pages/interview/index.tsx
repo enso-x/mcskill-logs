@@ -324,6 +324,10 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 		}));
 	}, [ grades ]);
 
+	const reversedTestResults = useMemo(() => {
+		return testResults.reverse().map((result, i) => ({ key: i, ...result }));
+	}, [ testResults ]);
+
 	useEffect(() => {
 		if (step === 'results' && results.length === questionsCount) {
 			fetch('/api/test-results/add', {
@@ -471,7 +475,7 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 								{
 									testResults.length ? (
 										<Table bordered pagination={ false } columns={ testResultsTableColumns }
-										       dataSource={ testResults.reverse().map((testResult) => (testResult)) } scroll={ { y: 320 } }/>
+										       dataSource={ reversedTestResults } scroll={ { y: 320 } }/>
 									) : null
 								}
 							</ContentContainer>
