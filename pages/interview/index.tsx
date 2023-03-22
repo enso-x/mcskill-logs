@@ -1,6 +1,20 @@
 import React, { ChangeEventHandler, useState, useMemo, useEffect } from 'react';
 import { GetServerSideProps, NextPage } from 'next';
-import { ConfigProvider, theme, Avatar, Button, Select, Input, InputNumber, Card, Space, Table, Typography, Descriptions } from 'antd';
+import Error from 'next/error';
+import {
+	ConfigProvider,
+	theme,
+	Avatar,
+	Button,
+	Select,
+	Input,
+	InputNumber,
+	Card,
+	Space,
+	Table,
+	Typography,
+	Descriptions
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import 'antd/dist/reset.css';
 
@@ -11,12 +25,16 @@ import styled from 'styled-components';
 import protectedRoute from '@/middleware/protectedRoute';
 import Page from '@/components/Page';
 import { DiscordUser } from '@/types/DiscordUser';
-import Error from 'next/error';
+import { ITestResult } from '@/models/TestResult';
 
 interface IResultsTableData {
 	key: number;
 	question: string;
 	points: number;
+}
+
+interface ITestResultsTableData extends ITestResult {
+	timestamp: Date;
 }
 
 const resultTableColumns: ColumnsType<IResultsTableData> = [
@@ -42,6 +60,49 @@ const resultTableColumns: ColumnsType<IResultsTableData> = [
 	}
 ];
 
+const testResultsTableColumns: ColumnsType<ITestResultsTableData> = [
+	{
+		title: 'Date',
+		dataIndex: 'timestamp',
+		key: 'timestamp',
+		render: (text, record, index) => dateFormatter.format(new Date(text))
+	},
+	{
+		title: 'Reviewer',
+		dataIndex: 'author',
+		key: 'author'
+	},
+	{
+		title: 'Player',
+		dataIndex: 'player',
+		key: 'player'
+	},
+	{
+		title: 'Grade',
+		dataIndex: 'grade',
+		key: 'grade'
+	},
+	{
+		title: 'Question count',
+		dataIndex: 'questionCount',
+		key: 'questionCount'
+	},
+	{
+		title: 'Points',
+		width: 100,
+		dataIndex: 'points',
+		key: 'points',
+	},
+	{
+		title: 'Percents',
+		width: 100,
+		dataIndex: 'percent',
+		key: 'percent',
+		fixed: 'right',
+		render: (text, record, index) => `${text}%`
+	}
+];
+
 const Container = styled.div`
 	height: 100vh;
 	display: flex;
@@ -53,10 +114,17 @@ const Container = styled.div`
 
 const ContentContainer = styled.div`
 	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	max-width: 860px;
+`;
+
+const InnerContainer = styled.div`
+	display: flex;
 	align-items: center;
 	gap: 16px;
 	padding: 16px;
-	justify-content: normal;
+	justify-content: center;
 `;
 
 const dateFormatter = Intl.DateTimeFormat('ru-RU', {
@@ -101,10 +169,12 @@ const PointsInput = styled.input.attrs((attrs) => ({
 
 interface InterviewPageProps {
 	user: DiscordUser | null;
+	testResults: ITestResultsTableData[];
 }
 
 const InterviewPage: NextPage<InterviewPageProps> = ({
-	user
+	user,
+	testResults
 }) => {
 	const [ step, setStep ] = useState<string>('');
 	const [ grades, setGrades ] = useState<{ name: string; fileName: string; }[]>([]);
@@ -254,125 +324,173 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 		}));
 	}, [ grades ]);
 
+	useEffect(() => {
+		if (step === 'results' && results.length === questionsCount) {
+			fetch('/api/test-results/add', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					testResult: {
+						author: user?.username || '',
+						player: playerName || '',
+						grade: grade?.name || '',
+						questionCount: questionsCount || 0,
+						points: resultPoints,
+						percent: parseFloat(resultPercent)
+					}
+				})
+			});
+		}
+	}, [ resultPoints, resultPercent, results, grade ]);
+
 	return (
-		<ConfigProvider theme={{
+		<ConfigProvider theme={ {
 			algorithm: darkAlgorithm,
 			token: {
 				colorPrimary: '#722ed1',
 			}
-		}}>
-		<Page>
-			{
-				user && !user.access_is_allowed ? (
-					<VerticalLayout>
-						<Error title="Access not allowed" statusCode={ 401 }/>
-						<button onClick={ onLogoutClick }>Log out</button>
-					</VerticalLayout>
-				) : (
-					<Container>
-						<ContentContainer>
-						{
-							user && (
-								<VerticalLayout>
-									<Avatar src={ `https://cdn.discordapp.com/avatars/${ user.id }/${ user.avatar }.png` } alt={ user.username } size={ 120 } />
-									<Button danger onClick={ onLogoutClick }>Log out</Button>
-								</VerticalLayout>
-							)
-						}
-						{
-							step === 'init' && (
-								<>
-									<div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-										<Select<string> style={{ width: 200 }} getPopupContainer={() => {
-											return document.body;
-										}} defaultActiveFirstOption defaultValue={ selectedGrade } onChange={ onSelectChange } options={ selectGrades }/>
-									</div>
-									<Button type="primary" onClick={ onClickSetup }>Setup</Button>
-								</>
-							)
-						}
-						{
-							step === 'settings' && grade && (
-								<Box>
-									<div>
-										<Input type="text" value={ playerName } placeholder={ 'Player name' }
-										                    onChange={ onPlayerNameChange }/>
-									</div>
-									<div>
-										<Input type="text" value={ questionsCountValue } placeholder={ 'Question count' }
-										                       onChange={ onQuestionCountChange } addonAfter={ `/ ${ grade.questions.length }` } />
-									</div>
-									<Button type="primary" onClick={ onClickBegin }>Begin</Button>
-								</Box>
-							)
-						}
-						{
-							step === 'test' && grade && playerName && questions.length && (
-								<Space direction="vertical" size={ 16 }>
-									<Descriptions bordered column={{ xxl: 1, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }}>
-										<Descriptions.Item label="Player name">{ playerName }</Descriptions.Item>
-										<Descriptions.Item label="Grade">{ grade.name }</Descriptions.Item>
-									</Descriptions>
-									<Card title={ `Question: ${ currentQuestion + 1 } / ${ questionsCount }` } bordered>
-										<Descriptions column={{ xxl: 1, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }}>
-											<Descriptions.Item label="Question">{ questions[currentQuestion].question }</Descriptions.Item>
-											<Descriptions.Item label="Answer">{ questions[currentQuestion].answer }</Descriptions.Item>
-										</Descriptions>
-										<Space size={ 16 }>
-											<InputNumber<string> addonBefore="Points"
-											                     stringMode={ true }
-											                     min={ '0' }
-											                     step={ '0.1' }
-											                     controls={ false }
-											                     value={ currentQuestionPointsValue }
-											                     onChange={ onCurrentQuestionPointsChange }
-											/>
-											{
-												currentQuestion < (questionsCount - 1) ? (
-													<Button onClick={ onClickNextQuestion }>Next</Button>
-												) : (
-													<Button type="primary" onClick={ onClickGetResults }>Get results</Button>
-												)
-											}
-										</Space>
-									</Card>
-								</Space>
-							)
-						}
-						{
-							step === 'results' && grade && playerName && results.length && (
-								<Space direction="vertical" size={ 16 }>
-									<Descriptions bordered column={{ xxl: 1, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }}>
-										<Descriptions.Item label="Player name">{ playerName }</Descriptions.Item>
-										<Descriptions.Item label="Grade">{ grade.name }</Descriptions.Item>
-										<Descriptions.Item label="Question count">{ questionsCount }</Descriptions.Item>
-									</Descriptions>
-									<Box>
-										<Title level={ 3 } style={{ marginBottom: 0 }}>Results</Title>
-										<Table bordered pagination={ false } columns={ resultTableColumns } dataSource={ results.map((result, i) => ({
-											key: i + 1,
-											question: result.question,
-											points: result.points
-										})) } scroll={{ y: 320 }} footer={() => (
-											<span>Points: { resultPoints } / { questionsCount } ( { resultPercent }% )</span>
-										)} />
-									</Box>
-								</Space>
-							)
-						}
-						</ContentContainer>
-					</Container>
-				)
-			}
-		</Page>
+		} }>
+			<Page>
+				{
+					user && !user.access_is_allowed ? (
+						<VerticalLayout>
+							<Error title="Access not allowed" statusCode={ 401 }/>
+							<button onClick={ onLogoutClick }>Log out</button>
+						</VerticalLayout>
+					) : (
+						<Container>
+							<ContentContainer>
+								<InnerContainer>
+									{
+										user && (
+											<VerticalLayout>
+												<Avatar
+													src={ `https://cdn.discordapp.com/avatars/${ user.id }/${ user.avatar }.png` }
+													alt={ user.username } size={ 120 }/>
+												<Button danger onClick={ onLogoutClick }>Log out</Button>
+											</VerticalLayout>
+										)
+									}
+									{
+										step === 'init' && (
+											<>
+												<div style={ { display: 'flex', justifyContent: 'flex-end' } }>
+													<Select<string> style={ { width: 200 } } getPopupContainer={ () => {
+														return document.body;
+													} } defaultActiveFirstOption defaultValue={ selectedGrade }
+													                onChange={ onSelectChange } options={ selectGrades }/>
+												</div>
+												<Button type="primary" onClick={ onClickSetup }>Setup</Button>
+											</>
+										)
+									}
+									{
+										step === 'settings' && grade && (
+											<Box>
+												<div>
+													<Input type="text" value={ playerName } placeholder={ 'Player name' }
+													       onChange={ onPlayerNameChange }/>
+												</div>
+												<div>
+													<Input type="text" value={ questionsCountValue }
+													       placeholder={ 'Question count' }
+													       onChange={ onQuestionCountChange }
+													       addonAfter={ `/ ${ grade.questions.length }` }/>
+												</div>
+												<Button type="primary" onClick={ onClickBegin }>Begin</Button>
+											</Box>
+										)
+									}
+									{
+										step === 'test' && grade && playerName && questions.length && (
+											<Space direction="vertical" size={ 16 }>
+												<Descriptions bordered
+												              column={ { xxl: 1, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 } }>
+													<Descriptions.Item
+														label="Player name">{ playerName }</Descriptions.Item>
+													<Descriptions.Item label="Grade">{ grade.name }</Descriptions.Item>
+												</Descriptions>
+												<Card title={ `Question: ${ currentQuestion + 1 } / ${ questionsCount }` }
+												      bordered>
+													<Descriptions column={ { xxl: 1, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 } }>
+														<Descriptions.Item
+															label="Question">{ questions[currentQuestion].question }</Descriptions.Item>
+														<Descriptions.Item
+															label="Answer">{ questions[currentQuestion].answer }</Descriptions.Item>
+													</Descriptions>
+													<Space size={ 16 }>
+														<InputNumber<string> addonBefore="Points"
+														                     stringMode={ true }
+														                     min={ '0' }
+														                     step={ '0.1' }
+														                     controls={ false }
+														                     value={ currentQuestionPointsValue }
+														                     onChange={ onCurrentQuestionPointsChange }
+														/>
+														{
+															currentQuestion < (questionsCount - 1) ? (
+																<Button onClick={ onClickNextQuestion }>Next</Button>
+															) : (
+																<Button type="primary" onClick={ onClickGetResults }>Get
+																	results</Button>
+															)
+														}
+													</Space>
+												</Card>
+											</Space>
+										)
+									}
+									{
+										step === 'results' && grade && playerName && results.length && (
+											<Space direction="vertical" size={ 16 }>
+												<Descriptions bordered
+												              column={ { xxl: 1, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 } }>
+													<Descriptions.Item
+														label="Player name">{ playerName }</Descriptions.Item>
+													<Descriptions.Item label="Grade">{ grade.name }</Descriptions.Item>
+													<Descriptions.Item
+														label="Question count">{ questionsCount }</Descriptions.Item>
+												</Descriptions>
+												<Box>
+													<Title level={ 3 } style={ { marginBottom: 0 } }>Results</Title>
+													<Table bordered pagination={ false } columns={ resultTableColumns }
+													       dataSource={ results.map((result, i) => ({
+														       key: i + 1,
+														       question: result.question,
+														       points: result.points
+													       })) } scroll={ { y: 320 } } footer={ () => (
+														<span>Points: { resultPoints } / { questionsCount } ( { resultPercent }% )</span>
+													) }/>
+												</Box>
+											</Space>
+										)
+									}
+								</InnerContainer>
+								{
+									testResults.length ? (
+										<Table bordered pagination={ false } columns={ testResultsTableColumns }
+										       dataSource={ testResults.reverse().map((testResult) => (testResult)) } scroll={ { y: 320 } }/>
+									) : null
+								}
+							</ContentContainer>
+						</Container>
+					)
+				}
+			</Page>
 		</ConfigProvider>
 	);
 };
 
 export const getServerSideProps = protectedRoute<InterviewPageProps>(async (context) => {
+	const proto = context.req.headers['x-forwarded-proto'] ? 'https' : 'http';
+	const testResults: ITestResultsTableData[] = await fetch(`${ proto }://${ context.req.headers.host }/api/test-results`).then(res => res.json());
+
 	return ({
 		props: {
-			user: context.user ?? null
+			user: context.user ?? null,
+			testResults
 		}
 	});
 }, '/interview');
