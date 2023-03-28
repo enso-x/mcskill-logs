@@ -1,3 +1,4 @@
+import styled from 'styled-components';
 import React, { ChangeEventHandler, useState, useMemo, useEffect } from 'react';
 import { GetServerSideProps, NextPage } from 'next';
 import Error from 'next/error';
@@ -21,7 +22,6 @@ import 'antd/dist/reset.css';
 const { darkAlgorithm } = theme;
 const { Title } = Typography;
 
-import styled from 'styled-components';
 import protectedRoute from '@/middleware/protectedRoute';
 import Page from '@/components/Page';
 import { DiscordUser } from '@/types/DiscordUser';
@@ -146,25 +146,6 @@ const Box = styled.div`
 	flex-direction: column;
 	width: 600px;
 	gap: 16px;
-`;
-
-const QuestionsBox = styled(Box)`
-	max-height: 400px;
-	overflow-y: auto;
-`;
-
-const PointsInput = styled.input.attrs((attrs) => ({
-	type: 'number',
-	step: 0.1,
-	min: 0,
-	...attrs
-}))`
-	&::-webkit-outer-spin-button,
-	&::-webkit-inner-spin-button {
-		/* display: none; <- Crashes Chrome on hover */
-		-webkit-appearance: none;
-		margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
-	}
 `;
 
 interface InterviewPageProps {
