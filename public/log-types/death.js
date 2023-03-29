@@ -72,6 +72,8 @@ const deathLogs = {
 				const { world, x, y, z } = death;
 				const processedPlayerName = processPlayerName(death.playerName);
 
+				const giveCommands = [];
+
 				return wrappedLine(`
 					${ world ? `<span>Мир: <span class="world" onclick="navigator.clipboard.writeText(\`[name:'${ world }', x:${ x }, y:${ y }, z:${ z }]\`)">${ world }</span> <span class="coordinates">{ x: <span class="x">${ x }</span>,y:  <span class="y">${ y }</span>, z: <span class="z">${ z }</span> }</span></span>` : '' }
 					<div>
@@ -82,9 +84,12 @@ const deathLogs = {
 	                </div>
 	                <div class="inventory">
 						${ items.reduce((itemsTemplate, itemData) => {
-							itemsTemplate += `<span class="inventory__item" title="${ itemData.itemName || 'Experience' }" onclick="navigator.clipboard.writeText('${ itemData.type === 'exp' ? `/xp ${ itemData.amount } ${ death.playerName }` : `/give ${ death.playerName } ${ itemData.itemName } ${ itemData.amount }` }');"><img src="${ itemData.type === 'exp' ? '/exp-icon.png' : '/unknown-icon.png' }" alt="${ itemData.type === 'exp' ? 'Experience' : 'Unknown' } item"><span class="amount">${ itemData.amount }</span></span>`;
+							const command = itemData.type === 'exp' ? `/xp ${ itemData.amount } ${ death.playerName }` : `/give ${ death.playerName } ${ itemData.itemName } ${ itemData.amount }`;
+							giveCommands.push(command);
+							itemsTemplate += `<span class="inventory__item" title="${ itemData.itemName || 'Experience' }" onclick="navigator.clipboard.writeText('${ command }');"><img src="${ itemData.type === 'exp' ? '/exp-icon.png' : '/unknown-icon.png' }" alt="${ itemData.type === 'exp' ? 'Experience' : 'Unknown' } item"><span class="amount">${ itemData.amount }</span></span>`;
 							return itemsTemplate;
 						}, '') }
+						<div class="inventory__copy-all" title="Export ${death.playerName} inventory give commands" onclick="navigator.clipboard.writeText('${ giveCommands.join('\\n') }');"></div>
 					</div>
 	            `, death.original, true);
 			},

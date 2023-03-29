@@ -349,6 +349,7 @@ const getDaysBetweenDates = (date1, date2) => {
             }
             
             .inventory {
+                position: relative;
                 display: flex;
                 flex-wrap: wrap;
                 border: 12px solid transparent;
@@ -375,6 +376,18 @@ const getDaysBetweenDates = (date1, date2) => {
                 right: 4px;
                 text-shadow: 1px 1px #000;
             }
+
+			.inventory__copy-all {
+				width: 60px;
+                height: 60px;
+				border: 12px solid transparent;
+				border-image: url("/inventory-border.png") 12;
+				background: url("/inventory-export.png") no-repeat;
+			    position: absolute;
+			    left: calc(100% + 4px);
+			    top: -12px;
+			    cursor: pointer;
+			}
             
             input[type="text"], input[type="number"] {
                 background: rgba(0,0,0,0.3);
