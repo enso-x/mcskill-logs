@@ -90,6 +90,11 @@ const deathLogs = {
 							return itemsTemplate;
 						}, '') }
 						<div class="inventory__copy-all" title="Export ${death.playerName} inventory give commands" onclick="navigator.clipboard.writeText('${ giveCommands.join('\\n') }');"></div>
+						<div class="inventory__copy-all-to-player" title="Export ${death.playerName} inventory give commands" onclick="this.nextElementSibling.style.display = 'block';"></div>
+						<div class="inventory__copy-all-to-player-input">
+							<input type="text" placeholder="Player name"/>
+							<button onclick="navigator.clipboard.writeText('${ giveCommands.join('\\n') }'.replaceAll('${ death.playerName }', this.previousElementSibling.value || '${ death.playerName }'));this.previousElementSibling.value = '';this.parentNode.style.display = 'none';">Copy</button>
+						</div>
 					</div>
 	            `, death.original, true);
 			},

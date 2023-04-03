@@ -388,6 +388,54 @@ const getDaysBetweenDates = (date1, date2) => {
 			    top: -12px;
 			    cursor: pointer;
 			}
+			
+			.inventory__copy-all-to-player-input {
+				display: none;
+				border: 12px solid transparent;
+				border-image: url("/inventory-border.png") 12;
+				background: #c6c6c6;
+				background-clip: content-box;
+			    position: absolute;
+			    left: calc(100% + 108px);
+			    top: -12px;
+			}
+			
+			.inventory__copy-all-to-player-input input[type="text"]::placeholder {
+				color: #fff;
+			}
+			
+			.inventory__copy-all-to-player-input input[type="text"], .inventory__copy-all-to-player-input input[type="text"]:focus-visible {
+				border: 2px solid #a0a0a0;
+				border-radius: 0;
+				box-shadow: none;
+				background: #000;
+				text-shadow: 2px 2px 0 #373737;
+				margin-bottom: 4px;
+			}
+			
+			.inventory__copy-all-to-player-input button {
+			    width: 100%;
+			    height: 24px;
+			    border: 2px solid #a1a1a1;
+			    border-right-color: #595959;
+			    border-bottom-color: #595959;
+			    background: #858585;
+				border-radius: 0;
+				box-shadow: none;
+				cursor: pointer;
+			}
+
+			.inventory__copy-all-to-player {
+				width: 60px;
+                height: 60px;
+				border: 12px solid transparent;
+				border-image: url("/inventory-border.png") 12;
+				background: url("/inventory-export-player.png") no-repeat;
+			    position: absolute;
+			    left: calc(100% + 56px);
+			    top: -12px;
+			    cursor: pointer;
+			}
             
             input[type="text"], input[type="number"] {
                 background: rgba(0,0,0,0.3);
