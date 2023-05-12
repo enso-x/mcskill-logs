@@ -8,9 +8,10 @@ export interface ITestResult {
 	questionCount: number;
 	points: number;
 	percent: number;
+	timestamp: Date;
 }
 
-export const testResultSchema = new Schema({
+export const testResultSchema = new Schema<ITestResult>({
 	author: {
 		type: String,
 		required: true
