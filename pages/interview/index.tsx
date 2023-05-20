@@ -1,6 +1,6 @@
 import styled from 'styled-components';
-import React, { ChangeEventHandler, useState, useMemo, useEffect } from 'react';
-import { GetServerSideProps, NextPage } from 'next';
+import React, { ChangeEventHandler, useEffect, useMemo, useState } from 'react';
+import { NextPage } from 'next';
 import Error from 'next/error';
 import {
 	ConfigProvider,
@@ -19,15 +19,13 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import { signIn, signOut } from 'next-auth/react';
 import 'antd/dist/reset.css';
+import { protectedRoute } from '@/middleware/protectedRoute';
+import Page from '@/components/Page';
+import { ITestResult } from '@/models/TestResult';
+import { EUserRoles, IUser } from '@/interfaces/User';
 
 const { darkAlgorithm } = theme;
 const { Title } = Typography;
-
-import { protectedRoute } from '@/middleware/protectedRoute';
-import Page from '@/components/Page';
-import { DiscordUser } from '@/types/DiscordUser';
-import { ITestResult } from '@/models/TestResult';
-import { IUser } from '@/interfaces/User';
 
 interface IResultsTableData {
 	key: number;
@@ -345,6 +343,11 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 						<VerticalLayout>
 							<Error title="Access not allowed" statusCode={ 401 }/>
 							<button onClick={ () => signIn('discord') }>Login</button>
+						</VerticalLayout>
+					) : user.role <= EUserRoles.moder ? (
+						<VerticalLayout>
+							<Error title="Forbidden" statusCode={ 403 }/>
+							<button onClick={ onLogoutClick }>Logout</button>
 						</VerticalLayout>
 					) : (
 						<Container>
