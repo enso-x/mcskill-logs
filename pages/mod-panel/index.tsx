@@ -328,7 +328,7 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 											users.filter(modUser => modUser.discord_id !== currentUser.discord_id).map(modUser => (
 												<ModeratorCard key={ modUser.discord_id }>
 													{
-														currentUser.role >= EUserRoles.curator && currentUser.role >= modUser.role ? (
+														currentUser.role >= EUserRoles.st && currentUser.role > modUser.role ? (
 															<ModalAddMember user={ currentUser } edit={ modUser }
 															                buttonContent={ <EditOutlined/> }
 															                onSubmit={ updateUserList }/>
