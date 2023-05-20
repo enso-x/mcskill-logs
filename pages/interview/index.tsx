@@ -476,7 +476,7 @@ export const getServerSideProps = protectedRoute<InterviewPageProps>(async (cont
 
 	return ({
 		props: {
-			user: context.user ?? null,
+			user: context.session?.user ?? null,
 			testResults
 		}
 	});
