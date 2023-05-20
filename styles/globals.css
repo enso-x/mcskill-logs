@@ -8,6 +8,7 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  --accent-color: #722ed1;
 
   --primary-glow: conic-gradient(
     from 180deg at 50% 50%,
@@ -97,8 +98,37 @@ body {
     )
     rgb(var(--background-start-rgb));
 	color-scheme: dark;
-  background: #000;
+  background: #141414;
   color: #fff;
+  font-family: 'Exo 2';
+}
+
+.player {
+  color: #949494;
+}
+.trainee {
+  color: #6aff36;
+}
+.helper {
+  color: #1c6800;
+}
+.moder {
+  color: #5e00ff;
+}
+.st {
+  color: #2431a4;
+}
+.gm {
+  color: #008eff;
+}
+.curator {
+  color: #ff4400;
+}
+.admin {
+  color: #ffffff;
+}
+.creator {
+  color: #66f3cb;
 }
 
 a {

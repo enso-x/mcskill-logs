@@ -22,7 +22,7 @@ import 'antd/dist/reset.css';
 const { darkAlgorithm } = theme;
 const { Title } = Typography;
 
-import protectedRoute from '@/middleware/protectedRoute';
+import { protectedRoute } from '@/middleware/protectedRoute';
 import Page from '@/components/Page';
 import { DiscordUser } from '@/types/DiscordUser';
 import { ITestResult } from '@/models/TestResult';
@@ -149,12 +149,12 @@ const Box = styled.div`
 `;
 
 interface InterviewPageProps {
-	user: DiscordUser | null;
+	discord_user: DiscordUser;
 	testResults: ITestResultsTableData[];
 }
 
 const InterviewPage: NextPage<InterviewPageProps> = ({
-	user,
+	discord_user,
 	testResults
 }) => {
 	const [ step, setStep ] = useState<string>('');
@@ -192,7 +192,7 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 				'content-type': 'application/json'
 			},
 			body: JSON.stringify({
-				userId: user?.id ?? ''
+				userId: discord_user?.id ?? ''
 			})
 		}).then(async (response) => {
 			if (response.status === 200) {
@@ -215,7 +215,7 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 				'content-type': 'application/json'
 			},
 			body: JSON.stringify({
-				userId: user?.id ?? '',
+				userId: discord_user?.id ?? '',
 				file: selectedGrade
 			})
 		});
@@ -318,7 +318,7 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 				},
 				body: JSON.stringify({
 					testResult: {
-						author: user?.username || '',
+						author: discord_user?.username || '',
 						player: playerName || '',
 						grade: grade?.name || '',
 						questionCount: questionsCount || 0,
@@ -339,7 +339,7 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 		} }>
 			<Page>
 				{
-					user && !user.access_is_allowed ? (
+					discord_user && !discord_user.access_is_allowed ? (
 						<VerticalLayout>
 							<Error title="Access not allowed" statusCode={ 401 }/>
 							<button onClick={ onLogoutClick }>Log out</button>
@@ -349,11 +349,11 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 							<ContentContainer>
 								<InnerContainer>
 									{
-										user && (
+										discord_user && (
 											<VerticalLayout>
 												<Avatar
-													src={ `https://cdn.discordapp.com/avatars/${ user.id }/${ user.avatar }.png` }
-													alt={ user.username } size={ 120 }/>
+													src={ `https://cdn.discordapp.com/avatars/${ discord_user.id }/${ discord_user.avatar }.png` }
+													alt={ discord_user.username } size={ 120 }/>
 												<Button danger onClick={ onLogoutClick }>Log out</Button>
 											</VerticalLayout>
 										)
@@ -469,16 +469,16 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 };
 
 export const getServerSideProps = protectedRoute<InterviewPageProps>(async (context) => {
-	const proto = context.req.headers['x-forwarded-proto'] ? 'https' : 'http';
-	const testResults: ITestResultsTableData[] = await fetch(`${ proto }://${ context.req.headers.host }/api/test-results`).then(res => res.json());
+	const { siteFetch } = context;
+	const testResults = await siteFetch<ITestResultsTableData[]>(`/api/test-results`);
 
 	return ({
 		props: {
-			user: context.user ?? null,
+			discord_user: context.discord_user ?? null,
 			testResults
 		}
 	});
-}, '/interview');
+});
 
 export default InterviewPage;
 

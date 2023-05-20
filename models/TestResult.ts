@@ -1,5 +1,4 @@
-import mongoose from 'mongoose';
-const { Schema } = mongoose;
+import { createModel } from '@/middleware/mongodb';
 
 export interface ITestResult {
 	author: string;
@@ -11,7 +10,7 @@ export interface ITestResult {
 	timestamp: Date;
 }
 
-export const testResultSchema = new Schema<ITestResult>({
+export const TestResult = createModel<ITestResult>('TestResult', {
 	author: {
 		type: String,
 		required: true
@@ -38,7 +37,3 @@ export const testResultSchema = new Schema<ITestResult>({
 	},
 	timestamp: { type: Date, default: Date.now }
 });
-
-mongoose.models.TestResult = mongoose.models.TestResult || mongoose.model('TestResult', testResultSchema);
-
-export const TestResult = mongoose.models.TestResult;

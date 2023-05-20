@@ -1,60 +1,39 @@
-import { GetServerSidePropsContext } from 'next';
-import { parse } from 'cookie';
-import { verify } from 'jsonwebtoken';
+import { getServerSession, Session } from 'next-auth';
 
+import { authOptions } from '@/pages/api/auth/[...nextauth]';
 import { PageMiddleware } from '@/middleware/interfaces';
-import { DiscordUser } from '@/types/DiscordUser';
-import { config as discordConfig } from '@/config/discord';
-import allowedUsers from '@/data/protection/allowed';
+import { SitePageContextExtension, siteRoute } from '@/middleware/siteRoute';
+import { IUser } from '@/interfaces/User';
+import { DocumentType } from '@/middleware/mongodb';
 
-const parseUser = (ctx: GetServerSidePropsContext): DiscordUser | null => {
-	if (!ctx.req.headers.cookie) {
-		return null;
-	}
-
-	const token = parse(ctx.req.headers.cookie)[discordConfig.cookieName];
-
-	if (!token) {
-		return null;
-	}
-
-	try {
-		const { iat, exp, ...user } = verify(token, discordConfig.jwtSecret) as DiscordUser & { iat: number; exp: number };
-		return user;
-	} catch (e) {
-		return null;
-	}
-};
-
-interface ProtectedPageContextExtension {
-	user?: DiscordUser;
-	token?: string;
+interface ProtectedPageContextExtension extends SitePageContextExtension {
+	session: Session | null;
 }
 
-type ProtectMiddleware = PageMiddleware<ProtectedPageContextExtension>;
+export const serializeUser = (user: DocumentType<IUser>): IUser => {
+	return JSON.parse(JSON.stringify(user));
+};
 
-const middleware: ProtectMiddleware = (getServerSideProps, redirectUrl = '') => {
+export const protectedRoute: PageMiddleware<ProtectedPageContextExtension> = (getServerSideProps) => {
 	return async (context) => {
-		const user = parseUser(context);
+		const session = await getServerSession<any, Session>(context.req as any, context.res as any, authOptions as any);
 
-		if (!user) {
-			return {
-				redirect: {
-					destination: `/api/oauth${redirectUrl ? `?redirect=${redirectUrl}` : ''}`,
-					permanent: false,
-				},
-			};
-		}
+		// if (!session) {
+		// 	return {
+		// 		redirect: {
+		// 			destination: '/login',
+		// 			permanent: false,
+		// 		}
+		// 	};
+		// }
 
-		context.user = user;
-		context.user.access_is_allowed = allowedUsers.includes(context.user.id);
+		context.session = session;
 
-		return getServerSideProps(context);
+		return siteRoute(getServerSideProps)(context);
 	};
 };
 
-export default middleware;
 
-export const config = {
-	runtime: 'nodejs'
-};
+
+
+

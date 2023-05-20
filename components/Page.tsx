@@ -6,7 +6,6 @@ const Container = styled.main`
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-	font: 14px monospace, sans-serif;
 `;
 
 const Page: React.FC<React.PropsWithChildren> = ({
