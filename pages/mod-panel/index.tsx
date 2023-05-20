@@ -318,7 +318,7 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 											})) }
 										/>
 										{
-											currentUser.role >= EUserRoles.curator ? (
+											currentUser.role >= EUserRoles.st ? (
 												<ModalAddMember user={ currentUser } onSubmit={ updateUserList }/>
 											) : null
 										}
