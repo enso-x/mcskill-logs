@@ -17,6 +17,7 @@ import {
 	Descriptions
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { signIn, signOut } from 'next-auth/react';
 import 'antd/dist/reset.css';
 
 const { darkAlgorithm } = theme;
@@ -26,6 +27,7 @@ import { protectedRoute } from '@/middleware/protectedRoute';
 import Page from '@/components/Page';
 import { DiscordUser } from '@/types/DiscordUser';
 import { ITestResult } from '@/models/TestResult';
+import { IUser } from '@/interfaces/User';
 
 interface IResultsTableData {
 	key: number;
@@ -149,12 +151,12 @@ const Box = styled.div`
 `;
 
 interface InterviewPageProps {
-	discord_user: DiscordUser;
+	user: IUser;
 	testResults: ITestResultsTableData[];
 }
 
 const InterviewPage: NextPage<InterviewPageProps> = ({
-	discord_user,
+	user,
 	testResults
 }) => {
 	const [ step, setStep ] = useState<string>('');
@@ -192,7 +194,7 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 				'content-type': 'application/json'
 			},
 			body: JSON.stringify({
-				userId: discord_user?.id ?? ''
+				userId: user?.discord_id ?? ''
 			})
 		}).then(async (response) => {
 			if (response.status === 200) {
@@ -215,7 +217,7 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 				'content-type': 'application/json'
 			},
 			body: JSON.stringify({
-				userId: discord_user?.id ?? '',
+				userId: user?.discord_id ?? '',
 				file: selectedGrade
 			})
 		});
@@ -286,7 +288,7 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 	};
 
 	const onLogoutClick = async () => {
-		await fetch('/api/oauth/logout');
+		await signOut();
 		location.href = '/';
 	};
 
@@ -318,7 +320,7 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 				},
 				body: JSON.stringify({
 					testResult: {
-						author: discord_user?.username || '',
+						author: user?.username || '',
 						player: playerName || '',
 						grade: grade?.name || '',
 						questionCount: questionsCount || 0,
@@ -339,21 +341,21 @@ const InterviewPage: NextPage<InterviewPageProps> = ({
 		} }>
 			<Page>
 				{
-					discord_user && !discord_user.access_is_allowed ? (
+					!user ? (
 						<VerticalLayout>
 							<Error title="Access not allowed" statusCode={ 401 }/>
-							<button onClick={ onLogoutClick }>Log out</button>
+							<button onClick={ () => signIn('discord') }>Login</button>
 						</VerticalLayout>
 					) : (
 						<Container>
 							<ContentContainer>
 								<InnerContainer>
 									{
-										discord_user && (
+										user && (
 											<VerticalLayout>
 												<Avatar
-													src={ `https://cdn.discordapp.com/avatars/${ discord_user.id }/${ discord_user.avatar }.png` }
-													alt={ discord_user.username } size={ 120 }/>
+													src={ `https://mcskill.net/MineCraft/?name=${ user.username }&mode=5` }
+													alt={ user.username } size={ 120 }/>
 												<Button danger onClick={ onLogoutClick }>Log out</Button>
 											</VerticalLayout>
 										)
@@ -474,7 +476,7 @@ export const getServerSideProps = protectedRoute<InterviewPageProps>(async (cont
 
 	return ({
 		props: {
-			discord_user: context.discord_user ?? null,
+			user: context.user ?? null,
 			testResults
 		}
 	});
