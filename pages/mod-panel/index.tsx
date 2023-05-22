@@ -79,6 +79,7 @@ const HeaderControls = styled.div`
 const MainContainer = styled.div`
 	display: flex;
 	flex: 1;
+	overflow: hidden;
 `;
 
 const Sidebar = styled.div`
@@ -112,7 +113,8 @@ const SidebarItem = styled.a<ISidebarItemProps>`
 const ContentContainer = styled.div`
 	flex: 1;
 	overflow: hidden;
-	height: calc(100vh - 64px);
+	display: flex;
+	flex-direction: column;
 `;
 
 const ContentControls = styled.div`

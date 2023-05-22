@@ -64,6 +64,7 @@ const HeaderControls = styled.div`
 const MainContainer = styled.div`
 	display: flex;
 	flex: 1;
+	overflow: hidden;
 `;
 
 const Sidebar = styled.div`
@@ -96,6 +97,8 @@ const SidebarItem = styled.a<ISidebarItemProps>`
 
 const ContentContainer = styled.div`
 	flex: 1;
+	display: flex;
+	flex-direction: column;
 `;
 
 const ContentControls = styled.div`
@@ -110,12 +113,7 @@ const ContentControls = styled.div`
 	}
 `;
 
-const PunishmentsContainer = styled.div`
-	overflow: hidden;
-`;
-
 const PunishmentList = styled.div`
-	height: calc(100vh - 64px - 114px);
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
@@ -410,17 +408,15 @@ const ModPanelPunishmentsPage: NextPage<ModPanelPunishmentsPageProps> = ({
 											             format="YYYY-MM-DD"/>
 										</HorizontalLayout>
 									</ContentControls>
-									<PunishmentsContainer>
-										<PunishmentList>
-											<Table style={ {
-												width: '100%'
-											} } dataSource={ punishments.map(punish => {
-												//@ts-ignore
-												punish.key = punish.timestamp.toString()
-												return punish;
-											}) } columns={ columns }/>
-										</PunishmentList>
-									</PunishmentsContainer>
+									<PunishmentList>
+										<Table style={ {
+											width: '100%'
+										} } dataSource={ punishments.map(punish => {
+											//@ts-ignore
+											punish.key = punish.timestamp.toString()
+											return punish;
+										}) } columns={ columns }/>
+									</PunishmentList>
 								</ContentContainer>
 							</MainContainer>
 						</AppContainer>
