@@ -327,7 +327,11 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 									</ContentControls>
 									<ModeratorList>
 										{
-											users.filter(modUser => modUser.discord_id !== currentUser.discord_id).map(modUser => (
+											users.filter(modUser => modUser.discord_id !== currentUser.discord_id).sort((a, b) => {
+												return a.username.localeCompare(b.username) * -1;
+											}).sort((a, b) => {
+												return a.role >= b.role ? -1 : 1;
+											}).map(modUser => (
 												<ModeratorCard key={ modUser.discord_id }>
 													{
 														currentUser.role >= EUserRoles.st && currentUser.role > modUser.role ? (
