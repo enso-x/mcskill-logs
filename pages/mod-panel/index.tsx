@@ -115,6 +115,10 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 	allUsers
 }) => {
 	const filterAndSortUsers = (users: IUser[]): IUser[] => {
+		if (!currentUser) {
+			return users;
+		}
+
 		return users.filter(modUser => modUser.discord_id !== currentUser.discord_id)
 			.sort((a, b) => {
 				return a.username.localeCompare(b.username) * -1;
