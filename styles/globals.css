@@ -115,11 +115,17 @@ body {
 .moder {
   color: #5e00ff;
 }
+.builder {
+  color: #e556ff;
+}
 .st {
   color: #2431a4;
 }
 .gm {
   color: #008eff;
+}
+.gd {
+  color: #56b9ff;
 }
 .curator {
   color: #ff4400;
