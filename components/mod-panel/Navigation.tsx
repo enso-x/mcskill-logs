@@ -1,6 +1,7 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 import { EUserRoles } from '@/interfaces/User';
 import { useSession } from 'next-auth/react';
@@ -17,7 +18,7 @@ interface ISidebarItemProps {
 	$active?: boolean;
 }
 
-const SidebarItem = styled.a<ISidebarItemProps>`
+const SidebarItem = styled.div<ISidebarItemProps>`
 	padding: 16px 32px;
 	color: #fff;
 
@@ -60,12 +61,11 @@ export function Navigation() {
 		<Sidebar>
 			{
 				ROUTES.filter(route => route.role <= session?.user.role).map(route => (
-					<SidebarItem key={ route.id }
-					             $active={ router.route === route.url }
-					             href={ router.route === route.url ? undefined : route.url }
-					>
-						{ route.label }
-					</SidebarItem>
+					<Link key={ route.id } href={ route.url }>
+						<SidebarItem $active={ router.route === route.url }>
+							{ route.label }
+						</SidebarItem>
+					</Link>
 				))
 			}
 		</Sidebar>

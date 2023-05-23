@@ -3,8 +3,7 @@ import styled from 'styled-components';
 import { NextPage } from 'next';
 import { useSession } from 'next-auth/react';
 import { JWT } from 'next-auth/jwt';
-import { ConfigProvider, Select, theme } from 'antd';
-import 'antd/dist/reset.css';
+import { Select } from 'antd';
 
 import { protectedRoute } from '@/middleware/protectedRoute';
 import { useDebounce } from '@/helpers';
@@ -16,8 +15,6 @@ import { ModeratorCard } from '@/components/mod-panel/ModeratorCard';
 import { ModalAddMember } from '@/components/mod-panel/modals/ModalAddMember';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { SERVERS } from '@/interfaces/Server';
-
-const { darkAlgorithm } = theme;
 
 const AppContainer = styled.div`
 	display: flex;
@@ -103,62 +100,55 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 	};
 
 	return (
-		<ConfigProvider theme={ {
-			algorithm: darkAlgorithm,
-			token: {
-				colorPrimary: '#722ed1',
+		<Page>
+			{
+				!currentUser ? (
+					<NotAuthorized/>
+				) : (
+					<AppContainer>
+						<Header/>
+						<MainContainer>
+							<Navigation/>
+							<Content>
+								<ContentControls>
+									<Select
+										mode="multiple"
+										allowClear
+										style={ { width: '240px', cursor: 'pointer' } }
+										placeholder="Сервер"
+										defaultValue={ [] }
+										value={ selectedServers }
+										onChange={ handleServerSelectChange }
+										options={ Object.values(SERVERS).map((server) => ({
+											label: server.label,
+											value: server.value
+										})) }
+									/>
+									{
+										currentUser.role >= EUserRoles.st ? (
+											<ModalAddMember user={ currentUser } onSubmit={ updateUserList }/>
+										) : null
+									}
+								</ContentControls>
+								<ContentContainer>
+									{
+										users.filter(modUser => modUser.discord_id !== currentUser.discord_id)
+											.sort((a, b) => {
+												return a.username.localeCompare(b.username) * -1;
+											}).sort((a, b) => {
+											return a.role >= b.role ? -1 : 1;
+										}).map(modUser => (
+											<ModeratorCard key={ modUser.discord_id } user={ currentUser }
+											               moderator={ modUser } onUpdate={ updateUserList }/>
+										))
+									}
+								</ContentContainer>
+							</Content>
+						</MainContainer>
+					</AppContainer>
+				)
 			}
-		} }>
-			<Page>
-				{
-					!currentUser ? (
-						<NotAuthorized/>
-					) : (
-						<AppContainer>
-							<Header/>
-							<MainContainer>
-								<Navigation/>
-								<Content>
-									<ContentControls>
-										<Select
-											mode="multiple"
-											allowClear
-											style={ { width: '240px', cursor: 'pointer' } }
-											placeholder="Сервер"
-											defaultValue={ [] }
-											value={ selectedServers }
-											onChange={ handleServerSelectChange }
-											options={ Object.values(SERVERS).map((server) => ({
-												label: server.label,
-												value: server.value
-											})) }
-										/>
-										{
-											currentUser.role >= EUserRoles.st ? (
-												<ModalAddMember user={ currentUser } onSubmit={ updateUserList }/>
-											) : null
-										}
-									</ContentControls>
-									<ContentContainer>
-										{
-											users.filter(modUser => modUser.discord_id !== currentUser.discord_id)
-												.sort((a, b) => {
-													return a.username.localeCompare(b.username) * -1;
-												}).sort((a, b) => {
-												return a.role >= b.role ? -1 : 1;
-											}).map(modUser => (
-												<ModeratorCard key={ modUser.discord_id } user={ currentUser }
-												               moderator={ modUser } onUpdate={ updateUserList }/>
-											))
-										}
-									</ContentContainer>
-								</Content>
-							</MainContainer>
-						</AppContainer>
-					)
-				}
-			</Page>
-		</ConfigProvider>
+		</Page>
 	);
 };
 

@@ -5,18 +5,15 @@ import { JWT } from 'next-auth/jwt';
 import {
 	Button,
 	Card,
-	ConfigProvider,
 	Descriptions,
 	Input,
 	InputNumber,
 	Select,
 	Space,
 	Table,
-	Typography,
-	theme
+	Typography
 } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import 'antd/dist/reset.css';
 
 import { protectedRoute } from '@/middleware/protectedRoute';
 import Page from '@/components/Page';
@@ -27,7 +24,6 @@ import { Navigation } from '@/components/mod-panel/Navigation';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { ITestResult } from '@/models/TestResult';
 
-const { darkAlgorithm } = theme;
 const { Title } = Typography;
 
 interface IResultsTableData {
@@ -148,10 +144,12 @@ const ContentContainer = styled.div`
 	.ant-table-wrapper .ant-table-container {
 		border-radius: 8px;
 	}
-	.ant-table-wrapper .ant-table-container table tr:not(thead > tr):last-child >*:last-child {
+
+	.ant-table-wrapper .ant-table-container table tr:not(thead > tr):last-child > *:last-child {
 		border-end-end-radius: 8px;
 	}
-	.ant-table-wrapper .ant-table-container table tr:not(thead > tr):last-child >*:first-child {
+
+	.ant-table-wrapper .ant-table-container table tr:not(thead > tr):last-child > *:first-child {
 		border-end-start-radius: 8px;
 	}
 `;
@@ -360,185 +358,179 @@ const ModPanelInterviewPage: NextPage<ModPanelInterviewPageProps> = ({
 	}, [ resultPoints, resultPercent, results, grade ]);
 
 	return (
-		<ConfigProvider theme={ {
-			algorithm: darkAlgorithm,
-			token: {
-				colorPrimary: '#722ed1',
-			}
-		} }>
-			<Page>
-				{
-					!user ? (
-						<NotAuthorized/>
-					) : user.role <= EUserRoles.moder ? (
-						<Forbidden/>
-					) : (
-						<AppContainer>
-							<Header/>
-							<MainContainer>
-								<Navigation/>
-								<Content>
+
+		<Page>
+			{
+				!user ? (
+					<NotAuthorized/>
+				) : user.role <= EUserRoles.moder ? (
+					<Forbidden/>
+				) : (
+					<AppContainer>
+						<Header/>
+						<MainContainer>
+							<Navigation/>
+							<Content>
+								{
+									step === 'init' || step === 'settings' ? (
+										<ContentControls>
+											{
+												step === 'init' && (
+													<>
+														<div style={ { display: 'flex', justifyContent: 'flex-end' } }>
+															<Select<string> style={ { width: 200 } }
+															                getPopupContainer={ () => {
+																                return document.body;
+															                } } defaultActiveFirstOption
+															                defaultValue={ selectedGrade }
+															                onChange={ onSelectChange }
+															                options={ selectGrades }/>
+														</div>
+														<Button type="primary" onClick={ onClickSetup }>Настройки
+															тестирования</Button>
+													</>
+												)
+											}
+											{
+												step === 'settings' && grade && (
+													<Box>
+														<div>
+															<Input type="text" value={ playerName }
+															       placeholder={ 'Player name' }
+															       onChange={ onPlayerNameChange }/>
+														</div>
+														<div>
+															<Input type="text" value={ questionsCountValue }
+															       placeholder={ 'Question count' }
+															       onChange={ onQuestionCountChange }
+															       addonAfter={ `/ ${ grade.questions.length }` }/>
+														</div>
+														<Button type="primary" onClick={ onClickBegin }>Начать</Button>
+													</Box>
+												)
+											}
+										</ContentControls>
+									) : null
+								}
+								<ContentContainer>
 									{
-										step === 'init' || step === 'settings' ? (
-											<ContentControls>
+										step === 'test' || step === 'results' ? (
+											<InnerContainer>
 												{
-													step === 'init' && (
-														<>
-															<div style={ { display: 'flex', justifyContent: 'flex-end' } }>
-																<Select<string> style={ { width: 200 } }
-																                getPopupContainer={ () => {
-																	                return document.body;
-																                } } defaultActiveFirstOption
-																                defaultValue={ selectedGrade }
-																                onChange={ onSelectChange }
-																                options={ selectGrades }/>
-															</div>
-															<Button type="primary" onClick={ onClickSetup }>Настройки
-																тестирования</Button>
-														</>
+													step === 'test' && grade && playerName && questions.length && (
+														<Space direction="vertical" size={ 16 }>
+															<Descriptions bordered
+															              column={ {
+																              xxl: 1,
+																              xl: 1,
+																              lg: 1,
+																              md: 1,
+																              sm: 1,
+																              xs: 1
+															              } }>
+																<Descriptions.Item
+																	label="Player name">{ playerName }</Descriptions.Item>
+																<Descriptions.Item
+																	label="Grade">{ grade.name }</Descriptions.Item>
+															</Descriptions>
+															<Card
+																title={ `Question: ${ currentQuestion + 1 } / ${ questionsCount }` }
+																bordered>
+																<Descriptions
+																	column={ {
+																		xxl: 1,
+																		xl: 1,
+																		lg: 1,
+																		md: 1,
+																		sm: 1,
+																		xs: 1
+																	} }>
+																	<Descriptions.Item
+																		label="Question">{ questions[currentQuestion].question }</Descriptions.Item>
+																	<Descriptions.Item
+																		label="Answer">{ questions[currentQuestion].answer }</Descriptions.Item>
+																</Descriptions>
+																<Space size={ 16 }>
+																	<InputNumber<string> addonBefore="Points"
+																	                     stringMode={ true }
+																	                     min={ '0' }
+																	                     step={ '0.1' }
+																	                     controls={ false }
+																	                     value={ currentQuestionPointsValue }
+																	                     onChange={ onCurrentQuestionPointsChange }
+																	/>
+																	{
+																		currentQuestion < (questionsCount - 1) ? (
+																			<Button
+																				onClick={ onClickNextQuestion }>Next</Button>
+																		) : (
+																			<Button type="primary"
+																			        onClick={ onClickGetResults }>Get
+																				results</Button>
+																		)
+																	}
+																</Space>
+															</Card>
+														</Space>
 													)
 												}
 												{
-													step === 'settings' && grade && (
-														<Box>
-															<div>
-																<Input type="text" value={ playerName }
-																       placeholder={ 'Player name' }
-																       onChange={ onPlayerNameChange }/>
-															</div>
-															<div>
-																<Input type="text" value={ questionsCountValue }
-																       placeholder={ 'Question count' }
-																       onChange={ onQuestionCountChange }
-																       addonAfter={ `/ ${ grade.questions.length }` }/>
-															</div>
-															<Button type="primary" onClick={ onClickBegin }>Начать</Button>
-														</Box>
+													step === 'results' && grade && playerName && results.length && (
+														<Space direction="vertical" size={ 16 }>
+															<Descriptions bordered
+															              column={ {
+																              xxl: 1,
+																              xl: 1,
+																              lg: 1,
+																              md: 1,
+																              sm: 1,
+																              xs: 1
+															              } }>
+																<Descriptions.Item
+																	label="Player name">{ playerName }</Descriptions.Item>
+																<Descriptions.Item
+																	label="Grade">{ grade.name }</Descriptions.Item>
+																<Descriptions.Item
+																	label="Question count">{ questionsCount }</Descriptions.Item>
+															</Descriptions>
+															<Box>
+																<Title level={ 3 }
+																       style={ { marginBottom: 0 } }>Results</Title>
+																<Table bordered pagination={ false }
+																       columns={ resultTableColumns }
+																       dataSource={ results.map((result, i) => ({
+																	       key: i + 1,
+																	       question: result.question,
+																	       points: result.points
+																       })) } scroll={ { y: 320 } } footer={ () => (
+																	<span>Points: { resultPoints } / { questionsCount } ( { resultPercent }% )</span>
+																) }/>
+															</Box>
+														</Space>
 													)
 												}
-											</ContentControls>
+											</InnerContainer>
 										) : null
 									}
-									<ContentContainer>
-										{
-											step === 'test' || step === 'results' ? (
-												<InnerContainer>
-													{
-														step === 'test' && grade && playerName && questions.length && (
-															<Space direction="vertical" size={ 16 }>
-																<Descriptions bordered
-																              column={ {
-																	              xxl: 1,
-																	              xl: 1,
-																	              lg: 1,
-																	              md: 1,
-																	              sm: 1,
-																	              xs: 1
-																              } }>
-																	<Descriptions.Item
-																		label="Player name">{ playerName }</Descriptions.Item>
-																	<Descriptions.Item
-																		label="Grade">{ grade.name }</Descriptions.Item>
-																</Descriptions>
-																<Card
-																	title={ `Question: ${ currentQuestion + 1 } / ${ questionsCount }` }
-																	bordered>
-																	<Descriptions
-																		column={ {
-																			xxl: 1,
-																			xl: 1,
-																			lg: 1,
-																			md: 1,
-																			sm: 1,
-																			xs: 1
-																		} }>
-																		<Descriptions.Item
-																			label="Question">{ questions[currentQuestion].question }</Descriptions.Item>
-																		<Descriptions.Item
-																			label="Answer">{ questions[currentQuestion].answer }</Descriptions.Item>
-																	</Descriptions>
-																	<Space size={ 16 }>
-																		<InputNumber<string> addonBefore="Points"
-																		                     stringMode={ true }
-																		                     min={ '0' }
-																		                     step={ '0.1' }
-																		                     controls={ false }
-																		                     value={ currentQuestionPointsValue }
-																		                     onChange={ onCurrentQuestionPointsChange }
-																		/>
-																		{
-																			currentQuestion < (questionsCount - 1) ? (
-																				<Button
-																					onClick={ onClickNextQuestion }>Next</Button>
-																			) : (
-																				<Button type="primary"
-																				        onClick={ onClickGetResults }>Get
-																					results</Button>
-																			)
-																		}
-																	</Space>
-																</Card>
-															</Space>
-														)
-													}
-													{
-														step === 'results' && grade && playerName && results.length && (
-															<Space direction="vertical" size={ 16 }>
-																<Descriptions bordered
-																              column={ {
-																	              xxl: 1,
-																	              xl: 1,
-																	              lg: 1,
-																	              md: 1,
-																	              sm: 1,
-																	              xs: 1
-																              } }>
-																	<Descriptions.Item
-																		label="Player name">{ playerName }</Descriptions.Item>
-																	<Descriptions.Item
-																		label="Grade">{ grade.name }</Descriptions.Item>
-																	<Descriptions.Item
-																		label="Question count">{ questionsCount }</Descriptions.Item>
-																</Descriptions>
-																<Box>
-																	<Title level={ 3 }
-																	       style={ { marginBottom: 0 } }>Results</Title>
-																	<Table bordered pagination={ false }
-																	       columns={ resultTableColumns }
-																	       dataSource={ results.map((result, i) => ({
-																		       key: i + 1,
-																		       question: result.question,
-																		       points: result.points
-																	       })) } scroll={ { y: 320 } } footer={ () => (
-																		<span>Points: { resultPoints } / { questionsCount } ( { resultPercent }% )</span>
-																	) }/>
-																</Box>
-															</Space>
-														)
-													}
-												</InnerContainer>
-											) : null
-										}
-										{
-											testResults.length ? (
-												<Table style={ {
-													width: '100%',
-													display: 'flex',
-													flexDirection: 'column',
-													overflowY: 'auto',
-													padding: '16px'
-												} } bordered pagination={ false } columns={ testResultsTableColumns }
-												       dataSource={ reversedTestResults }/>
-											) : null
-										}
-									</ContentContainer>
-								</Content>
-							</MainContainer>
-						</AppContainer>
-					)
-				}
-			</Page>
-		</ConfigProvider>
+									{
+										testResults.length ? (
+											<Table style={ {
+												width: '100%',
+												display: 'flex',
+												flexDirection: 'column',
+												overflowY: 'auto',
+												padding: '16px'
+											} } bordered pagination={ false } columns={ testResultsTableColumns }
+											       dataSource={ reversedTestResults }/>
+										) : null
+									}
+								</ContentContainer>
+							</Content>
+						</MainContainer>
+					</AppContainer>
+				)
+			}
+		</Page>
 	);
 };
 

@@ -2,8 +2,7 @@ import React, { ChangeEvent, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { NextPage } from 'next';
 import { JWT } from 'next-auth/jwt';
-import { ConfigProvider, Select, theme, Table, Input, DatePicker } from 'antd';
-import 'antd/dist/reset.css';
+import { Select, Table, Input, DatePicker } from 'antd';
 
 import { protectedRoute } from '@/middleware/protectedRoute';
 import { useDebounce } from '@/helpers';
@@ -18,7 +17,6 @@ import { EUserRoles, IUser } from '@/interfaces/User';
 import { IPunishment } from '@/models/Punishment';
 import { Forbidden } from '@/components/mod-panel/errors/Forbidden';
 
-const { darkAlgorithm } = theme;
 const { RangePicker } = DatePicker;
 
 const AppContainer = styled.div`
@@ -64,10 +62,12 @@ const ContentContainer = styled.div`
 	.ant-table-wrapper .ant-table-container {
 		border-radius: 8px;
 	}
-	.ant-table-wrapper .ant-table-container table tr:not(thead > tr):last-child >*:last-child {
+
+	.ant-table-wrapper .ant-table-container table tr:not(thead > tr):last-child > *:last-child {
 		border-end-end-radius: 8px;
 	}
-	.ant-table-wrapper .ant-table-container table tr:not(thead > tr):last-child >*:first-child {
+
+	.ant-table-wrapper .ant-table-container table tr:not(thead > tr):last-child > *:first-child {
 		border-end-start-radius: 8px;
 	}
 `;
@@ -201,95 +201,89 @@ const ModPanelPunishmentsPage: NextPage<ModPanelPunishmentsPageProps> = ({
 	}, [ debouncedPlayerName, debouncedServers, debouncedModerators, debouncedTypes, debouncedReason, debouncedRange ]);
 
 	return (
-		<ConfigProvider theme={ {
-			algorithm: darkAlgorithm,
-			token: {
-				colorPrimary: '#722ed1',
+
+		<Page>
+			{
+				!user ? (
+					<NotAuthorized/>
+				) : user.role < EUserRoles.helper ? (
+					<Forbidden/>
+				) : (
+					<AppContainer>
+						<Header/>
+						<MainContainer>
+							<Navigation/>
+							<Content>
+								<ContentControls>
+									<HorizontalLayout>
+										<Select
+											mode="multiple"
+											allowClear
+											style={ { width: '240px', cursor: 'pointer' } }
+											placeholder="Сервер"
+											defaultValue={ [] }
+											value={ selectedServers }
+											onChange={ handleServerSelectChange }
+											options={ Object.values(SERVERS).map((server) => ({
+												label: server.label,
+												value: server.label
+											})) }
+										/>
+										<Select
+											mode="multiple"
+											allowClear
+											style={ { width: '240px', cursor: 'pointer' } }
+											placeholder="Модератор"
+											defaultValue={ [] }
+											value={ selectedModerators }
+											onChange={ handleModeratorSelectChange }
+											options={ Object.values(allUsers).map((user) => ({
+												label: user.username,
+												value: user.discord_id
+											})) }
+										/>
+										<Select
+											mode="multiple"
+											allowClear
+											style={ { width: '240px', cursor: 'pointer' } }
+											placeholder="Тип нарушения"
+											defaultValue={ [] }
+											value={ selectedTypes }
+											onChange={ handleTypesSelectChange }
+											options={ Object.values(PUNISHMENT_TYPES).map((type) => ({
+												label: type.description,
+												value: type.label
+											})) }
+										/>
+									</HorizontalLayout>
+									<HorizontalLayout>
+										<Input style={ {
+											width: '240px'
+										} } placeholder="Ник игрока" value={ playerName }
+										       onChange={ handlePlayerName }/>
+										<Input style={ {
+											width: '240px'
+										} } placeholder="Причина" value={ reason }
+										       onChange={ handleReason }/>
+										<RangePicker onChange={ handleRangeChange }
+										             format="YYYY-MM-DD"/>
+									</HorizontalLayout>
+								</ContentControls>
+								<ContentContainer>
+									<Table bordered style={ {
+										width: '100%'
+									} } dataSource={ punishments.map(punish => {
+										//@ts-ignore
+										punish.key = punish.timestamp.toString();
+										return punish;
+									}) } columns={ columns }/>
+								</ContentContainer>
+							</Content>
+						</MainContainer>
+					</AppContainer>
+				)
 			}
-		} }>
-			<Page>
-				{
-					!user ? (
-						<NotAuthorized/>
-					) : user.role < EUserRoles.helper ? (
-						<Forbidden/>
-					) : (
-						<AppContainer>
-							<Header/>
-							<MainContainer>
-								<Navigation/>
-								<Content>
-									<ContentControls>
-										<HorizontalLayout>
-											<Select
-												mode="multiple"
-												allowClear
-												style={ { width: '240px', cursor: 'pointer' } }
-												placeholder="Сервер"
-												defaultValue={ [] }
-												value={ selectedServers }
-												onChange={ handleServerSelectChange }
-												options={ Object.values(SERVERS).map((server) => ({
-													label: server.label,
-													value: server.label
-												})) }
-											/>
-											<Select
-												mode="multiple"
-												allowClear
-												style={ { width: '240px', cursor: 'pointer' } }
-												placeholder="Модератор"
-												defaultValue={ [] }
-												value={ selectedModerators }
-												onChange={ handleModeratorSelectChange }
-												options={ Object.values(allUsers).map((user) => ({
-													label: user.username,
-													value: user.discord_id
-												})) }
-											/>
-											<Select
-												mode="multiple"
-												allowClear
-												style={ { width: '240px', cursor: 'pointer' } }
-												placeholder="Тип нарушения"
-												defaultValue={ [] }
-												value={ selectedTypes }
-												onChange={ handleTypesSelectChange }
-												options={ Object.values(PUNISHMENT_TYPES).map((type) => ({
-													label: type.description,
-													value: type.label
-												})) }
-											/>
-										</HorizontalLayout>
-										<HorizontalLayout>
-											<Input style={ {
-												width: '240px'
-											} } placeholder="Ник игрока" value={ playerName }
-											       onChange={ handlePlayerName }/>
-											<Input style={ {
-												width: '240px'
-											} } placeholder="Причина" value={ reason }
-											       onChange={ handleReason }/>
-											<RangePicker onChange={ handleRangeChange }
-											             format="YYYY-MM-DD"/>
-										</HorizontalLayout>
-									</ContentControls>
-									<ContentContainer>
-										<Table bordered style={ {
-											width: '100%'
-										} } dataSource={ punishments.map(punish => {
-											//@ts-ignore
-											punish.key = punish.timestamp.toString();
-											return punish;
-										}) } columns={ columns }/>
-									</ContentContainer>
-								</Content>
-							</MainContainer>
-						</AppContainer>
-					)
-				}
-			</Page>
-		</ConfigProvider>
+		</Page>
 	);
 };
 
