@@ -5,6 +5,7 @@ import allowedUsers from '@/data/protection/allowed';
 
 type ResponseFile = {
 	name: string;
+	index: number;
 	fileName: string;
 };
 
@@ -23,9 +24,12 @@ const handler = async (
 		const response = JSON.parse(fs.readFileSync(`data/grades/${file}`).toString());
 		result.push({
 			name: response.name,
+			index: response.index,
 			fileName: file
 		});
 	}
+
+	result.sort((f1, f2) => f1.index >= f2.index ? 1 : -1);
 
 	res.status(200).json(result);
 };
