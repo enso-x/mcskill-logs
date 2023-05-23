@@ -59,6 +59,16 @@ const ContentContainer = styled.div`
 	align-items: flex-start;
 	overflow: auto;
 	word-break: break-all;
+
+	.ant-table-wrapper .ant-table-container {
+		border-radius: 8px;
+	}
+	.ant-table-wrapper .ant-table-container table tr:not(thead > tr):last-child >*:last-child {
+		border-end-end-radius: 8px;
+	}
+	.ant-table-wrapper .ant-table-container table tr:not(thead > tr):last-child >*:first-child {
+		border-end-start-radius: 8px;
+	}
 `;
 
 const dateFormatter = Intl.DateTimeFormat('ru-RU', {
@@ -262,7 +272,7 @@ const ModPanelPunishmentsPage: NextPage<ModPanelPunishmentsPageProps> = ({
 										</HorizontalLayout>
 									</ContentControls>
 									<ContentContainer>
-										<Table style={ {
+										<Table bordered style={ {
 											width: '100%'
 										} } dataSource={ punishments.map(punish => {
 											//@ts-ignore

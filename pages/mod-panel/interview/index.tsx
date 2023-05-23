@@ -144,6 +144,16 @@ const ContentContainer = styled.div`
 	justify-content: center;
 	align-items: center;
 	overflow-y: auto;
+
+	.ant-table-wrapper .ant-table-container {
+		border-radius: 8px;
+	}
+	.ant-table-wrapper .ant-table-container table tr:not(thead > tr):last-child >*:last-child {
+		border-end-end-radius: 8px;
+	}
+	.ant-table-wrapper .ant-table-container table tr:not(thead > tr):last-child >*:first-child {
+		border-end-start-radius: 8px;
+	}
 `;
 
 const InnerContainer = styled.div`
@@ -260,7 +270,7 @@ const ModPanelInterviewPage: NextPage<ModPanelInterviewPageProps> = ({
 	};
 
 	const onPlayerNameChange: ChangeEventHandler<HTMLInputElement> = (e) => {
-		setPlayerName(e.target.value);
+		setPlayerName(e.target.value.trim());
 	};
 
 	const onClickBegin = async () => {
