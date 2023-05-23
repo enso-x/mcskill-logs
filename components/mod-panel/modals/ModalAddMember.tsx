@@ -1,9 +1,9 @@
 import React, { ChangeEvent, useState } from 'react';
-import { Button, Modal, Select, Input } from 'antd';
+import { Button, Input, Modal, Select } from 'antd';
 import styled from 'styled-components';
 
 import { SERVERS } from '@/interfaces/Server';
-import { IUser, ROLES } from '@/interfaces/User';
+import { EUserRoles, IUser, ROLES } from '@/interfaces/User';
 import { useDebounce } from '@/helpers';
 import { PlusOutlined } from '@ant-design/icons';
 
@@ -152,9 +152,9 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 							value: key
 						})) }
 					/>
-					<Input placeholder="Никнейм" value={ username } onChange={ handleUsernameChange }/>
-					<Input placeholder="Discord ID" value={ discordID } onChange={ handleDiscordIDChange }/>
-					<Input placeholder="Кол-во баллов" value={ points } onChange={ handlePointsChange }/>
+					<Input placeholder="Никнейм" value={ username } disabled={ edit && user.role <= EUserRoles.st } onChange={ handleUsernameChange }/>
+					<Input placeholder="Discord ID" value={ discordID } disabled={ edit && user.role <= EUserRoles.st } onChange={ handleDiscordIDChange }/>
+					<Input placeholder="Кол-во баллов" value={ points } disabled={ edit && user.role <= EUserRoles.st } onChange={ handlePointsChange }/>
 					{ debouncedUsername && (
 						<img style={{
 							width: '128px',
