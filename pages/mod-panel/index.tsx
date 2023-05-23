@@ -190,7 +190,7 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 			},
 			body: JSON.stringify({ urlBase: server.connection_logs_url, date: dateFormatter.format(new Date()).replaceAll('.', '-') })
 		}).then(res => res.json())
-		const serverUserNames = allUsers.filter(user => user.servers.includes(server.value)).map(user => user.username);
+		const serverUserNames = allUsers.map(user => user.username);
 		const online: any = {};
 		const usernamesReg = new RegExp(serverUserNames.map(username => ` ${username} `).join('|'), 'i');
 
