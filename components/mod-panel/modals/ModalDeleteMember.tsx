@@ -1,22 +1,8 @@
-import React, { ChangeEvent, useState } from 'react';
+import React, { useState } from 'react';
 import { Button, Popconfirm } from 'antd';
-import styled from 'styled-components';
-
-import { SERVERS } from '@/interfaces/Server';
-import { EUserRoles, IUser, ROLES } from '@/interfaces/User';
-import { useDebounce } from '@/helpers';
 import { DeleteOutlined } from '@ant-design/icons';
 
-const ContentContainer = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
-	padding: 16px 0;
-
-	.ant-select-show-search:where(.css-dev-only-do-not-override-a1szv).ant-select:not(.ant-select-customize-input) .ant-select-selector {
-		cursor: pointer;
-	}
-`;
+import { IUser } from '@/interfaces/User';
 
 interface IModalDeleteMemberProps {
 	user: IUser;

@@ -4,9 +4,9 @@ import { EditOutlined } from '@ant-design/icons';
 
 import { HorizontalLayout, VerticalLayout } from '@/components/Styled';
 import { ModalAddMember } from '@/components/mod-panel/modals/ModalAddMember';
+import { ModalDeleteMember } from '@/components/mod-panel/modals/ModalDeleteMember';
 import { InfinityIcon } from '@/components/mod-panel/icons/Infinity';
 import { EUserRoles, IUser, ROLES } from '@/interfaces/User';
-import { ModalDeleteMember } from '@/components/mod-panel/modals/ModalDeleteMember';
 
 const ButtonsContainer = styled(VerticalLayout)`
 	gap: 8px;
