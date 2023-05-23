@@ -30,7 +30,8 @@ export const authOptions: AuthOptions = {
 
 			return session;
 		}
-	}
+	},
+	secret: validateEnv('NEXTAUTH_SECRET'),
 };
 
 export default NextAuth(authOptions);
