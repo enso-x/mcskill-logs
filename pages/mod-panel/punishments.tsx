@@ -1,24 +1,23 @@
-import styled, { css } from 'styled-components';
 import React, { ChangeEvent, useEffect, useState } from 'react';
+import styled from 'styled-components';
 import { NextPage } from 'next';
-import Error from 'next/error';
-import { Avatar, Button, ConfigProvider, Select, theme, Typography, Table, Input, DatePicker } from 'antd';
-import { signIn, signOut } from 'next-auth/react';
 import { JWT } from 'next-auth/jwt';
+import { ConfigProvider, Select, theme, Table, Input, DatePicker } from 'antd';
 import 'antd/dist/reset.css';
+
 import { protectedRoute } from '@/middleware/protectedRoute';
+import { useDebounce } from '@/helpers';
 import Page from '@/components/Page';
-import { ITestResult } from '@/models/TestResult';
-import { EUserRoles, IUser, ROLES } from '@/interfaces/User';
-import { SERVERS } from '@/interfaces/Server';
-import { asyncDebounce, useDebounce } from '@/helpers';
-import { ModalAddMember } from '@/components/modals/ModalAddMember';
-import { EditOutlined, LogoutOutlined } from '@ant-design/icons';
-import { IPunishment } from '@/models/Punishment';
+import { Header } from '@/components/mod-panel/Header';
+import { NotAuthorized } from '@/components/mod-panel/errors/NotAuthorized';
+import { Navigation } from '@/components/mod-panel/Navigation';
+import { HorizontalLayout } from '@/components/Styled';
 import { PUNISHMENT_TYPES } from '@/interfaces/PunishmentType';
+import { SERVERS } from '@/interfaces/Server';
+import { IUser } from '@/interfaces/User';
+import { IPunishment } from '@/models/Punishment';
 
 const { darkAlgorithm } = theme;
-const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
 const AppContainer = styled.div`
@@ -28,74 +27,13 @@ const AppContainer = styled.div`
 	background: #141414;
 `;
 
-const Header = styled.div`
-	display: grid;
-	grid-template-columns: 1fr 1fr 1fr;
-	align-items: center;
-	height: 64px;
-	border-bottom: 2px solid #242424;
-	padding: 8px 16px;
-`;
-
-const HeaderTitle = styled.div`
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	gap: 16px;
-
-	span {
-		font-size: 24px;
-		font-family: monospace;
-		white-space: nowrap;
-	}
-`;
-
-const HeaderLogo = styled.img`
-	max-height: 48px;
-`;
-
-const HeaderControls = styled.div`
-	display: flex;
-	justify-content: flex-end;
-	align-items: center;
-	gap: 16px;
-`;
-
 const MainContainer = styled.div`
 	display: flex;
 	flex: 1;
 	overflow: hidden;
 `;
 
-const Sidebar = styled.div`
-	display: flex;
-	flex-direction: column;
-	width: 240px;
-	flex-shrink: 0;
-	border-right: 2px solid #242424;
-`;
-
-const PointsContainer = styled.span`
-	display: flex;
-	align-items: center;
-	gap: 8px;
-`;
-
-interface ISidebarItemProps {
-	$active?: boolean;
-}
-
-const SidebarItem = styled.a<ISidebarItemProps>`
-	padding: 16px 32px;
-	color: #fff;
-
-	${ (props) => props.$active ? css`background: var(--accent-color);` : '' }
-	&:not(:last-child) {
-		border-bottom: 1px solid #242424;
-	}
-`;
-
-const ContentContainer = styled.div`
+const Content = styled.div`
 	flex: 1;
 	display: flex;
 	flex-direction: column;
@@ -113,12 +51,11 @@ const ContentControls = styled.div`
 	}
 `;
 
-const PunishmentList = styled.div`
+const ContentContainer = styled.div`
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
 	padding: 16px;
-	gap: 16px;
 	align-items: flex-start;
 	overflow: auto;
 	word-break: break-all;
@@ -131,47 +68,6 @@ const dateFormatter = Intl.DateTimeFormat('ru-RU', {
 	hour: '2-digit',
 	minute: '2-digit'
 });
-
-const VerticalLayout = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
-`;
-
-const HorizontalLayout = styled.div`
-	display: flex;
-	align-items: center;
-	gap: 16px;
-`;
-
-const ErrorContainer = styled(VerticalLayout)`
-	width: 100%;
-	height: 100%;
-	justify-content: center;
-	align-items: center;
-
-	> div {
-		height: 100px !important;
-	}
-`;
-
-const InfinityIcon = () => {
-	return (
-		<svg fill="#fff" height="24px" width="24px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg"
-		     viewBox="0 0 512 512" stroke="#fff">
-			<g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-			<g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
-			<g id="SVGRepo_iconCarrier">
-				<g>
-					<g>
-						<path
-							d="M373.333,117.333c-76.578,0-138.667,62.081-138.667,138.667c0,53.015-42.979,96-96,96c-53.007,0-96-42.993-96-96 c0-53.021,42.985-96,96-96c13.445,0,26.452,2.74,38.454,7.985c10.796,4.718,23.373-0.209,28.091-11.005 c4.718-10.796-0.209-23.373-11.005-28.091c-17.369-7.591-36.192-11.556-55.541-11.556C62.088,117.333,0,179.414,0,256 c0,76.571,62.095,138.667,138.667,138.667c76.586,0,138.667-62.089,138.667-138.667c0-53.021,42.985-96,96-96 c53.029,0,96,42.971,96,96c0,53.015-42.979,96-96,96c-13.416,0-26.421-2.749-38.422-8.002 c-10.794-4.724-23.373,0.196-28.097,10.99c-4.724,10.794,0.196,23.373,10.99,28.097c17.369,7.602,36.195,11.582,55.53,11.582 C449.919,394.667,512,332.578,512,256C512,179.407,449.926,117.333,373.333,117.333z"></path>
-					</g>
-				</g>
-			</g>
-		</svg>
-	);
-};
 
 interface ModPanelPunishmentsPageProps {
 	discord: JWT;
@@ -186,17 +82,13 @@ const ModPanelPunishmentsPage: NextPage<ModPanelPunishmentsPageProps> = ({
 	allUsers,
 	allPunishments
 }) => {
-	const [ currentUser, setCurrentUser ] = useState<IUser>(user);
 	const [ punishments, setPunishments ] = useState<IPunishment[]>(allPunishments);
-
-
 	const [ playerName, setPlayerName ] = useState<string>('');
 	const [ reason, setReason ] = useState<string>('');
 	const [ selectedServers, setSelectedServers ] = useState<string[]>([]);
 	const [ selectedModerators, setSelectedModerators ] = useState<string[]>([]);
 	const [ selectedTypes, setSelectedTypes ] = useState<string[]>([]);
 	const [ dateRange, setDateRange ] = useState<string[]>([]);
-
 
 	const debouncedPlayerName = useDebounce(playerName, 200);
 	const debouncedReason = useDebounce(reason, 200);
@@ -250,14 +142,6 @@ const ModPanelPunishmentsPage: NextPage<ModPanelPunishmentsPageProps> = ({
 			),
 		},
 	];
-
-	const onLogoutClick = async () => {
-		await signOut();
-	};
-
-	const handleLogin = async () => {
-		await signIn('discord');
-	};
 
 	const handlePlayerName = (e: ChangeEvent<HTMLInputElement>) => {
 		setPlayerName(e.target.value);
@@ -314,45 +198,14 @@ const ModPanelPunishmentsPage: NextPage<ModPanelPunishmentsPageProps> = ({
 		} }>
 			<Page>
 				{
-					!currentUser ? (
-						<ErrorContainer>
-							<Error className="error" title="Not authorized" statusCode={ 401 }/>
-							<Button onClick={ handleLogin }>Login</Button>
-						</ErrorContainer>
+					!user ? (
+						<NotAuthorized/>
 					) : (
 						<AppContainer>
-							<Header>
-								<HorizontalLayout>
-									<Avatar
-										src={ `https://mcskill.net/MineCraft/?name=${ currentUser.username }&mode=5` }
-										alt={ currentUser.username } size={ 32 }/>
-									<span>{ currentUser.username }</span>
-									<span>[<span
-										className={ EUserRoles[currentUser.role] }>{ ROLES[currentUser.role] }</span>]</span>
-									<PointsContainer>
-										Баллы: { currentUser.points >= 0 ? currentUser.points : (
-										<InfinityIcon/>
-									) }
-									</PointsContainer>
-								</HorizontalLayout>
-								<HeaderTitle>
-									<HeaderLogo src="/images/logo.png"/>
-									<span>Pixelmon Mod panel</span>
-								</HeaderTitle>
-								<HeaderControls>
-									<Button danger onClick={ onLogoutClick }>Выйти <LogoutOutlined/></Button>
-								</HeaderControls>
-							</Header>
+							<Header/>
 							<MainContainer>
-								<Sidebar>
-									<SidebarItem href="/mod-panel">
-										Мод состав
-									</SidebarItem>
-									<SidebarItem $active>
-										Наказания
-									</SidebarItem>
-								</Sidebar>
-								<ContentContainer>
+								<Navigation/>
+								<Content>
 									<ContentControls>
 										<HorizontalLayout>
 											<Select
@@ -408,16 +261,16 @@ const ModPanelPunishmentsPage: NextPage<ModPanelPunishmentsPageProps> = ({
 											             format="YYYY-MM-DD"/>
 										</HorizontalLayout>
 									</ContentControls>
-									<PunishmentList>
+									<ContentContainer>
 										<Table style={ {
 											width: '100%'
 										} } dataSource={ punishments.map(punish => {
 											//@ts-ignore
-											punish.key = punish.timestamp.toString()
+											punish.key = punish.timestamp.toString();
 											return punish;
 										}) } columns={ columns }/>
-									</PunishmentList>
-								</ContentContainer>
+									</ContentContainer>
+								</Content>
 							</MainContainer>
 						</AppContainer>
 					)
