@@ -307,9 +307,11 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 
 	useEffect(() => {
 		(async () => {
-			const [ appSettings ] = await fetch('/api/settings/get').then(res => res.json());
-			setSettings(appSettings);
-			await getOnlineStatus();
+			if (currentUser) {
+				const [ appSettings ] = await fetch('/api/settings/get').then(res => res.json());
+				setSettings(appSettings);
+				await getOnlineStatus();
+			}
 		})();
 	}, []);
 
