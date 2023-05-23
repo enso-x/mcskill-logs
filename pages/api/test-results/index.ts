@@ -9,7 +9,7 @@ const handler = async (
 ) => {
 	if (req.method === 'GET') {
 		try {
-			const results = await TestResult.find().exec();
+			const results = await TestResult.find().sort({ timestamp: -1 }).exec();
 			return res.status(200).send(results);
 		} catch (error) {
 			return res.status(500).send([]);

@@ -332,8 +332,8 @@ const ModPanelInterviewPage: NextPage<ModPanelInterviewPageProps> = ({
 		}));
 	}, [ grades ]);
 
-	const reversedTestResults = useMemo(() => {
-		return testResults.reverse().map((result, i) => ({ key: i, ...result }));
+	const preparedTestResults = useMemo(() => {
+		return testResults.map((result, i) => ({ key: i, ...result }));
 	}, [ testResults ]);
 
 	useEffect(() => {
@@ -521,7 +521,7 @@ const ModPanelInterviewPage: NextPage<ModPanelInterviewPageProps> = ({
 												overflowY: 'auto',
 												padding: '16px'
 											} } bordered pagination={ false } columns={ testResultsTableColumns }
-											       dataSource={ reversedTestResults }/>
+											       dataSource={ preparedTestResults }/>
 										) : null
 									}
 								</ContentContainer>
