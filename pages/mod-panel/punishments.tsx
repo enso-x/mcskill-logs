@@ -14,8 +14,9 @@ import { Navigation } from '@/components/mod-panel/Navigation';
 import { HorizontalLayout } from '@/components/Styled';
 import { PUNISHMENT_TYPES } from '@/interfaces/PunishmentType';
 import { SERVERS } from '@/interfaces/Server';
-import { IUser } from '@/interfaces/User';
+import { EUserRoles, IUser } from '@/interfaces/User';
 import { IPunishment } from '@/models/Punishment';
+import { Forbidden } from '@/components/mod-panel/errors/Forbidden';
 
 const { darkAlgorithm } = theme;
 const { RangePicker } = DatePicker;
@@ -210,6 +211,8 @@ const ModPanelPunishmentsPage: NextPage<ModPanelPunishmentsPageProps> = ({
 				{
 					!user ? (
 						<NotAuthorized/>
+					) : user.role < EUserRoles.helper ? (
+						<Forbidden/>
 					) : (
 						<AppContainer>
 							<Header/>

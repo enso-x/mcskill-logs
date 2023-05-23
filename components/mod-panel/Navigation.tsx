@@ -3,6 +3,7 @@ import styled, { css } from 'styled-components';
 import { useRouter } from 'next/router';
 
 import { EUserRoles } from '@/interfaces/User';
+import { useSession } from 'next-auth/react';
 
 const Sidebar = styled.div`
 	display: flex;
@@ -49,11 +50,16 @@ const ROUTES = [
 
 export function Navigation() {
 	const router = useRouter();
+	const { data: session } = useSession();
+
+	if (!session) {
+		return null;
+	}
 
 	return (
 		<Sidebar>
 			{
-				ROUTES.map(route => (
+				ROUTES.filter(route => route.role <= session?.user.role).map(route => (
 					<SidebarItem key={ route.id }
 					             $active={ router.route === route.url }
 					             href={ router.route === route.url ? undefined : route.url }
