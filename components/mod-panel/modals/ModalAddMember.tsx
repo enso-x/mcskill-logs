@@ -82,7 +82,7 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 		if (!edit) {
 			setUsername('');
 			setDiscordID('');
-			setPoints('');
+			setPoints('0');
 			setServerSelectValues([]);
 			setRoleSelectValues([]);
 		}
