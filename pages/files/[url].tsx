@@ -103,6 +103,7 @@ const FileList = styled.ul`
 	display: flex;
 	flex-direction: column;
 	font: 14px monospace;
+	margin: 0;
 	//width: 320px;
 `;
 
