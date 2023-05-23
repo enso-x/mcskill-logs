@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { EditOutlined } from '@ant-design/icons';
 
 import { HorizontalLayout } from '@/components/Styled';
@@ -34,6 +34,30 @@ const ModeratorCardContainer = styled.div`
 	}
 `;
 
+interface IOnlineIndicatorProps {
+	$online: boolean;
+}
+
+const OnlineIndicator = styled.span<IOnlineIndicatorProps>`
+	position: absolute;
+	left: 16px;
+	display: block;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background: #242424;
+	
+	${ (props) => props.$online ? css`
+		background: #6aff36;
+		border: 1px solid #1c6800;
+		box-shadow: 0 0 4px #6aff36;
+	` : css`
+		background: #ff3636;
+		border: 1px solid #680000;
+		box-shadow: 0 0 4px #ff3636;
+	` }
+`;
+
 const PointsContainer = styled(HorizontalLayout)`
 	gap: 8px;
 `;
@@ -41,12 +65,17 @@ const PointsContainer = styled(HorizontalLayout)`
 interface IModeratorCardProps {
 	user: IUser;
 	moderator: IUser;
+	isOnline: {
+		title: string;
+		status: boolean;
+	};
 	onUpdate: () => void;
 }
 
 export function ModeratorCard({
 	user,
 	moderator,
+	isOnline,
 	onUpdate
 }: IModeratorCardProps) {
 	return (
@@ -59,6 +88,7 @@ export function ModeratorCard({
 					                onSubmit={ onUpdate }/>
 				) : null
 			}
+			<OnlineIndicator title={ isOnline.title } $online={ isOnline.status }/>
 			<img
 				src={ `https://mcskill.net/MineCraft/?name=${ moderator.username }&mode=1` }
 				alt="User skin"/>

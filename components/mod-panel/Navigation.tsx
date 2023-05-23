@@ -19,10 +19,16 @@ interface ISidebarItemProps {
 }
 
 const SidebarItem = styled.div<ISidebarItemProps>`
-	padding: 16px 32px;
-	color: #fff;
+	display: flex;
+	flex-direction: column;
+	
+	a {
+		padding: 16px 32px;
+		color: #fff;
 
-	${ (props) => props.$active ? css`background: var(--accent-color);` : '' }
+		${ (props) => props.$active ? css`background: var(--accent-color);` : '' }
+	}
+
 	&:not(:last-child) {
 		border-bottom: 1px solid #242424;
 	}
@@ -47,6 +53,12 @@ const ROUTES = [
 		url: '/mod-panel/interview',
 		role: EUserRoles.st
 	},
+	{
+		id: 'route-3',
+		label: 'Настройки',
+		url: '/mod-panel/settings',
+		role: EUserRoles.curator
+	},
 ];
 
 export function Navigation() {
@@ -61,11 +73,11 @@ export function Navigation() {
 		<Sidebar>
 			{
 				ROUTES.filter(route => route.role <= session?.user.role).map(route => (
-					<Link key={ route.id } href={ route.url }>
-						<SidebarItem $active={ router.route === route.url }>
+					<SidebarItem key={ route.id } $active={ router.route === route.url }>
+						<Link href={ route.url }>
 							{ route.label }
-						</SidebarItem>
-					</Link>
+						</Link>
+					</SidebarItem>
 				))
 			}
 		</Sidebar>
