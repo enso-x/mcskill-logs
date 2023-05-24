@@ -297,7 +297,7 @@ const ModPanelInterviewPage: NextPage<ModPanelInterviewPageProps> = ({
 	}, [ resultPoints, resultPercent, results, grade ]);
 
 	return (
-		<ModPanelPage user={ user } needRole={ EUserRoles.st }>
+		<ModPanelPage needRole={ EUserRoles.st }>
 			{
 				step === 'init' || step === 'settings' ? (
 					<ModPanelPageControls>

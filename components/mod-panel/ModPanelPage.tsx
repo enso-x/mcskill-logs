@@ -7,6 +7,7 @@ import { Forbidden } from '@/components/mod-panel/errors/Forbidden';
 import { Header } from '@/components/mod-panel/Header';
 import { Navigation } from '@/components/mod-panel/Navigation';
 import { EUserRoles, IUser } from '@/interfaces/User';
+import { useSession } from 'next-auth/react';
 
 const AppContainer = styled.div`
 	display: flex;
@@ -60,15 +61,21 @@ export const ModPanelPageContent = styled.div`
 `;
 
 interface IModPanelPageProps extends React.PropsWithChildren {
-	user: IUser;
 	needRole?: EUserRoles;
 }
 
 export function ModPanelPage({
 	children,
-	user,
 	needRole = EUserRoles.player
 }: IModPanelPageProps) {
+	const { data: session } = useSession();
+	console.log(session);
+	if (!session) {
+		return null;
+	}
+
+	const { user } = session;
+
 	return (
 		<Page title={ 'Pixelmon Mod panel' }>
 			{

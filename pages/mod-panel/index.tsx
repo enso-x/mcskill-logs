@@ -164,7 +164,7 @@ const ModPanelIndexPage: NextPage<ModPanelIndexPageProps> = ({
 	}, [ debouncedServers ]);
 
 	return (
-		<ModPanelPage user={ user }>
+		<ModPanelPage>
 			<ModPanelPageControls>
 				<Select
 					mode="multiple"

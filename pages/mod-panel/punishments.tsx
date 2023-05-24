@@ -143,7 +143,7 @@ const ModPanelPunishmentsPage: NextPage<ModPanelPunishmentsPageProps> = ({
 	}, [ debouncedPlayerName, debouncedServers, debouncedModerators, debouncedTypes, debouncedReason, debouncedRange ]);
 
 	return (
-		<ModPanelPage user={ user } needRole={EUserRoles.helper}>
+		<ModPanelPage needRole={EUserRoles.helper}>
 			<ModPanelPageControls>
 				<HorizontalLayout>
 					<Select

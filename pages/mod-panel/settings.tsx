@@ -78,7 +78,7 @@ const ModPanelSettingsPage: NextPage<ModPanelSettingsPageProps> = ({
 	};
 
 	return (
-		<ModPanelPage user={user} needRole={EUserRoles.curator}>
+		<ModPanelPage needRole={EUserRoles.curator}>
 			<ModPanelPageContent>
 				<Text>Онлайн за неделю</Text>
 				<Input value={ onlinePerWeek } placeholder="Онлайн за неделю"
