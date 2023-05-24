@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  transpileModules: ['antd'],
+  reactStrictMode: false,
+  transpilePackages: ['antd'],
   compiler: {
-    styledComponents: true
+    styledComponents: true,
   },
   env: {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL
