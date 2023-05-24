@@ -49,17 +49,9 @@ export function ServerMonitoring() {
 	const [ serversInfo, setServersInfo ] = useState<IServerInfo[]>([]);
 
 	const fetchServersInfo = async () => {
-		const { result } = await fetch('https://mcskill.net/api/v2/monitoring').then(res => res.json());
-		if (result) {
-			const version = result.find((item: any) => item.version === '1.12.2');
-			if (!version) return;
-
-			const client = version.clients && version.clients.find((client: any) => client.title === 'Pixelmon');
-			if (!client) return;
-
-			if (client.servers && client.servers.length) {
-				setServersInfo(client.servers);
-			}
+		const servers = await fetch('/api/monitoring').then(res => res.json());
+		if (servers) {
+			setServersInfo(servers);
 		}
 	};
 
