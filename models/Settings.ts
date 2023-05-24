@@ -2,7 +2,9 @@ import { createModel } from '@/middleware/mongodb';
 
 export interface ISettings {
 	onlinePerWeek: string;
-	pointsPerWeek: number;
+	pointsPerWeekForTrainee: number;
+	pointsPerWeekForHelper: number;
+	pointsPerWeekForModerator: number;
 	overtimeMultiplier: number;
 	lastWeek: number;
 }
@@ -12,9 +14,17 @@ export const Settings = createModel<ISettings>('Settings', {
 		type: String,
 		default: '21:00:00'
 	},
-	pointsPerWeek: {
+	pointsPerWeekForTrainee: {
 		type: Number,
-		default: 15
+		default: 50
+	},
+	pointsPerWeekForHelper: {
+		type: Number,
+		default: 70
+	},
+	pointsPerWeekForModerator: {
+		type: Number,
+		default: 100
 	},
 	overtimeMultiplier: {
 		type: Number,

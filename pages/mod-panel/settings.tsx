@@ -59,7 +59,9 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 	const { update: updateSession } = useSession();
 	const [ settings, setSettings ] = useState<ISettings>(appSettings);
 	const [ onlinePerWeek, setOnlinePerWeek ] = useState<string>(settings.onlinePerWeek);
-	const [ pointsPerWeek, setPointsPerWeek ] = useState<string>(settings.pointsPerWeek.toString());
+	const [ pointsPerWeekForTrainee, setPointsPerWeekForTrainee ] = useState<string>(settings.pointsPerWeekForTrainee.toString());
+	const [ pointsPerWeekForHelper, setPointsPerWeekForHelper ] = useState<string>(settings.pointsPerWeekForHelper.toString());
+	const [ pointsPerWeekForModerator, setPointsPerWeekForModerator ] = useState<string>(settings.pointsPerWeekForModerator.toString());
 	const [ overtimeMultiplier, setOvertimeMultiplier ] = useState<string>(settings.overtimeMultiplier.toString());
 	const [ saveInProgress, setSaveInProgress ] = useState<boolean>(false);
 
@@ -67,8 +69,16 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 		setOnlinePerWeek(e.target.value);
 	};
 
-	const handlePointsPerWeekChange = (e: ChangeEvent<HTMLInputElement>) => {
-		setPointsPerWeek(e.target.value);
+	const handlePointsPerWeekForTraineeChange = (e: ChangeEvent<HTMLInputElement>) => {
+		setPointsPerWeekForTrainee(e.target.value);
+	};
+
+	const handlePointsPerWeekForHelperChange = (e: ChangeEvent<HTMLInputElement>) => {
+		setPointsPerWeekForHelper(e.target.value);
+	};
+
+	const handlePointsPerWeekForModeratorChange = (e: ChangeEvent<HTMLInputElement>) => {
+		setPointsPerWeekForModerator(e.target.value);
 	};
 
 	const handleOvertimeMultiplierChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -77,7 +87,9 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 
 	const hasChanges = () => {
 		return settings.onlinePerWeek !== onlinePerWeek ||
-			   settings.pointsPerWeek.toString() !== pointsPerWeek ||
+			   settings.pointsPerWeekForTrainee.toString() !== pointsPerWeekForTrainee ||
+			   settings.pointsPerWeekForHelper.toString() !== pointsPerWeekForHelper ||
+			   settings.pointsPerWeekForModerator.toString() !== pointsPerWeekForModerator ||
 			   settings.overtimeMultiplier.toString() !== overtimeMultiplier;
 	};
 
@@ -90,7 +102,9 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 			},
 			body: JSON.stringify({
 				onlinePerWeek,
-				pointsPerWeek: parseFloat(pointsPerWeek),
+				pointsPerWeekForTrainee: parseFloat(pointsPerWeekForTrainee),
+				pointsPerWeekForHelper: parseFloat(pointsPerWeekForHelper),
+				pointsPerWeekForModerator: parseFloat(pointsPerWeekForModerator),
 				overtimeMultiplier: parseFloat(overtimeMultiplier)
 			})
 		}).then(res => res.json());
@@ -116,9 +130,15 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 									<Text>Онлайн за неделю</Text>
 									<Input value={ onlinePerWeek } placeholder="Онлайн за неделю"
 									       onChange={ handleOnlinePerWeekChange }/>
-									<Text>Очки за неделю</Text>
-									<Input value={ pointsPerWeek } placeholder="Очки за неделю"
-									       onChange={ handlePointsPerWeekChange }/>
+									<Text>Очки за неделю для Стажера</Text>
+									<Input value={ pointsPerWeekForTrainee } placeholder="Очки за неделю для Стажера"
+									       onChange={ handlePointsPerWeekForTraineeChange }/>
+									<Text>Очки за неделю для Помощника</Text>
+									<Input value={ pointsPerWeekForHelper } placeholder="Очки за неделю для Помощника"
+									       onChange={ handlePointsPerWeekForHelperChange }/>
+									<Text>Очки за неделю для Модератора</Text>
+									<Input value={ pointsPerWeekForModerator } placeholder="Очки за неделю для Модератора"
+									       onChange={ handlePointsPerWeekForModeratorChange }/>
 									<Text>Множитель за овертайм</Text>
 									<Input value={ overtimeMultiplier } placeholder="Множитель за овертайм"
 									       onChange={ handleOvertimeMultiplierChange }/>

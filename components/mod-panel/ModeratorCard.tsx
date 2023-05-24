@@ -2,7 +2,7 @@ import React from 'react';
 import styled, { css } from 'styled-components';
 import { EditOutlined } from '@ant-design/icons';
 
-import { HorizontalLayout, VerticalLayout } from '@/components/Styled';
+import { HorizontalLayout, VerticalLayout, OnlineIndicator } from '@/components/Styled';
 import { ModalAddMember } from '@/components/mod-panel/modals/ModalAddMember';
 import { ModalDeleteMember } from '@/components/mod-panel/modals/ModalDeleteMember';
 import { InfinityIcon } from '@/components/mod-panel/icons/Infinity';
@@ -36,28 +36,9 @@ const ModeratorCardContainer = styled.div`
 	}
 `;
 
-interface IOnlineIndicatorProps {
-	$online: boolean;
-}
-
-const OnlineIndicator = styled.span<IOnlineIndicatorProps>`
+const CardOnlineIndicator = styled(OnlineIndicator)`
 	position: absolute;
 	align-self: flex-start;
-	display: block;
-	width: 12px;
-	height: 12px;
-	border-radius: 50%;
-	background: #242424;
-
-	${ (props) => props.$online ? css`
-		background: #6aff36;
-		border: 1px solid #1c6800;
-		box-shadow: 0 0 4px #6aff36;
-	` : css`
-		background: #ff3636;
-		border: 1px solid #680000;
-		box-shadow: 0 0 4px #ff3636;
-	` }
 `;
 
 const PointsContainer = styled(HorizontalLayout)`
@@ -82,7 +63,7 @@ export function ModeratorCard({
 }: IModeratorCardProps) {
 	return (
 		<ModeratorCardContainer>
-			<OnlineIndicator title={ isOnline.title } $online={ isOnline.status }/>
+			<CardOnlineIndicator title={ isOnline.title } $online={ isOnline.status }/>
 			<ButtonsContainer>
 				{
 					(user.role >= EUserRoles.st && user.role > moderator.role)

@@ -1,17 +1,24 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
-import { useRouter } from 'next/router';
 import Link from 'next/link';
-
-import { EUserRoles } from '@/interfaces/User';
+import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
+
+import { ServerMonitoring } from '@/components/ServerMonitoring';
+import { EUserRoles } from '@/interfaces/User';
 
 const Sidebar = styled.div`
 	display: flex;
 	flex-direction: column;
+	justify-content: space-between;
 	width: 240px;
 	flex-shrink: 0;
 	border-right: 2px solid #242424;
+`;
+
+const NavigationContainer = styled.div`
+	display: flex;
+	flex-direction: column;
 `;
 
 interface ISidebarItemProps {
@@ -71,6 +78,7 @@ export function Navigation() {
 
 	return (
 		<Sidebar>
+			<NavigationContainer>
 			{
 				ROUTES.filter(route => route.role <= session?.user.role).map(route => (
 					<SidebarItem key={ route.id } $active={ router.route === route.url }>
@@ -80,6 +88,8 @@ export function Navigation() {
 					</SidebarItem>
 				))
 			}
+			</NavigationContainer>
+			<ServerMonitoring/>
 		</Sidebar>
 	);
 }

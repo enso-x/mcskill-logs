@@ -4,9 +4,11 @@ import { NextPage } from 'next';
 import { useSession } from 'next-auth/react';
 import { JWT } from 'next-auth/jwt';
 import { Button, Select } from 'antd';
+import moment from 'moment';
 
 import { protectedRoute } from '@/middleware/protectedRoute';
 import { useDebounce } from '@/helpers';
+import { HorizontalLayout } from '@/components/Styled';
 import Page from '@/components/Page';
 import { Header } from '@/components/mod-panel/Header';
 import { Navigation } from '@/components/mod-panel/Navigation';
@@ -15,8 +17,6 @@ import { ModeratorCard } from '@/components/mod-panel/ModeratorCard';
 import { ModalAddMember } from '@/components/mod-panel/modals/ModalAddMember';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { SERVERS } from '@/interfaces/Server';
-import moment from 'moment';
-import { HorizontalLayout } from '@/components/Styled';
 import { ISettings } from '@/models/Settings';
 
 const AppContainer = styled.div`
@@ -67,20 +67,20 @@ interface ModPanelPageProps {
 
 const getDaysBetweenDates = (date1: Date, date2: Date): Date[] => {
 	const result = [];
-	for (let day = date1; day <= date2; day.setDate(day.getDate()+1)) {
+	for (let day = date1; day <= date2; day.setDate(day.getDate() + 1)) {
 		result.push(new Date(day));
 	}
 	return result;
 };
 
 const dateFormatter = new Intl.DateTimeFormat('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' });
-export const timePattern = (group: string | null = null) => `\\[(?${group ? `<${group}>` : ':'}\\d{2}:\\d{2}(?::\\d{2})?)]`;
-export const namePattern = (group: string | null = null) => `(?${group ? `<${group}>` : ':'}[A-Za-z_0-9-]+)`;
+const timePattern = (group: string | null = null) => `\\[(?${ group ? `<${ group }>` : ':' }\\d{2}:\\d{2}(?::\\d{2})?)]`;
+const namePattern = (group: string | null = null) => `(?${ group ? `<${ group }>` : ':' }[A-Za-z_0-9-]+)`;
 const connectionRegExp = new RegExp(`${timePattern('time')} ${namePattern('playerName')} (?<actionType>(?:logged in)|(?:left the game))\\n?`, 'i');
 const toUTC = (date: string) => date.split('-').reverse().join('-');
 
 const timeToSeconds = (time: string): number => {
-	const [hours, minutes, seconds] = time.split(':').map(Number);
+	const [ hours, minutes, seconds ] = time.split(':').map(Number);
 	return (hours * 60 + minutes) * 60 + seconds;
 };
 
@@ -106,7 +106,7 @@ const durationToString = (duration: any): string => {
 	const minutes = duration._data.minutes;
 	const seconds = duration._data.seconds;
 
-	return `${padZero(days * 24 + hours)}:${padZero(minutes)}:${padZero(seconds)}`;
+	return `${ padZero(days * 24 + hours) }:${ padZero(minutes) }:${ padZero(seconds) }`;
 };
 
 const ModPanelPage: NextPage<ModPanelPageProps> = ({
@@ -149,7 +149,10 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 				headers: {
 					'content-type': 'application/json'
 				},
-				body: JSON.stringify({ urlBase: server.connection_logs_url, date: dateFormatter.format(date).replaceAll('.', '-') })
+				body: JSON.stringify({
+					urlBase: `${ server.logs_url }/connection/`,
+					date: dateFormatter.format(date).replaceAll('.', '-')
+				})
 			})
 		}));
 		for await (let request of requests) {
@@ -158,24 +161,40 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 		}
 		const serverUserNames = allUsers.filter(user => user.servers.includes(server.value) && user.role <= EUserRoles.moder).map(user => user.username);
 		const durations: any = {};
-		const usernamesReg = new RegExp(serverUserNames.map(username => ` ${username} `).join('|'), 'i');
-		logs.forEach(log => {
-			log.text.split('\n').filter((line: string) => line.length && usernamesReg.test(line)).forEach((line: string) => {
+		const usernamesReg = new RegExp(serverUserNames.map(username => ` ${ username } `).join('|'), 'i');
+
+		logs.forEach((log, li) => {
+			const lines = log.text.split('\n').filter((line: string) => line.length && usernamesReg.test(line));
+			const notEndedModerators: Set<string> = new Set();
+
+			lines.forEach((line: string, i: number) => {
 				const data = connectionRegExp.exec(line)?.groups;
 
 				if (data) {
 					if (!durations[data.playerName]) durations[data.playerName] = {
 						duration: moment.duration(0),
-						lastLogin: `${toUTC(log.date)} 00:00:00`
+						lastLogin: `${ toUTC(log.date) } 00:00:00`
 					};
 					if (data.actionType === 'left the game') {
-						const leftTime = `${toUTC(log.date)} ${data.time}`;
+						const leftTime = `${ toUTC(log.date) } ${ data.time }`;
 						const lastLoginMoment = moment(durations[data.playerName].lastLogin);
 						const leftGameMoment = moment(leftTime);
 						durations[data.playerName].duration = durations[data.playerName].duration.add(moment.duration(leftGameMoment.diff(lastLoginMoment)));
+						notEndedModerators.delete(data.playerName);
 					} else {
-						durations[data.playerName].lastLogin = `${toUTC(log.date)} ${data.time}`;
+						durations[data.playerName].lastLogin = `${ toUTC(log.date) } ${ data.time }`;
+						notEndedModerators.add(data.playerName);
 					}
+				}
+
+				if (i === lines.length - 1 && li === logs.length - 1 && notEndedModerators.size > 0) {
+					notEndedModerators.forEach(moderatorName => {
+						const leftTime = `${ toUTC(log.date) } 00:00:00`;
+						const lastLoginMoment = moment(durations[moderatorName].lastLogin);
+						const leftGameMoment = moment(leftTime).add(1, 'day');
+						durations[moderatorName].duration = durations[moderatorName].duration.add(moment.duration(leftGameMoment.diff(lastLoginMoment)));
+						notEndedModerators.delete(moderatorName);
+					});
 				}
 			});
 		});
@@ -188,11 +207,14 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 			headers: {
 				'content-type': 'application/json'
 			},
-			body: JSON.stringify({ urlBase: server.connection_logs_url, date: dateFormatter.format(new Date()).replaceAll('.', '-') })
-		}).then(res => res.json())
+			body: JSON.stringify({
+				urlBase: `${ server.logs_url }/connection/`,
+				date: dateFormatter.format(new Date()).replaceAll('.', '-')
+			})
+		}).then(res => res.json());
 		const serverUserNames = allUsers.map(user => user.username);
 		const online: any = {};
-		const usernamesReg = new RegExp(serverUserNames.map(username => ` ${username} `).join('|'), 'i');
+		const usernamesReg = new RegExp(serverUserNames.map(username => ` ${ username } `).join('|'), 'i');
 
 		response.text.split('\n').filter((line: string) => line.length && usernamesReg.test(line)).forEach((line: string) => {
 			const data = connectionRegExp.exec(line)?.groups;
@@ -228,11 +250,17 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 
 		for (let server of Object.values(SERVERS)) {
 			const onlineForRecentWeek = await getOnlineForRecentWeekForServer(days, server);
-			clipboardText += `[ ${server.label} ]\n`;
+			clipboardText += `[ ${ server.label } ]\n`;
 
-			for (let [username, value] of Object.entries(onlineForRecentWeek)) {
+			for (let [ username, value ] of Object.entries(onlineForRecentWeek)) {
 				const duration = (value as any).duration;
-				const earnedPoints = calcOnlinePointsForUser(duration.as('seconds'), settings?.pointsPerWeek, settings?.onlinePerWeek, settings?.overtimeMultiplier);
+				const moderator = users.find(user => user.username === username);
+				const pointsPerWeekByRole = moderator ?
+					moderator.role === EUserRoles.trainee ? settings?.pointsPerWeekForTrainee :
+						moderator.role === EUserRoles.helper ? settings?.pointsPerWeekForHelper :
+							moderator.role === EUserRoles.moder ? settings?.pointsPerWeekForModerator :
+								settings?.pointsPerWeekForTrainee : settings?.pointsPerWeekForTrainee;
+				const earnedPoints = calcOnlinePointsForUser(duration.as('seconds'), pointsPerWeekByRole, settings?.onlinePerWeek, settings?.overtimeMultiplier);
 
 				if (!result[username]) {
 					result[username] = earnedPoints;
@@ -240,7 +268,7 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 					result[username] = result[username] + earnedPoints;
 				}
 
-				clipboardText += `${username}: ${durationToString(duration)} (+${earnedPoints})\n`;
+				clipboardText += `${ username }: ${ durationToString(duration) } (+${ earnedPoints })\n`;
 			}
 			clipboardText += `\n`;
 		}
@@ -248,7 +276,7 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 
 		await navigator.clipboard.writeText(clipboardText);
 
-		for (let [username, points] of Object.entries(result)) {
+		for (let [ username, points ] of Object.entries(result)) {
 			const moderator = users.find(user => user.username === username);
 			if (moderator) {
 				await fetch('/api/users/edit', {
@@ -387,14 +415,17 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 									<HorizontalLayout>
 										{
 											settings && settings.lastWeek < moment().get('week') && currentUser.role >= EUserRoles.curator ? (
-												<Button type="primary" loading={ pointsInProgress } onClick={ calcOnlineForRecentWeek }>Начислить очки за неделю</Button>
+												<Button type="primary" loading={ pointsInProgress }
+												        onClick={ calcOnlineForRecentWeek }>
+													Начислить очки за неделю
+												</Button>
 											) : null
 										}
-										{/*{*/}
-										{/*	currentUser.role >= EUserRoles.curator ? (*/}
-										{/*		<Button type="primary" danger loading={ pointsInProgress } onClick={ resetPoints }>Ресетнуть все очки</Button>*/}
-										{/*	) : null*/}
-										{/*}*/}
+										{/*{*/ }
+										{/*	currentUser.role >= EUserRoles.curator ? (*/ }
+										{/*		<Button type="primary" danger loading={ pointsInProgress } onClick={ resetPoints }>Ресетнуть все очки</Button>*/ }
+										{/*	) : null*/ }
+										{/*}*/ }
 										{
 											currentUser.role >= EUserRoles.st ? (
 												<ModalAddMember user={ currentUser } onSubmit={ updateUserList }/>
@@ -411,7 +442,9 @@ const ModPanelPage: NextPage<ModPanelPageProps> = ({
 											return a.role >= b.role ? -1 : 1;
 										}).map(modUser => (
 											<ModeratorCard key={ modUser.discord_id } user={ currentUser }
-											               moderator={ modUser } isOnline={ getUserOnlineStatus(modUser) } onUpdate={ updateUserList }/>
+											               moderator={ modUser }
+											               isOnline={ getUserOnlineStatus(modUser) }
+											               onUpdate={ updateUserList }/>
 										))
 									}
 								</ContentContainer>
