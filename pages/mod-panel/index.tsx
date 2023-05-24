@@ -181,7 +181,7 @@ const ModPanelIndexPage: NextPage<ModPanelIndexPageProps> = ({
 				/>
 				<HorizontalLayout>
 					{
-						settings && settings.lastWeek < moment().get('week') && user.role >= EUserRoles.curator ? (
+						settings && settings.lastWeek < moment().get('week') && user && user.role >= EUserRoles.curator ? (
 							<Button type="primary" loading={ pointsInProgress }
 							        onClick={ calcOnlineForRecentWeek }>
 								Начислить очки за неделю
@@ -194,7 +194,7 @@ const ModPanelIndexPage: NextPage<ModPanelIndexPageProps> = ({
 					{/*	) : null*/ }
 					{/*}*/ }
 					{
-						user.role >= EUserRoles.st ? (
+						user && user.role >= EUserRoles.st ? (
 							<ModalAddMember user={ user } onSubmit={ updateUserList }/>
 						) : null
 					}

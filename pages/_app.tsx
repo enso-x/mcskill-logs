@@ -9,15 +9,15 @@ const { darkAlgorithm } = theme;
 
 export default function App({ Component, pageProps }: AppProps) {
 	return (
-		<ConfigProvider theme={ {
-			algorithm: darkAlgorithm,
-			token: {
-				colorPrimary: '#722ed1',
-			}
-		} }>
-			<SessionProvider session={ pageProps.session }>
+		<SessionProvider session={ pageProps.session }>
+			<ConfigProvider theme={ {
+				algorithm: darkAlgorithm,
+				token: {
+					colorPrimary: '#722ed1',
+				}
+			} }>
 				<Component { ...pageProps } />
-			</SessionProvider>
-		</ConfigProvider>
+			</ConfigProvider>
+		</SessionProvider>
 	);
 }

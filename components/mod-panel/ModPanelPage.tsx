@@ -7,7 +7,7 @@ import { Forbidden } from '@/components/mod-panel/errors/Forbidden';
 import { Header } from '@/components/mod-panel/Header';
 import { Navigation } from '@/components/mod-panel/Navigation';
 import { EUserRoles, IUser } from '@/interfaces/User';
-import { useSession } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 
 const AppContainer = styled.div`
 	display: flex;
@@ -69,7 +69,7 @@ export function ModPanelPage({
 	needRole = EUserRoles.player
 }: IModPanelPageProps) {
 	const { data: session } = useSession();
-	console.log(session);
+
 	if (!session) {
 		return null;
 	}

@@ -4,6 +4,9 @@ const nextConfig = {
   transpileModules: ['antd'],
   compiler: {
     styledComponents: true
+  },
+  env: {
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL
   }
 }
 
