@@ -8,13 +8,18 @@ const Container = styled.main`
 	flex-direction: column;
 `;
 
-const Page: React.FC<React.PropsWithChildren> = ({
-	children
-}) => {
+interface IPageProps extends React.PropsWithChildren {
+	title?: string;
+}
+
+export function Page({
+	children,
+	title = 'McSkill Fancy logs'
+}: IPageProps) {
 	return (
 		<>
 			<Head>
-				<title>McSkill Fancy logs</title>
+				<title>{ title }</title>
 				<meta name="description" content="McSkill Fancy logs created by @enso-x"/>
 				<meta name="viewport" content="width=device-width, initial-scale=1"/>
 				<link rel="icon" href="/favicon.ico"/>
@@ -24,6 +29,4 @@ const Page: React.FC<React.PropsWithChildren> = ({
 			</Container>
 		</>
 	);
-};
-
-export default Page;
+}

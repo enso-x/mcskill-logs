@@ -1,9 +1,10 @@
 import React from 'react';
-import Page from '@/components/Page';
+import styled from 'styled-components';
 import { GetServerSideProps, NextPage } from 'next';
 import Error from 'next/error';
 import Script from 'next/script';
-import styled from 'styled-components';
+
+import { Page } from '@/components/Page';
 
 interface ILogsPageProps {
 	url: string;

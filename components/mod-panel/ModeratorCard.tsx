@@ -1,5 +1,5 @@
 import React from 'react';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 import { EditOutlined } from '@ant-design/icons';
 
 import { HorizontalLayout, VerticalLayout, OnlineIndicator } from '@/components/Styled';
@@ -7,6 +7,7 @@ import { ModalAddMember } from '@/components/mod-panel/modals/ModalAddMember';
 import { ModalDeleteMember } from '@/components/mod-panel/modals/ModalDeleteMember';
 import { InfinityIcon } from '@/components/mod-panel/icons/Infinity';
 import { EUserRoles, IUser, ROLES } from '@/interfaces/User';
+import { IUserOnlineStatus } from '@/api/mod-panel/online';
 
 const ButtonsContainer = styled(VerticalLayout)`
 	gap: 8px;
@@ -48,22 +49,19 @@ const PointsContainer = styled(HorizontalLayout)`
 interface IModeratorCardProps {
 	user: IUser;
 	moderator: IUser;
-	isOnline: {
-		title: string;
-		status: boolean;
-	};
+	onlineStatus: IUserOnlineStatus;
 	onUpdate: () => void;
 }
 
 export function ModeratorCard({
 	user,
 	moderator,
-	isOnline,
+	onlineStatus,
 	onUpdate
 }: IModeratorCardProps) {
 	return (
 		<ModeratorCardContainer>
-			<CardOnlineIndicator title={ isOnline.title } $online={ isOnline.status }/>
+			<CardOnlineIndicator title={ onlineStatus.title } $online={ onlineStatus.isOnline }/>
 			<ButtonsContainer>
 				{
 					(user.role >= EUserRoles.st && user.role > moderator.role)

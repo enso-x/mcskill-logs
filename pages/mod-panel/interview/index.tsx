@@ -2,25 +2,11 @@ import React, { ChangeEventHandler, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { NextPage } from 'next';
 import { JWT } from 'next-auth/jwt';
-import {
-	Button,
-	Card,
-	Descriptions,
-	Input,
-	InputNumber,
-	Select,
-	Space,
-	Table,
-	Typography
-} from 'antd';
+import { Button, Card, Descriptions, Input, InputNumber, Select, Space, Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 
 import { protectedRoute } from '@/middleware/protectedRoute';
-import Page from '@/components/Page';
-import { Header } from '@/components/mod-panel/Header';
-import { NotAuthorized } from '@/components/mod-panel/errors/NotAuthorized';
-import { Forbidden } from '@/components/mod-panel/errors/Forbidden';
-import { Navigation } from '@/components/mod-panel/Navigation';
+import { ModPanelPage, ModPanelPageContent, ModPanelPageControls } from '@/components/mod-panel/ModPanelPage';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { ITestResult } from '@/models/TestResult';
 
@@ -103,57 +89,6 @@ const testResultsTableColumns: ColumnsType<ITestResultsTableData> = [
 	}
 ];
 
-const AppContainer = styled.div`
-	display: flex;
-	flex-direction: column;
-	height: 100vh;
-	background: #141414;
-`;
-
-const MainContainer = styled.div`
-	display: flex;
-	flex: 1;
-	overflow: hidden;
-`;
-
-const Content = styled.div`
-	flex: 1;
-	overflow: hidden;
-	display: flex;
-	flex-direction: column;
-`;
-
-const ContentControls = styled.div`
-	display: flex;
-	padding: 16px;
-	justify-content: space-between;
-	border-bottom: 2px solid #242424;
-
-	.ant-select-show-search:where(.css-dev-only-do-not-override-a1szv).ant-select:not(.ant-select-customize-input) .ant-select-selector {
-		cursor: pointer;
-	}
-`;
-
-const ContentContainer = styled.div`
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	overflow-y: auto;
-
-	.ant-table-wrapper .ant-table-container {
-		border-radius: 8px;
-	}
-
-	.ant-table-wrapper .ant-table-container table tr:not(thead > tr):last-child > *:last-child {
-		border-end-end-radius: 8px;
-	}
-
-	.ant-table-wrapper .ant-table-container table tr:not(thead > tr):last-child > *:first-child {
-		border-end-start-radius: 8px;
-	}
-`;
-
 const InnerContainer = styled.div`
 	display: flex;
 	align-items: center;
@@ -177,6 +112,10 @@ const dateFormatter = Intl.DateTimeFormat('ru-RU', {
 	hour: '2-digit',
 	minute: '2-digit'
 });
+
+const ModPanelPageContentStyled = styled(ModPanelPageContent)`
+	padding: 0;
+`;
 
 interface ModPanelInterviewPageProps {
 	discord: JWT;
@@ -358,179 +297,162 @@ const ModPanelInterviewPage: NextPage<ModPanelInterviewPageProps> = ({
 	}, [ resultPoints, resultPercent, results, grade ]);
 
 	return (
-
-		<Page>
+		<ModPanelPage user={ user } needRole={ EUserRoles.st }>
 			{
-				!user ? (
-					<NotAuthorized/>
-				) : user.role <= EUserRoles.moder ? (
-					<Forbidden/>
-				) : (
-					<AppContainer>
-						<Header/>
-						<MainContainer>
-							<Navigation/>
-							<Content>
-								{
-									step === 'init' || step === 'settings' ? (
-										<ContentControls>
-											{
-												step === 'init' && (
-													<>
-														<div style={ { display: 'flex', justifyContent: 'flex-end' } }>
-															<Select<string> style={ { width: 200 } }
-															                getPopupContainer={ () => {
-																                return document.body;
-															                } } defaultActiveFirstOption
-															                defaultValue={ selectedGrade }
-															                onChange={ onSelectChange }
-															                options={ selectGrades }/>
-														</div>
-														<Button type="primary" onClick={ onClickSetup }>Настройки
-															тестирования</Button>
-													</>
-												)
-											}
-											{
-												step === 'settings' && grade && (
-													<Box>
-														<div>
-															<Input type="text" value={ playerName }
-															       placeholder={ 'Player name' }
-															       onChange={ onPlayerNameChange }/>
-														</div>
-														<div>
-															<Input type="text" value={ questionsCountValue }
-															       placeholder={ 'Question count' }
-															       onChange={ onQuestionCountChange }
-															       addonAfter={ `/ ${ grade.questions.length }` }/>
-														</div>
-														<Button type="primary" onClick={ onClickBegin }>Начать</Button>
-													</Box>
-												)
-											}
-										</ContentControls>
-									) : null
-								}
-								<ContentContainer>
-									{
-										step === 'test' || step === 'results' ? (
-											<InnerContainer>
-												{
-													step === 'test' && grade && playerName && questions.length && (
-														<Space direction="vertical" size={ 16 }>
-															<Descriptions bordered
-															              column={ {
-																              xxl: 1,
-																              xl: 1,
-																              lg: 1,
-																              md: 1,
-																              sm: 1,
-																              xs: 1
-															              } }>
-																<Descriptions.Item
-																	label="Player name">{ playerName }</Descriptions.Item>
-																<Descriptions.Item
-																	label="Grade">{ grade.name }</Descriptions.Item>
-															</Descriptions>
-															<Card
-																title={ `Question: ${ currentQuestion + 1 } / ${ questionsCount }` }
-																bordered>
-																<Descriptions
-																	column={ {
-																		xxl: 1,
-																		xl: 1,
-																		lg: 1,
-																		md: 1,
-																		sm: 1,
-																		xs: 1
-																	} }>
-																	<Descriptions.Item
-																		label="Question">{ questions[currentQuestion].question }</Descriptions.Item>
-																	<Descriptions.Item
-																		label="Answer">{ questions[currentQuestion].answer }</Descriptions.Item>
-																</Descriptions>
-																<Space size={ 16 }>
-																	<InputNumber<string> addonBefore="Points"
-																	                     stringMode={ true }
-																	                     min={ '0' }
-																	                     step={ '0.1' }
-																	                     controls={ false }
-																	                     value={ currentQuestionPointsValue }
-																	                     onChange={ onCurrentQuestionPointsChange }
-																	/>
-																	{
-																		currentQuestion < (questionsCount - 1) ? (
-																			<Button
-																				onClick={ onClickNextQuestion }>Next</Button>
-																		) : (
-																			<Button type="primary"
-																			        onClick={ onClickGetResults }>Get
-																				results</Button>
-																		)
-																	}
-																</Space>
-															</Card>
-														</Space>
-													)
-												}
-												{
-													step === 'results' && grade && playerName && results.length && (
-														<Space direction="vertical" size={ 16 }>
-															<Descriptions bordered
-															              column={ {
-																              xxl: 1,
-																              xl: 1,
-																              lg: 1,
-																              md: 1,
-																              sm: 1,
-																              xs: 1
-															              } }>
-																<Descriptions.Item
-																	label="Player name">{ playerName }</Descriptions.Item>
-																<Descriptions.Item
-																	label="Grade">{ grade.name }</Descriptions.Item>
-																<Descriptions.Item
-																	label="Question count">{ questionsCount }</Descriptions.Item>
-															</Descriptions>
-															<Box>
-																<Title level={ 3 }
-																       style={ { marginBottom: 0 } }>Results</Title>
-																<Table bordered pagination={ false }
-																       columns={ resultTableColumns }
-																       dataSource={ results.map((result, i) => ({
-																	       key: i + 1,
-																	       question: result.question,
-																	       points: result.points
-																       })) } scroll={ { y: 320 } } footer={ () => (
-																	<span>Points: { resultPoints } / { questionsCount } ( { resultPercent }% )</span>
-																) }/>
-															</Box>
-														</Space>
-													)
-												}
-											</InnerContainer>
-										) : null
-									}
-									{
-										testResults.length ? (
-											<Table style={ {
-												width: '100%',
-												display: 'flex',
-												flexDirection: 'column',
-												overflowY: 'auto',
-												padding: '16px'
-											} } bordered pagination={ false } columns={ testResultsTableColumns }
-											       dataSource={ preparedTestResults }/>
-										) : null
-									}
-								</ContentContainer>
-							</Content>
-						</MainContainer>
-					</AppContainer>
-				)
+				step === 'init' || step === 'settings' ? (
+					<ModPanelPageControls>
+						{
+							step === 'init' && (
+								<>
+									<div style={ { display: 'flex', justifyContent: 'flex-end' } }>
+										<Select<string> style={ { width: 200 } }
+										                getPopupContainer={ () => {
+											                return document.body;
+										                } } defaultActiveFirstOption
+										                defaultValue={ selectedGrade }
+										                onChange={ onSelectChange }
+										                options={ selectGrades }/>
+									</div>
+									<Button type="primary" onClick={ onClickSetup }>Настройки
+										тестирования</Button>
+								</>
+							)
+						}
+						{
+							step === 'settings' && grade && (
+								<Box>
+									<div>
+										<Input type="text" value={ playerName }
+										       placeholder={ 'Player name' }
+										       onChange={ onPlayerNameChange }/>
+									</div>
+									<div>
+										<Input type="text" value={ questionsCountValue }
+										       placeholder={ 'Question count' }
+										       onChange={ onQuestionCountChange }
+										       addonAfter={ `/ ${ grade.questions.length }` }/>
+									</div>
+									<Button type="primary" onClick={ onClickBegin }>Начать</Button>
+								</Box>
+							)
+						}
+					</ModPanelPageControls>
+				) : null
 			}
-		</Page>
+			<ModPanelPageContentStyled>
+				{
+					step === 'test' || step === 'results' ? (
+						<InnerContainer>
+							{
+								step === 'test' && grade && playerName && questions.length && (
+									<Space direction="vertical" size={ 16 }>
+										<Descriptions bordered
+										              column={ {
+											              xxl: 1,
+											              xl: 1,
+											              lg: 1,
+											              md: 1,
+											              sm: 1,
+											              xs: 1
+										              } }>
+											<Descriptions.Item
+												label="Player name">{ playerName }</Descriptions.Item>
+											<Descriptions.Item
+												label="Grade">{ grade.name }</Descriptions.Item>
+										</Descriptions>
+										<Card
+											title={ `Question: ${ currentQuestion + 1 } / ${ questionsCount }` }
+											bordered>
+											<Descriptions
+												column={ {
+													xxl: 1,
+													xl: 1,
+													lg: 1,
+													md: 1,
+													sm: 1,
+													xs: 1
+												} }>
+												<Descriptions.Item
+													label="Question">{ questions[currentQuestion].question }</Descriptions.Item>
+												<Descriptions.Item
+													label="Answer">{ questions[currentQuestion].answer }</Descriptions.Item>
+											</Descriptions>
+											<Space size={ 16 }>
+												<InputNumber<string> addonBefore="Points"
+												                     stringMode={ true }
+												                     min={ '0' }
+												                     step={ '0.1' }
+												                     controls={ false }
+												                     value={ currentQuestionPointsValue }
+												                     onChange={ onCurrentQuestionPointsChange }
+												/>
+												{
+													currentQuestion < (questionsCount - 1) ? (
+														<Button
+															onClick={ onClickNextQuestion }>Next</Button>
+													) : (
+														<Button type="primary"
+														        onClick={ onClickGetResults }>Get
+															results</Button>
+													)
+												}
+											</Space>
+										</Card>
+									</Space>
+								)
+							}
+							{
+								step === 'results' && grade && playerName && results.length && (
+									<Space direction="vertical" size={ 16 }>
+										<Descriptions bordered
+										              column={ {
+											              xxl: 1,
+											              xl: 1,
+											              lg: 1,
+											              md: 1,
+											              sm: 1,
+											              xs: 1
+										              } }>
+											<Descriptions.Item
+												label="Player name">{ playerName }</Descriptions.Item>
+											<Descriptions.Item
+												label="Grade">{ grade.name }</Descriptions.Item>
+											<Descriptions.Item
+												label="Question count">{ questionsCount }</Descriptions.Item>
+										</Descriptions>
+										<Box>
+											<Title level={ 3 }
+											       style={ { marginBottom: 0 } }>Results</Title>
+											<Table bordered pagination={ false }
+											       columns={ resultTableColumns }
+											       dataSource={ results.map((result, i) => ({
+												       key: i + 1,
+												       question: result.question,
+												       points: result.points
+											       })) } scroll={ { y: 320 } } footer={ () => (
+												<span>Points: { resultPoints } / { questionsCount } ( { resultPercent }% )</span>
+											) }/>
+										</Box>
+									</Space>
+								)
+							}
+						</InnerContainer>
+					) : null
+				}
+				{
+					testResults.length ? (
+						<Table style={ {
+							width: '100%',
+							display: 'flex',
+							flexDirection: 'column',
+							overflowY: 'auto',
+							padding: '16px'
+						} } bordered pagination={ false } columns={ testResultsTableColumns }
+						       dataSource={ preparedTestResults }/>
+					) : null
+				}
+			</ModPanelPageContentStyled>
+		</ModPanelPage>
 	);
 };
 

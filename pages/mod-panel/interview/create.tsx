@@ -1,8 +1,8 @@
 import React, { ChangeEventHandler, DragEventHandler, MouseEventHandler, useRef, useState } from 'react';
-import Page from '@/components/Page';
+import styled from 'styled-components';
 import { NextPage } from 'next';
 
-import styled from 'styled-components';
+import { Page } from '@/components/Page';
 
 const Container = styled.div`
 	height: 100vh;
@@ -12,14 +12,6 @@ const Container = styled.div`
 	padding: 16px;
 	gap: 16px;
 `;
-
-const dateFormatter = Intl.DateTimeFormat('ru-RU', {
-	day: '2-digit',
-	month: '2-digit',
-	year: 'numeric',
-	hour: '2-digit',
-	minute: '2-digit'
-});
 
 const Box = styled.div`
 	display: flex;

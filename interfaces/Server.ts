@@ -1,4 +1,12 @@
-export const SERVERS = {
+export interface IServer {
+	id: string;
+	label: string;
+	description: string;
+	value: string;
+	logs_url: string;
+}
+
+export const SERVERS: Record<string, IServer> = {
 	'server1': {
 		id: 'pixelmon',
 		label: 'Pixelmon 1.12.2 #1',

@@ -1,8 +1,9 @@
 import React from 'react';
-import Page from '@/components/Page';
-import { GetServerSideProps, NextPage } from 'next';
-import { parse } from 'node-html-parser';
 import styled from 'styled-components';
+import { parse } from 'node-html-parser';
+import { GetServerSideProps, NextPage } from 'next';
+
+import { Page } from '@/components/Page';
 
 const Container = styled.div`
 	height: 100%;
