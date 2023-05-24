@@ -6,11 +6,11 @@ import { JWT } from 'next-auth/jwt';
 import { Button, Select } from 'antd';
 import moment from 'moment';
 
-import { onlineAPI } from '@/api/mod-panel';
 import { protectedRoute } from '@/middleware/protectedRoute';
 import { useDebounce } from '@/helpers';
 import { filterAndSortUsers } from '@/helpers/users';
 import { momentDurationToString } from '@/helpers/datetime';
+import { onlineAPI } from '@/helpers/mod-panel';
 import { ModPanelPage, ModPanelPageControls, ModPanelPageContent } from '@/components/mod-panel/ModPanelPage';
 import { HorizontalLayout } from '@/components/Styled';
 import { ModeratorCard } from '@/components/mod-panel/ModeratorCard';
