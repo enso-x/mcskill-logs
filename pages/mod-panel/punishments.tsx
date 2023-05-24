@@ -11,6 +11,7 @@ import { PUNISHMENT_TYPES } from '@/interfaces/PunishmentType';
 import { SERVERS } from '@/interfaces/Server';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { IPunishment } from '@/models/Punishment';
+import styled from 'styled-components';
 
 const { RangePicker } = DatePicker;
 
@@ -21,6 +22,12 @@ const dateFormatter = Intl.DateTimeFormat('ru-RU', {
 	hour: '2-digit',
 	minute: '2-digit'
 });
+
+const ModPageControlsStyled = styled(ModPanelPageControls)`
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+`;
 
 interface ModPanelPunishmentsPageProps {
 	discord: JWT;
@@ -144,7 +151,7 @@ const ModPanelPunishmentsPage: NextPage<ModPanelPunishmentsPageProps> = ({
 
 	return (
 		<ModPanelPage needRole={EUserRoles.helper}>
-			<ModPanelPageControls>
+			<ModPageControlsStyled>
 				<HorizontalLayout>
 					<Select
 						mode="multiple"
@@ -198,7 +205,7 @@ const ModPanelPunishmentsPage: NextPage<ModPanelPunishmentsPageProps> = ({
 					<RangePicker onChange={ handleRangeChange }
 					             format="YYYY-MM-DD"/>
 				</HorizontalLayout>
-			</ModPanelPageControls>
+			</ModPageControlsStyled>
 			<ModPanelPageContent>
 				<Table bordered style={ {
 					width: '100%'

@@ -115,6 +115,7 @@ const dateFormatter = Intl.DateTimeFormat('ru-RU', {
 
 const ModPanelPageContentStyled = styled(ModPanelPageContent)`
 	padding: 0;
+	gap: 0;
 `;
 
 interface ModPanelInterviewPageProps {
