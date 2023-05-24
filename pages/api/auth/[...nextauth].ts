@@ -2,9 +2,9 @@ import NextAuth, { AuthOptions } from 'next-auth';
 import DiscordProvider from 'next-auth/providers/discord';
 
 import { createDBConnection } from '@/middleware/mongodb';
+import { serializeUser } from '@/middleware/protectedRoute';
 import validateEnv from '@/helpers/validateEnv';
 import { User } from '@/models/User';
-import { serializeUser } from '@/middleware/protectedRoute';
 
 export const authOptions: AuthOptions = {
 	providers: [
@@ -31,7 +31,7 @@ export const authOptions: AuthOptions = {
 			return session;
 		}
 	},
-	secret: validateEnv('NEXTAUTH_SECRET'),
+	secret: validateEnv('NEXT_PUBLIC_SECRET'),
 };
 
 export default NextAuth(authOptions);
