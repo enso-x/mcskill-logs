@@ -70,18 +70,12 @@ export function ModPanelPage({
 }: IModPanelPageProps) {
 	const { data: session } = useSession();
 
-	if (!session) {
-		return null;
-	}
-
-	const { user } = session;
-
 	return (
 		<Page title={ 'Pixelmon Mod panel' }>
 			{
-				!user ? (
+				!session ? (
 					<NotAuthorized/>
-				) : user.role < needRole ? (
+				) : session.user && session.user.role < needRole ? (
 					<Forbidden/>
 				) : (
 					<AppContainer>
