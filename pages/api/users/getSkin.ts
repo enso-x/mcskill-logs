@@ -34,7 +34,7 @@ const handler = async (
 					contentType,
 					buffer,
 					timeout: setTimeout(() => {
-
+						userSkinsCache.delete(username);
 					}, 1000 * 60 * 60)
 				});
 
