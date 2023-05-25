@@ -12,7 +12,7 @@ const handler = async (
 		try {
 			const [ alreadyHaveUser ] = await User.find({ discord_id: req.body.discord_id }).exec();
 
-			if (!req.body.username || !req.body.discord_id || !req.body.role || !req.body.servers || alreadyHaveUser) {
+			if (!req.body.username || !req.body.discord_id || !req.body.roles || alreadyHaveUser) {
 				return res.status(500).send([]);
 			}
 			const newUser = new User(req.body);
