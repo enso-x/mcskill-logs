@@ -74,7 +74,7 @@ export function ServerMonitoring() {
 							<span>Текущий онлайн:</span>
 							<span>{ serverInfo.players_now } / { serverInfo.players_max }</span>
 						</ServerContent>
-						<Button href={ `/files/${ encodeURIComponent(Object.values(SERVERS).find(server => server.id === serverInfo.url)!.logs_url) }` } target="__blank" icon={<FileTextOutlined />}>Логи</Button>
+						<Button href={ `/files/${ encodeURIComponent(Object.values(SERVERS).find(server => server.id === serverInfo.url)!.logs_url) }/` } target="__blank" icon={<FileTextOutlined />}>Логи</Button>
 					</ServerInfoContainer>
 				))
 			}
