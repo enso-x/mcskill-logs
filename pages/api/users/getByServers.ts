@@ -14,7 +14,7 @@ const handler = async (
 			if (!ids) {
 				return res.status(200).send([]);
 			}
-			const results = await User.find({ servers: { $all: ids.split(',') } }).exec();
+			const results = await User.find({ 'roles.server': { $all: ids.split(',') } }).exec();
 			return res.status(200).send(results);
 		} catch (error) {
 			return res.status(500).send([]);
