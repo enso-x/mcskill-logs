@@ -265,7 +265,7 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 						<img style={ {
 							width: '128px',
 							alignSelf: 'center'
-						} } src={ `https://mcskill.net/MineCraft/?name=${ debouncedUsername }&mode=1` }
+						} } src={ `/api/users/getSkin?username=${ debouncedUsername }&mode=1` }
 						     alt="Skin preview"/>
 					) }
 				</ContentContainer>

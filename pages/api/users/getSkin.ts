@@ -4,6 +4,7 @@ const userSkinsCache = new Map<string, {
 	lastUpdate: Date;
 	contentType: string;
 	buffer: Buffer;
+	timeout: NodeJS.Timeout;
 }>();
 
 const handler = async (
@@ -26,28 +27,30 @@ const handler = async (
 				return [contentType, Buffer.from(await userSkinResponse.arrayBuffer())];
 			};
 
-			if (!userSkinsCache.has(username)) {
+			const sendSkinData = async () => {
 				const [ contentType, buffer ] = await fetchSkin();
 				userSkinsCache.set(username, {
 					lastUpdate: new Date(),
 					contentType,
-					buffer
+					buffer,
+					timeout: setTimeout(() => {
+
+					}, 1000 * 60 * 60)
 				});
+
 				res.setHeader('Content-Type', contentType);
 				return res.status(200).send(buffer);
+			};
+
+			if (!userSkinsCache.has(username)) {
+				await sendSkinData();
 			}
 
 			const cache = userSkinsCache.get(username)!;
 
 			if ((cache.lastUpdate.getTime() + 1000 * 60 * 60) < new Date().getTime()) {
-				const [ contentType, buffer ] = await fetchSkin();
-				userSkinsCache.set(username, {
-					lastUpdate: new Date(),
-					contentType,
-					buffer
-				});
-				res.setHeader('Content-Type', contentType);
-				return res.status(200).send(buffer);
+				clearTimeout(cache.timeout);
+				await sendSkinData();
 			}
 
 			res.setHeader('Content-Type', cache.contentType);
