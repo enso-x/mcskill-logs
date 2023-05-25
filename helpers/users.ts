@@ -1,4 +1,4 @@
-import { IUser } from '@/interfaces/User';
+import { EUserRoles, IUser, IUserServerRoleInfo } from '@/interfaces/User';
 
 export const filterAndSortUsers = (currentUser: IUser, userList: IUser[]): IUser[] => {
 	if (!currentUser || !userList) {
@@ -9,6 +9,29 @@ export const filterAndSortUsers = (currentUser: IUser, userList: IUser[]): IUser
 		.sort((a, b) => {
 			return a.username.localeCompare(b.username) * -1;
 		}).sort((a, b) => {
-			return a.role >= b.role ? -1 : 1;
+			return getAverageUserRoleInfo(a).role >= getAverageUserRoleInfo(b).role ? -1 : 1;
 		});
+};
+
+export const getAverageUserRoleInfo = (user: IUser): IUserServerRoleInfo => {
+	let result: IUserServerRoleInfo = user.roles[0];
+	user.roles.forEach(roleInfo => {
+		if (roleInfo.role > result.role) {
+			result = roleInfo;
+		}
+	});
+
+	return result;
+};
+
+export const getUserRoleInfoForServer = (user: IUser, server: string): IUserServerRoleInfo | null => {
+	return user.roles.find(role => role.server === server) ?? null;
+};
+
+export const getUserServersKeys = (user: IUser): string[] => {
+	return user.roles.map(roleInfo => roleInfo.server);
+};
+
+export const hasJuniorRole = (user: IUser): boolean => {
+	return user.roles.some(roleInfo => roleInfo.role <= EUserRoles.moder);
 };

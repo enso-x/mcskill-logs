@@ -1,5 +1,7 @@
 import { Types } from 'mongoose';
 
+import { SERVERS } from '@/interfaces/Server';
+
 export enum EUserRoles {
 	player,
 	trainee,
@@ -28,10 +30,16 @@ export const ROLES: Record<EUserRoles, string> = {
 	[EUserRoles.creator]: 'Создатель'
 };
 
+export interface IUserServerRoleInfo {
+	server: keyof typeof SERVERS;
+	role: EUserRoles;
+	points: number;
+}
+
 export interface IUser {
 	username: string;
 	discord_id: string;
-	role: EUserRoles;
-	points: number;
-	servers: Types.Array<string>;
+	verbs: number;
+	warnings: number;
+	roles: Types.Array<IUserServerRoleInfo>;
 }

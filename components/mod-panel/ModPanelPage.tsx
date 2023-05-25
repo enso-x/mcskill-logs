@@ -8,6 +8,7 @@ import { Header } from '@/components/mod-panel/Header';
 import { Navigation } from '@/components/mod-panel/Navigation';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { signOut, useSession } from 'next-auth/react';
+import { getAverageUserRoleInfo } from '@/helpers/users';
 
 const AppContainer = styled.div`
 	display: flex;
@@ -70,12 +71,14 @@ export function ModPanelPage({
 }: IModPanelPageProps) {
 	const { data: session } = useSession();
 
+	const averageUserRoleInfo = session ? session.user ? getAverageUserRoleInfo(session.user) : null : null;
+
 	return (
 		<Page title={ 'Pixelmon Mod panel' }>
 			{
 				!session ? (
 					<NotAuthorized/>
-				) : session.user && session.user.role < needRole ? (
+				) : averageUserRoleInfo && averageUserRoleInfo.role < needRole ? (
 					<Forbidden/>
 				) : (
 					<AppContainer>

@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 
 import { ServerMonitoring } from '@/components/ServerMonitoring';
 import { EUserRoles } from '@/interfaces/User';
+import { getAverageUserRoleInfo } from '@/helpers/users';
 
 const Sidebar = styled.div`
 	display: flex;
@@ -76,11 +77,13 @@ export function Navigation() {
 		return null;
 	}
 
+	const averageUserRoleInfo = session.user ? getAverageUserRoleInfo(session.user) : null;
+
 	return (
 		<Sidebar>
 			<NavigationContainer>
 			{
-				ROUTES.filter(route => route.role <= session?.user.role).map(route => (
+				ROUTES.filter(route => averageUserRoleInfo && route.role <= averageUserRoleInfo.role).map(route => (
 					<SidebarItem key={ route.id } $active={ router.route === route.url }>
 						<Link href={ route.url }>
 							{ route.label }

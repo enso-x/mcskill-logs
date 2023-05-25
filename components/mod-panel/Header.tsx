@@ -7,6 +7,7 @@ import { LogoutOutlined } from '@ant-design/icons';
 import { InfinityIcon } from '@/components/mod-panel/icons/Infinity';
 import { HorizontalLayout } from '@/components/Styled';
 import { EUserRoles, ROLES } from '@/interfaces/User';
+import { getAverageUserRoleInfo } from '@/helpers/users';
 
 const HeaderContainer = styled.div`
 	display: grid;
@@ -59,6 +60,7 @@ export function Header() {
 	}
 
 	const { user } = session;
+	const averageUserRoleInfo = user ? getAverageUserRoleInfo(user) : null;
 
 	const handleLogout = async () => {
 		await signOut();
@@ -71,12 +73,18 @@ export function Header() {
 					src={ `https://mcskill.net/MineCraft/?name=${ user.username }&mode=5` }
 					alt={ user.username } size={ 32 }/>
 				<span>{ user.username }</span>
-				<span>[<span className={ EUserRoles[user.role] }>{ ROLES[user.role] }</span>]</span>
-				<PointsContainer>
-					Баллы: { user.points >= 0 ? user.points : (
-						<InfinityIcon/>
-					) }
-				</PointsContainer>
+				{
+					averageUserRoleInfo ? (
+						<>
+							<span>[<span className={ EUserRoles[averageUserRoleInfo.role] }>{ ROLES[averageUserRoleInfo.role] }</span>]</span>
+							<PointsContainer>
+								Баллы: { averageUserRoleInfo.points >= 0 ? averageUserRoleInfo.points : (
+								<InfinityIcon/>
+							) }
+							</PointsContainer>
+						</>
+					) : null
+				}
 			</HeaderUserInfo>
 			<HeaderTitle>
 				<HeaderLogo src="/images/logo.png"/>

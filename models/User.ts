@@ -10,13 +10,29 @@ export const User = createModel<IUser>('User', {
 		type: String,
 		required: true
 	},
-	role: {
-		type: Number,
-		required: true
-	},
-	points: {
+	verbs: {
 		type: Number,
 		default: 0
 	},
-	servers: [String]
+	warnings: {
+		type: Number,
+		default: 0
+	},
+	roles: {
+		type: [{
+			server: {
+				type: String,
+				required: true
+			},
+			role: {
+				type: Number,
+				required: true
+			},
+			points: {
+				type: Number,
+				default: 0
+			}
+		}],
+		required: true
+	}
 });

@@ -1,11 +1,15 @@
-import React, { ChangeEvent, useState } from 'react';
-import { Button, Input, Modal, Select } from 'antd';
+import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { Button, Input, Modal, Select, Tabs, Typography } from 'antd';
 import styled from 'styled-components';
-
-import { SERVERS } from '@/interfaces/Server';
-import { EUserRoles, IUser, ROLES } from '@/interfaces/User';
-import { useDebounce } from '@/helpers';
 import { PlusOutlined } from '@ant-design/icons';
+
+import { useDebounce } from '@/helpers';
+import { VerticalLayout } from '@/components/Styled';
+import { SERVERS } from '@/interfaces/Server';
+import { EUserRoles, IUser, IUserServerRoleInfo, ROLES } from '@/interfaces/User';
+import { getAverageUserRoleInfo, getUserRoleInfoForServer } from '@/helpers/users';
+
+const { Text } = Typography;
 
 const ContentContainer = styled.div`
 	display: flex;
@@ -38,9 +42,18 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 
 	const [ username, setUsername ] = useState<string>(edit ? edit.username : '');
 	const [ discordID, setDiscordID ] = useState<string>(edit ? edit.discord_id : '');
-	const [ points, setPoints ] = useState<string>(edit ? edit.points.toString() : '0');
-	const [ serverSelectValues, setServerSelectValues ] = useState<string[]>(edit ? edit.servers : selectedServers ?? []);
-	const [ roleSelectValues, setRoleSelectValues ] = useState<string[]>(edit ? [edit.role.toString()] : []);
+	const [ verbs, setVerbs ] = useState<string>(edit ? edit.verbs.toString() : '0');
+	const [ warnings, setWarnings ] = useState<string>(edit ? edit.warnings.toString() : '0');
+	const [ rolesInfo, setRolesInfo ] = useState<IUserServerRoleInfo[]>(edit && edit.roles ? edit.roles : []);
+	const [ serverSelectValues, setServerSelectValues ] = useState<string[]>(rolesInfo.map(roleInfo => roleInfo.server));
+	const [ roles, setRoles ] = useState<Record<string, number>>(rolesInfo.reduce((acc, next) => {
+		acc[next.server] = next.role;
+		return acc;
+	}, {} as Record<string, number>));
+	const [ points, setPoints ] = useState<Record<string, string>>(rolesInfo.reduce((acc, next) => {
+		acc[next.server] = next.points.toString();
+		return acc;
+	}, {} as Record<string, string>));
 	const debouncedUsername = useDebounce<string>(username, 200);
 
 	const showModal = () => {
@@ -50,7 +63,7 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 	const handleOk = async () => {
 		setConfirmLoading(true);
 
-		if (!username.length || !discordID.length || !points.length || !roleSelectValues.length) {
+		if (!username.length || !discordID.length || !rolesInfo.length || !verbs.length || !warnings.length) {
 			setConfirmLoading(false);
 			return;
 		}
@@ -63,13 +76,13 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 			body: JSON.stringify({
 				username: username,
 				discord_id: discordID,
-				role: roleSelectValues instanceof Array ? roleSelectValues[0] : roleSelectValues,
-				points: points,
-				servers: serverSelectValues
+				roles: rolesInfo,
+				verbs: parseInt(verbs, 10),
+				warnings: parseInt(warnings, 10)
 			})
 		}).then(res => res.json());
 
-		if (newUser && newUser.role) {
+		if (newUser && newUser.roles.length) {
 			handleCancel();
 			onSubmit?.();
 		} else {
@@ -82,9 +95,10 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 		if (!edit) {
 			setUsername('');
 			setDiscordID('');
-			setPoints('0');
 			setServerSelectValues([]);
-			setRoleSelectValues([]);
+			setRoles({});
+			setPoints({});
+			setRolesInfo([]);
 		}
 	};
 
@@ -102,27 +116,101 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 		setDiscordID(e.target.value.trim());
 	};
 
-	const handlePointsChange = (e: ChangeEvent<HTMLInputElement>) => {
-		setPoints(e.target.value.trim());
+	const handleVerbsChange = (e: ChangeEvent<HTMLInputElement>) => {
+		setVerbs(e.target.value.trim());
+	};
+
+	const handleWarningsChange = (e: ChangeEvent<HTMLInputElement>) => {
+		setWarnings(e.target.value.trim());
 	};
 
 	const handleServerSelectChange = (value: string[]) => {
 		setServerSelectValues(value);
 	};
 
-	const handleRoleSelectChange = (value: string[]) => {
-		setRoleSelectValues(value);
+	const handleRoleSelectChange = (server: string) => (value: string) => {
+		setRoles((allRoles) => ({
+			...allRoles,
+			[server]: parseInt(value, 10)
+		}));
 	};
+
+	const handlePointsChange = (server: string) => (e: ChangeEvent<HTMLInputElement>) => {
+		setPoints(allPoints => ({
+			...allPoints,
+			[server]: e.target.value
+		}));
+	};
+
+	useEffect(() => {
+		const newRolesInfo = serverSelectValues.map(server => {
+			const newRole = roles[server];
+			const newPoints = parseInt(points[server], 10);
+			return {
+				server,
+				role: newRole ? newRole : EUserRoles.player,
+				points: !isNaN(newPoints) ? newPoints : 0
+			};
+		});
+		setRolesInfo(newRolesInfo);
+	}, [ serverSelectValues, roles, points ]);
+
+	const isDisabled = (role: EUserRoles): boolean => {
+		const userRole = user ? getAverageUserRoleInfo(user)?.role ?? EUserRoles.player : EUserRoles.player;
+		const moderatorRole = edit ? getAverageUserRoleInfo(edit)?.role ?? EUserRoles.player : EUserRoles.player;
+		return moderatorRole
+			? userRole !== EUserRoles.creator && userRole < role || moderatorRole > userRole
+			: false;
+	};
+
+	const tabItems = useMemo(() => {
+		return serverSelectValues.filter(server => {
+			const userServerRole = getUserRoleInfoForServer(user, server)?.role ?? EUserRoles.player;
+			const moderatorServerRole = edit ? getUserRoleInfoForServer(edit, server)?.role ?? EUserRoles.player : EUserRoles.player;
+
+			return userServerRole >= EUserRoles.gm && (moderatorServerRole < userServerRole);
+		}).sort().map(server => {
+			const userServerRole = getUserRoleInfoForServer(user, server);
+
+			const availableRoles = userServerRole ? Object.entries(ROLES).filter(([ key ]) =>
+				userServerRole.role === EUserRoles.creator ||
+				parseInt(key, 10) < userServerRole.role
+			).map(([ key, value ]) => ({
+				label: value,
+				value: key
+			})) : [];
+
+			return {
+				key: server,
+				label: SERVERS[server].label,
+				children: (
+					<VerticalLayout>
+						<Select<string>
+							key={ server }
+							style={ { width: '100%' } }
+							placeholder={ `Должность` }
+							value={ roles[server]?.toString() ?? undefined }
+							onChange={ handleRoleSelectChange(server) }
+							options={ availableRoles }
+						/>
+						<Input placeholder="Кол-во баллов"
+						       value={ points[server]?.toString() ?? '0' }
+						       onChange={ handlePointsChange(server) }/>
+					</VerticalLayout>
+				),
+			};
+		});
+	}, [ user, serverSelectValues, roles, points ]);
 
 	return (
 		<>
-			<Button type={ edit ? "default" : "primary" } onClick={ showModal }>
+			<Button type={ edit ? 'default' : 'primary' } onClick={ showModal }>
 				{
-					buttonContent ? buttonContent : <PlusOutlined />
+					buttonContent ? buttonContent : <PlusOutlined/>
 				}
 			</Button>
 			<Modal
-				title={ edit ? "Изменить пользователя" : "Добавить нового пользователя" }
+				title={ edit ? 'Изменить пользователя' : 'Добавить нового пользователя' }
 				open={ open }
 				onOk={ handleOk }
 				confirmLoading={ confirmLoading }
@@ -131,35 +219,45 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 				<ContentContainer>
 					<Select
 						mode="multiple"
+						disabled={ isDisabled(EUserRoles.curator) }
 						style={ { width: '100%' } }
 						placeholder="Сервер"
 						defaultValue={ [] }
 						value={ serverSelectValues }
 						onChange={ handleServerSelectChange }
-						options={ Object.values(SERVERS).map((server) => ({
-							label: server.label,
-							value: server.value
-						})) }
+						options={ Object.values(SERVERS).map((server) => {
+							const userRole = getUserRoleInfoForServer(user, server.value)?.role ?? EUserRoles.player;
+							const moderatorRole = edit ? getUserRoleInfoForServer(edit, server.value)?.role ?? EUserRoles.player : EUserRoles.player;
+
+							return {
+								disabled: userRole < EUserRoles.gm
+										? true
+										: moderatorRole >= userRole,
+								label: server.label,
+								value: server.value
+							};
+						}) }
 					/>
-					<Select
-						style={ { width: '100%' } }
-						placeholder="Должность"
-						defaultValue={ [] }
-						value={ roleSelectValues }
-						onChange={ handleRoleSelectChange }
-						options={ Object.entries(ROLES).filter(([ key, value ]) => user.role === 999 || parseInt(key, 10) < user.role).map(([ key, value ]) => ({
-							label: value,
-							value: key
-						})) }
-					/>
-					<Input placeholder="Никнейм" value={ username } disabled={ edit && user.role <= EUserRoles.st } onChange={ handleUsernameChange }/>
-					<Input placeholder="Discord ID" value={ discordID } disabled={ edit && user.role <= EUserRoles.st } onChange={ handleDiscordIDChange }/>
-					<Input placeholder="Кол-во баллов" value={ points } disabled={ edit && user.role <= EUserRoles.st } onChange={ handlePointsChange }/>
+					{
+						serverSelectValues ? (
+							<Tabs items={ tabItems }/>
+						) : null
+					}
+					<Text>Общие данные:</Text>
+					<Input placeholder="Никнейм" value={ username } disabled={ isDisabled(EUserRoles.gm) }
+					       onChange={ handleUsernameChange }/>
+					<Input placeholder="Discord ID" value={ discordID } disabled={ isDisabled(EUserRoles.gm) }
+					       onChange={ handleDiscordIDChange }/>
+					<Input placeholder="Устники" value={ verbs } disabled={ isDisabled(EUserRoles.st) }
+					       onChange={ handleVerbsChange }/>
+					<Input placeholder="Предупреждения" value={ warnings } disabled={ isDisabled(EUserRoles.st) }
+					       onChange={ handleWarningsChange }/>
 					{ debouncedUsername && (
-						<img style={{
+						<img style={ {
 							width: '128px',
 							alignSelf: 'center'
-						}} src={ `https://mcskill.net/MineCraft/?name=${ debouncedUsername }&mode=1` } alt="Skin preview"/>
+						} } src={ `https://mcskill.net/MineCraft/?name=${ debouncedUsername }&mode=1` }
+						     alt="Skin preview"/>
 					) }
 				</ContentContainer>
 			</Modal>

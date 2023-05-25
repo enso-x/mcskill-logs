@@ -8,6 +8,7 @@ import { ModalDeleteMember } from '@/components/mod-panel/modals/ModalDeleteMemb
 import { InfinityIcon } from '@/components/mod-panel/icons/Infinity';
 import { EUserRoles, IUser, ROLES } from '@/interfaces/User';
 import { IUserOnlineStatus } from '@/helpers/mod-panel/online';
+import { getAverageUserRoleInfo } from '@/helpers/users';
 
 const ButtonsContainer = styled(VerticalLayout)`
 	gap: 8px;
@@ -59,21 +60,29 @@ export function ModeratorCard({
 	onlineStatus,
 	onUpdate
 }: IModeratorCardProps) {
+	if (!user) return null;
+
+	const userAverageRoleInfo = getAverageUserRoleInfo(user);
+	const moderatorAverageRoleInfo = getAverageUserRoleInfo(moderator);
+
+	const hasAccess = () => {
+		return (userAverageRoleInfo.role >= EUserRoles.st && userAverageRoleInfo.role > moderatorAverageRoleInfo.role)
+			|| userAverageRoleInfo.role === EUserRoles.creator;
+	};
+
 	return (
 		<ModeratorCardContainer>
 			<CardOnlineIndicator title={ onlineStatus.title } $online={ onlineStatus.isOnline }/>
 			<ButtonsContainer>
 				{
-					(user.role >= EUserRoles.st && user.role > moderator.role)
-					|| user.role === EUserRoles.creator ? (
+					hasAccess() ? (
 						<ModalAddMember user={ user } edit={ moderator }
 						                buttonContent={ <EditOutlined/> }
 						                onSubmit={ onUpdate }/>
 					) : null
 				}
 				{
-					(user.role >= EUserRoles.st && user.role > moderator.role)
-					|| user.role === EUserRoles.creator ? (
+					hasAccess() ? (
 						<ModalDeleteMember user={ moderator }
 						                   onSubmit={ onUpdate }/>
 					) : null
@@ -83,10 +92,10 @@ export function ModeratorCard({
 				src={ `https://mcskill.net/MineCraft/?name=${ moderator.username }&mode=1` }
 				alt="User skin"/>
 			<span
-				className={ EUserRoles[moderator.role] }>{ ROLES[moderator.role] }</span>
+				className={ EUserRoles[moderatorAverageRoleInfo.role] }>{ ROLES[moderatorAverageRoleInfo.role] }</span>
 			<span>{ moderator.username }</span>
 			<PointsContainer>
-				Баллы: { moderator.points >= 0 ? moderator.points : (
+				Баллы: { moderatorAverageRoleInfo.points >= 0 ? moderatorAverageRoleInfo.points : (
 				<InfinityIcon/>
 			) }
 			</PointsContainer>

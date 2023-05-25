@@ -3,6 +3,7 @@ import moment from 'moment/moment';
 import { getDaysBetweenDates, toUTC } from '@/helpers/datetime';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { IServer } from '@/interfaces/Server';
+import { getUserRoleInfoForServer, getUserServersKeys } from '@/helpers/users';
 
 const dateFormatter = new Intl.DateTimeFormat('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' });
 const timePattern = (group: string | null = null) => `\\[(?${ group ? `<${ group }>` : ':' }\\d{2}:\\d{2}(?::\\d{2})?)]`;
@@ -14,7 +15,10 @@ export const getUsernames = (users: IUser[]): string[] => {
 };
 
 export const getJuniorUsernamesForServer = (server: IServer, users: IUser[]): string[] => {
-	return getUsernames(users.filter(user => user.servers.includes(server.value) && user.role <= EUserRoles.moder));
+	return getUsernames(users.filter(user => {
+		const userRoleInfoForServer = getUserRoleInfoForServer(user, server.value);
+		return getUserServersKeys(user).includes(server.value) && userRoleInfoForServer && userRoleInfoForServer.role <= EUserRoles.moder;
+	}));
 };
 
 export const timeToSeconds = (time: string): number => {
@@ -166,19 +170,20 @@ export const getUserOnlineStatus = (user: IUser, statuses: Record<string, TUsers
 	return offlineStatus;
 };
 
-export const updateUsersPoints = async (users: IUser[], usersPoints: Record<string, number>) => {
-	for (let user of users) {
-		if (!usersPoints[user.username]) continue;
-
-		await fetch('/api/users/edit', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				discord_id: user.discord_id,
-				points: user.points + usersPoints[user.username]
+export const updateUserPointsForServer = async (user: IUser, server: string, pointsToAdd: number) => {
+	await fetch('/api/users/edit', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			discord_id: user.discord_id,
+			roles: user.roles.map(role => {
+				if (role.server === server) {
+					role.points = role.points + pointsToAdd;
+				}
+				return role;
 			})
-		});
-	}
+		})
+	});
 };
