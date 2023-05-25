@@ -448,7 +448,7 @@ const ModPanelInterviewPage: NextPage<ModPanelInterviewPageProps> = ({
 							flexDirection: 'column',
 							overflowY: 'auto',
 							padding: '16px'
-						} } bordered pagination={ false } columns={ testResultsTableColumns }
+						} } bordered columns={ testResultsTableColumns }
 						       dataSource={ preparedTestResults }/>
 					) : null
 				}

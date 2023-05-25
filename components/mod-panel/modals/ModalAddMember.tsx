@@ -20,6 +20,11 @@ const ContentContainer = styled.div`
 	.ant-select-show-search:where(.css-dev-only-do-not-override-a1szv).ant-select:not(.ant-select-customize-input) .ant-select-selector {
 		cursor: pointer;
 	}
+	
+	.ant-input-group-addon {
+		min-width: 140px;
+		text-align: right;
+	}
 `;
 
 interface IModalAddMemberProps {
@@ -163,13 +168,17 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 			: false;
 	};
 
-	const tabItems = useMemo(() => {
+	const allowedServers = useMemo(() => {
 		return serverSelectValues.filter(server => {
 			const userServerRole = getUserRoleInfoForServer(user, server)?.role ?? EUserRoles.player;
 			const moderatorServerRole = edit ? getUserRoleInfoForServer(edit, server)?.role ?? EUserRoles.player : EUserRoles.player;
 
 			return userServerRole >= EUserRoles.gm && (moderatorServerRole < userServerRole);
-		}).sort().map(server => {
+		}).sort()
+	}, [ serverSelectValues ]);
+
+	const tabItems = useMemo(() => {
+		return allowedServers.map(server => {
 			const userServerRole = getUserRoleInfoForServer(user, server);
 
 			const availableRoles = userServerRole ? Object.entries(ROLES).filter(([ key ]) =>
@@ -195,12 +204,12 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 						/>
 						<Input placeholder="Кол-во баллов"
 						       value={ points[server]?.toString() ?? '0' }
-						       onChange={ handlePointsChange(server) }/>
+						       onChange={ handlePointsChange(server) } addonBefore="Кол-во баллов"/>
 					</VerticalLayout>
 				),
 			};
 		});
-	}, [ user, serverSelectValues, roles, points ]);
+	}, [ user, allowedServers, roles, points ]);
 
 	return (
 		<>
@@ -239,19 +248,19 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 						}) }
 					/>
 					{
-						serverSelectValues ? (
+						allowedServers.length ? (
 							<Tabs items={ tabItems }/>
 						) : null
 					}
-					<Text>Общие данные:</Text>
+					{/*<Text>Общие данные:</Text>*/}
 					<Input placeholder="Никнейм" value={ username } disabled={ isDisabled(EUserRoles.gm) }
-					       onChange={ handleUsernameChange }/>
+					       onChange={ handleUsernameChange } addonBefore="Никнейм"/>
 					<Input placeholder="Discord ID" value={ discordID } disabled={ isDisabled(EUserRoles.gm) }
-					       onChange={ handleDiscordIDChange }/>
+					       onChange={ handleDiscordIDChange } addonBefore="Discord ID"/>
 					<Input placeholder="Устники" value={ verbs } disabled={ isDisabled(EUserRoles.st) }
-					       onChange={ handleVerbsChange }/>
+					       onChange={ handleVerbsChange } addonBefore="Устники"/>
 					<Input placeholder="Предупреждения" value={ warnings } disabled={ isDisabled(EUserRoles.st) }
-					       onChange={ handleWarningsChange }/>
+					       onChange={ handleWarningsChange } addonBefore="Предупреждения"/>
 					{ debouncedUsername && (
 						<img style={ {
 							width: '128px',
