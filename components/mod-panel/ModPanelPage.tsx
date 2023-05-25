@@ -71,12 +71,16 @@ export function ModPanelPage({
 }: IModPanelPageProps) {
 	const { data: session } = useSession();
 
+	if (session === undefined) {
+		return null;
+	}
+
 	const averageUserRoleInfo = session ? session.user ? getAverageUserRoleInfo(session.user) : null : null;
 
 	return (
 		<Page title={ 'Pixelmon Mod panel' }>
 			{
-				!session ? (
+				session === null ? (
 					<NotAuthorized/>
 				) : averageUserRoleInfo && averageUserRoleInfo.role < needRole ? (
 					<Forbidden/>
