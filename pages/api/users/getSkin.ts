@@ -43,14 +43,14 @@ const handler = async (
 			};
 
 			if (!userSkinsCache.has(username)) {
-				await sendSkinData();
+				return await sendSkinData();
 			}
 
 			const cache = userSkinsCache.get(username)!;
 
 			if ((cache.lastUpdate.getTime() + 1000 * 60 * 60) < new Date().getTime()) {
 				clearTimeout(cache.timeout);
-				await sendSkinData();
+				return await sendSkinData();
 			}
 
 			res.setHeader('Content-Type', cache.contentType);
