@@ -89,7 +89,7 @@ export function ModeratorCard({
 				}
 			</ButtonsContainer>
 			<img
-				src={ `https://mcskill.net/MineCraft/?name=${ moderator.username }&mode=1` }
+				src={ `/api/users/getSkin?username=${ moderator.username }&mode=1` }
 				alt="User skin"/>
 			<span
 				className={ EUserRoles[moderatorAverageRoleInfo.role] }>{ ROLES[moderatorAverageRoleInfo.role] }</span>

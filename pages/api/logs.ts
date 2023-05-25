@@ -13,24 +13,28 @@ const handler = async (
 
 	const { urlBase, date } = req.body;
 
-	const response = await fetch(`${ urlBase }${ date }.txt`)
+	try {
+		const response = await fetch(`${ urlBase }${ date }.txt`);
 
-	let result;
+		let result;
 
-	if (response.status === 200) {
-		const text = await response.text();
-		result = {
-			date: date as string,
-			text: text as string
-		};
-	} else {
-		result = {
-			date: date as string,
-			text: ''
-		};
+		if (response.status === 200) {
+			const text = await response.text();
+			result = {
+				date: date as string,
+				text: text as string
+			};
+		} else {
+			result = {
+				date: date as string,
+				text: ''
+			};
+		}
+
+		res.status(200).json(result);
+	} catch(e) {
+		console.log(e);
 	}
-
-	res.status(200).json(result);
 };
 
 export default handler;

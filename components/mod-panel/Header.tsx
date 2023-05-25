@@ -70,7 +70,7 @@ export function Header() {
 		<HeaderContainer>
 			<HeaderUserInfo>
 				<Avatar
-					src={ `https://mcskill.net/MineCraft/?name=${ user.username }&mode=5` }
+					src={ `/api/users/getSkin?username=${ user.username }&mode=5` }
 					alt={ user.username } size={ 32 }/>
 				<span>{ user.username }</span>
 				{
