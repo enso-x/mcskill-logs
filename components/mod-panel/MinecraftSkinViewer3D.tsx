@@ -45,7 +45,7 @@ export function MinecraftSkinViewer3D({
 					const ctx = canvas.getContext('2d');
 					if (ctx) {
 						ctx.drawImage(image, 0, 0, image.width, image.height);
-						const pixelData = ctx.getImageData(54 * imageScale, 20 * imageScale, 2 * imageScale, 12 * imageScale);
+						const pixelData = ctx.getImageData(50 * imageScale, 16 * imageScale, 2 * imageScale, 4 * imageScale);
 						setSkinType(pixelData.data.every(byte => byte === 0) ? 'slim' : '');
 					}
 				};
