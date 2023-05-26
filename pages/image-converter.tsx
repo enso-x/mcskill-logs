@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { ChangeEvent, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { NextPage } from 'next';
 
 import { PlusOutlined } from '@ant-design/icons';
-import { Modal, Upload } from 'antd';
+import { Modal, Upload, Input } from 'antd';
 import type { RcFile, UploadProps } from 'antd/es/upload';
 import type { UploadFile } from 'antd/es/upload/interface';
 
@@ -32,6 +32,7 @@ const getBase64 = (file: RcFile): Promise<string> =>
 	});
 
 const ImageConverterPage: NextPage = () => {
+	const [ needResolutions, setNeedResolutions ] = useState<string>('32, 200');
 	const [ previewOpen, setPreviewOpen ] = useState(false);
 	const [ previewImage, setPreviewImage ] = useState('');
 	const [ previewTitle, setPreviewTitle ] = useState('');
@@ -53,6 +54,10 @@ const ImageConverterPage: NextPage = () => {
 	const handleChange: UploadProps['onChange'] = ({ fileList: newFileList }) =>
 		setFileList(newFileList);
 
+	const handleResolutionsChange = (e: ChangeEvent<HTMLInputElement>) => {
+		setNeedResolutions(e.target.value);
+	};
+
 	useEffect(() => {
 		if (canvasContainerRef && canvasContainerRef.current) {
 			const getImageData = (file: UploadFile): Promise<string> => new Promise((resolve) => {
@@ -69,44 +74,40 @@ const ImageConverterPage: NextPage = () => {
 				const image = new Image();
 				image.src = imageData;
 
-				if (image && canvasContainerRef.current) {
+				const resolutions = needResolutions.split(',').map(value => parseInt(value.trim(), 10));
+
+				if (image && canvasContainerRef.current && resolutions.length) {
 					canvasContainerRef.current.innerHTML = '';
 
-					const canvas32Container = document.createElement('div');
-					canvas32Container.style.display = 'flex';
-					canvas32Container.style.border = '1px solid var(--border-color)';
-					canvas32Container.style.borderRadius = '8px';
-					canvas32Container.style.padding = '8px';
+					resolutions.forEach(resolution => {
+						if(!isNaN(resolution)) {
+							const canvasContainer = document.createElement('div');
+							canvasContainer.style.display = 'flex';
+							canvasContainer.style.border = '1px solid var(--border-color)';
+							canvasContainer.style.borderRadius = '8px';
+							canvasContainer.style.padding = '8px';
 
-					const canvas200Container = document.createElement('div');
-					canvas200Container.style.display = 'flex';
-					canvas200Container.style.border = '1px solid var(--border-color)';
-					canvas200Container.style.borderRadius = '8px';
-					canvas200Container.style.padding = '8px';
+							const canvas = document.createElement('canvas');
+							if (resolution <= 64) {
+								canvas.style.imageRendering = 'pixelated';
+							}
+							canvas.width = resolution;
+							canvas.height = resolution;
 
-					const canvas32 = document.createElement('canvas');
-					canvas32.style.imageRendering = 'pixelated';
-					canvas32.width = 32;
-					canvas32.height = 32;
-					const ctx32 = canvas32.getContext('2d');
+							const ctx = canvas.getContext('2d');
 
-					ctx32!.drawImage(image, 0, 0, 32, 32);
-					canvas32Container.append(canvas32);
+							if (ctx) {
+								ctx.drawImage(image, 0, 0, resolution, resolution);
+							}
 
-					const canvas200 = document.createElement('canvas');
-					const ctx200 = canvas200.getContext('2d');
-					canvas200.width = 200;
-					canvas200.height = 200;
-
-					ctx200!.drawImage(image, 0, 0, 200, 200);
-
-					canvas200Container.append(canvas200);
-
-					canvasContainerRef.current!.append(canvas32Container, canvas200Container);
+							canvasContainer.append(canvas);
+							canvasContainerRef.current!.append(canvasContainer);
+						}
+					});
 				}
 			});
 		}
-	}, [ fileList ])
+	}, [ fileList, needResolutions ])
 
 	const uploadButton = (
 		<div>
@@ -132,6 +133,9 @@ const ImageConverterPage: NextPage = () => {
 				<Modal open={ previewOpen } title={ previewTitle } footer={ null } onCancel={ handleCancel }>
 					<img alt="example" style={ { width: '100%' } } src={ previewImage }/>
 				</Modal>
+				<Input style={{
+					width: '240px'
+				}} placeholder="Resolutions" value={ needResolutions } onChange={ handleResolutionsChange }/>
 				<HorizontalLayout ref={ canvasContainerRef }></HorizontalLayout>
 			</Container>
 		</Page>
