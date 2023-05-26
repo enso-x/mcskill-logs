@@ -63,7 +63,6 @@ const getDaysBetweenDates = (date1, date2) => {
 		watches[listKey] = list;
 	};
 	const logsURLBase = `${ window.updateUrl.split("/").slice(0, -1).join("/") }/`;
-	let oldLog = '';
 	const dateFormatter = new Intl.DateTimeFormat('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' });
 	const templates = {
 		'UserName': v => `<span class="user-name">${ v }</span>`
@@ -788,10 +787,6 @@ const getDaysBetweenDates = (date1, date2) => {
 		}
 	});
 
-	const clearLogList = () => {
-		oldLog = '';
-	}
-
 	const saveWatchList = () => {
 		localStorage.setItem(localStorageWatchesKey, JSON.stringify(watches));
 	};
@@ -800,13 +795,11 @@ const getDaysBetweenDates = (date1, date2) => {
 		let watchItems = watches[name] ?? initialWatches;
 		const updateWatches = () => {
 			addToWatches(name, watchItems);
-			clearLogList();
+			// clearLogList();
 			saveWatchList();
 			update();
-			if (cancelLoopRef !== null) {
-				cancelLoopRef();
-			}
-			cancelLoopRef = fetchLogs();
+			// cancelLoopRef = fetchLogs();
+			updateLogContent();
 		};
 		const addWatchItem = (item) => {
 			watchItems.push(item);
@@ -1022,6 +1015,10 @@ const getDaysBetweenDates = (date1, date2) => {
 	let text = '';
 
 	const fetchLogs = () => {
+		if (cancelLoopRef !== null) {
+			cancelLoopRef();
+		}
+
 		let cancelled = false;
 
 		const update = async () => {
