@@ -8,6 +8,7 @@ import { InfinityIcon } from '@/components/mod-panel/icons/Infinity';
 import { HorizontalLayout } from '@/components/Styled';
 import { EUserRoles, ROLES } from '@/interfaces/User';
 import { getAverageUserRoleInfo } from '@/helpers/users';
+import { MinecraftFaceViewer } from '@/components/mod-panel/MinecraftFaceViewer';
 
 const HeaderContainer = styled.div`
 	display: grid;
@@ -70,8 +71,8 @@ export function Header() {
 		<HeaderContainer>
 			<HeaderUserInfo>
 				<Avatar
-					src={ `/api/users/getSkin?username=${ user.username }&mode=5` }
-					alt={ user.username } size={ 32 }/>
+					src={ <MinecraftFaceViewer username={ user.username }/> }
+					alt={ user.username } size={ 34 }/>
 				<span>{ user.username }</span>
 				{
 					averageUserRoleInfo ? (
