@@ -46,6 +46,10 @@ const CardOnlineIndicator = styled(OnlineIndicator)`
 
 const PointsContainer = styled(HorizontalLayout)`
 	gap: 8px;
+	
+	span {
+		line-height: 24px;
+	}
 `;
 
 interface IModeratorCardProps {
@@ -94,9 +98,11 @@ export function ModeratorCard({
 				className={ EUserRoles[moderatorAverageRoleInfo.role] }>{ ROLES[moderatorAverageRoleInfo.role] }</span>
 			<span>{ moderator.username }</span>
 			<PointsContainer>
-				Баллы: { moderatorAverageRoleInfo.points >= 0 ? moderatorAverageRoleInfo.points : (
-				<InfinityIcon/>
-			) }
+				Баллы: { moderatorAverageRoleInfo.points >= 0 ? (
+					<span>{ moderatorAverageRoleInfo.points }</span>
+				): (
+					<InfinityIcon/>
+				) }
 			</PointsContainer>
 		</ModeratorCardContainer>
 	);
