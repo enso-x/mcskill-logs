@@ -9,6 +9,7 @@ import { SERVERS } from '@/interfaces/Server';
 import { EUserRoles, IUser, IUserServerRoleInfo, ROLES } from '@/interfaces/User';
 import { getAverageUserRoleInfo, getUserRoleInfoForServer } from '@/helpers/users';
 import { MinecraftSkin } from '@/components/mod-panel/MinecraftSkin';
+import { MinecraftSkinViewer3D } from '@/components/mod-panel/MinecraftSkinViewer3D';
 
 const ContentContainer = styled.div`
 	height: 100%;
@@ -274,7 +275,8 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 					       onChange={ handleWarningsChange } addonBefore="Предупреждения"/>
 					{ debouncedUsername && (
 						<SkinContainer>
-							<MinecraftSkin username={ debouncedUsername } mode={ 1 }/>
+							{/*<MinecraftSkin username={ debouncedUsername } mode={ 1 }/>*/}
+							<MinecraftSkinViewer3D username={ debouncedUsername }/>
 						</SkinContainer>
 					) }
 					<DrawerControls>
