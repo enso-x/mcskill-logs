@@ -1,30 +1,39 @@
 import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
-import { Button, Input, Modal, Select, Tabs, Typography } from 'antd';
+import { Button, Input, Drawer, Select, Tabs } from 'antd';
 import styled from 'styled-components';
 import { PlusOutlined } from '@ant-design/icons';
 
 import { useDebounce } from '@/helpers';
-import { VerticalLayout } from '@/components/Styled';
+import { HorizontalLayout, VerticalLayout } from '@/components/Styled';
 import { SERVERS } from '@/interfaces/Server';
 import { EUserRoles, IUser, IUserServerRoleInfo, ROLES } from '@/interfaces/User';
 import { getAverageUserRoleInfo, getUserRoleInfoForServer } from '@/helpers/users';
 
-const { Text } = Typography;
-
 const ContentContainer = styled.div`
+	height: 100%;
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	padding: 16px 0;
 
 	.ant-select-show-search:where(.css-dev-only-do-not-override-a1szv).ant-select:not(.ant-select-customize-input) .ant-select-selector {
 		cursor: pointer;
 	}
-	
+
 	.ant-input-group-addon {
 		min-width: 140px;
 		text-align: right;
 	}
+`;
+
+const SkinContainer = styled.div`
+	flex: 1;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+`;
+
+const DrawerControls = styled(HorizontalLayout)`
+	justify-content: flex-end;
 `;
 
 interface IModalAddMemberProps {
@@ -174,7 +183,7 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 			const moderatorServerRole = edit ? getUserRoleInfoForServer(edit, server)?.role ?? EUserRoles.player : EUserRoles.player;
 
 			return userServerRole >= EUserRoles.gm && (moderatorServerRole < userServerRole);
-		}).sort()
+		}).sort();
 	}, [ serverSelectValues ]);
 
 	const tabItems = useMemo(() => {
@@ -218,12 +227,12 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 					buttonContent ? buttonContent : <PlusOutlined/>
 				}
 			</Button>
-			<Modal
+			<Drawer
 				title={ edit ? 'Изменить пользователя' : 'Добавить нового пользователя' }
 				open={ open }
-				onOk={ handleOk }
-				confirmLoading={ confirmLoading }
-				onCancel={ handleCancel }
+				width={ 540 }
+				onClose={ handleCancel }
+				closable={ false }
 			>
 				<ContentContainer>
 					<Select
@@ -240,8 +249,8 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 
 							return {
 								disabled: userRole < EUserRoles.gm
-										? true
-										: moderatorRole >= userRole,
+									? true
+									: moderatorRole >= userRole,
 								label: server.label,
 								value: server.value
 							};
@@ -252,7 +261,6 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 							<Tabs items={ tabItems }/>
 						) : null
 					}
-					{/*<Text>Общие данные:</Text>*/}
 					<Input placeholder="Никнейм" value={ username } disabled={ isDisabled(EUserRoles.gm) }
 					       onChange={ handleUsernameChange } addonBefore="Никнейм"/>
 					<Input placeholder="Discord ID" value={ discordID } disabled={ isDisabled(EUserRoles.gm) }
@@ -262,14 +270,22 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 					<Input placeholder="Предупреждения" value={ warnings } disabled={ isDisabled(EUserRoles.st) }
 					       onChange={ handleWarningsChange } addonBefore="Предупреждения"/>
 					{ debouncedUsername && (
-						<img style={ {
-							width: '128px',
-							alignSelf: 'center'
-						} } src={ `/api/users/getSkin?username=${ debouncedUsername }&mode=1` }
-						     alt="Skin preview"/>
+						<SkinContainer>
+							<img style={ {
+								width: '128px',
+								alignSelf: 'center'
+							} } src={ `/api/users/getSkin?username=${ debouncedUsername }&mode=1` }
+							     alt="Skin preview"/>
+						</SkinContainer>
 					) }
+					<DrawerControls>
+						<Button onClick={ handleCancel }>Отмена</Button>
+						<Button onClick={ handleOk } type="primary" loading={ confirmLoading }>
+							{ edit ? 'Изменить' : 'Создать' }
+						</Button>
+					</DrawerControls>
 				</ContentContainer>
-			</Modal>
+			</Drawer>
 		</>
 	);
 };

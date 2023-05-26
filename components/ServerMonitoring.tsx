@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Button } from 'antd';
+import { Button, Collapse } from 'antd';
 import { FileTextOutlined } from '@ant-design/icons';
+
+const { Panel } = Collapse;
 
 import { HorizontalLayout, OnlineIndicator, VerticalLayout } from '@/components/Styled';
 import { SERVERS } from '@/interfaces/Server';
@@ -27,19 +29,22 @@ interface IServerInfo {
 const Container = styled(VerticalLayout)`
 	padding: 8px;
 	gap: 8px;
-`;
 
-const ServerInfoContainer = styled(VerticalLayout)`
-	padding: 8px;
-	border: 1px solid #242424;
-	border-radius: 8px;
-	gap: 8px;
+	.ant-collapse > .ant-collapse-item > .ant-collapse-header {
+		align-items: center;
+	}
+
+	.ant-collapse-item > .ant-collapse-content > .ant-collapse-content-box {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
 `;
 
 const ServerContent = styled(HorizontalLayout)`
 	gap: 8px;
 	justify-content: space-between;
-	border-bottom: 1px solid #242424;
+	border-bottom: 2px solid #242424;
 	padding-bottom: 8px;
 `;
 
@@ -61,23 +66,22 @@ export function ServerMonitoring() {
 
 	return serversInfo && serversInfo.length ? (
 		<Container>
-			{
-				serversInfo.map((serverInfo, i) => (
-					<ServerInfoContainer key={ serverInfo.id }>
-						<ServerContent>
-							<span>
-								{ serverInfo.title }
-							</span>
-							<ServerOnlineIndicator $online={ Boolean(serverInfo.online) }/>
-						</ServerContent>
-						<ServerContent>
-							<span>Текущий онлайн:</span>
-							<span>{ serverInfo.players_now } / { serverInfo.players_max }</span>
-						</ServerContent>
-						<Button href={ `/files/${ encodeURIComponent(Object.values(SERVERS).find(server => server.id === serverInfo.url)!.logs_url + '/') }` } target="__blank" icon={<FileTextOutlined />}>Логи</Button>
-					</ServerInfoContainer>
-				))
-			}
+			<Collapse size="small" expandIcon={ () => null }>
+				{
+					serversInfo.map((serverInfo, i) => (
+						<Panel key={ serverInfo.id } header={ serverInfo.title }
+						       extra={ <ServerOnlineIndicator $online={ Boolean(serverInfo.online) }/> }>
+							<ServerContent>
+								<span>Текущий онлайн:</span>
+								<span>{ serverInfo.players_now } / { serverInfo.players_max }</span>
+							</ServerContent>
+							<Button
+								href={ `/files/${ encodeURIComponent(Object.values(SERVERS).find(server => server.id === serverInfo.url)!.logs_url + '/') }` }
+								target="__blank" icon={ <FileTextOutlined/> }>Логи</Button>
+						</Panel>
+					))
+				}
+			</Collapse>
 		</Container>
 	) : null;
 }
