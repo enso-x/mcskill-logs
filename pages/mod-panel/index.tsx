@@ -47,7 +47,7 @@ const ModeratorCardCheckboxContainer = styled.div`
 	padding: 16px;
 	background: #010101;
 	border-radius: 0 0 8px 8px;
-	border: 1px solid #242424;
+	border: 1px solid var(--border-color);
 `;
 
 const ModeratorCardContainer = styled.div`

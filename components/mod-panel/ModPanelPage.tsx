@@ -34,7 +34,7 @@ export const ModPanelPageControls = styled.div`
 	display: flex;
 	padding: 16px;
 	justify-content: space-between;
-	border-bottom: 2px solid #242424;
+	border-bottom: 2px solid var(--border-color);
 
 	.ant-select-show-search:where(.css-dev-only-do-not-override-a1szv).ant-select:not(.ant-select-customize-input) .ant-select-selector {
 		cursor: pointer;

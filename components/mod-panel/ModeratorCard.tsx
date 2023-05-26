@@ -9,6 +9,7 @@ import { InfinityIcon } from '@/components/mod-panel/icons/Infinity';
 import { EUserRoles, IUser, ROLES } from '@/interfaces/User';
 import { IUserOnlineStatus } from '@/helpers/mod-panel/online';
 import { getAverageUserRoleInfo } from '@/helpers/users';
+import { MinecraftSkin } from '@/components/mod-panel/MinecraftSkin';
 
 const ButtonsContainer = styled(VerticalLayout)`
 	gap: 8px;
@@ -24,7 +25,7 @@ const ModeratorCardContainer = styled.div`
 	gap: 14px;
 	align-items: center;
 	padding: 16px;
-	border: 1px solid #242424;
+	border: 1px solid var(--border-color);
 	border-radius: 8px;
 
 	img {
@@ -88,9 +89,7 @@ export function ModeratorCard({
 					) : null
 				}
 			</ButtonsContainer>
-			<img
-				src={ `/api/users/getSkin?username=${ moderator.username }&mode=1` }
-				alt="User skin"/>
+			<MinecraftSkin username={ moderator.username } mode={ 1 }/>
 			<span
 				className={ EUserRoles[moderatorAverageRoleInfo.role] }>{ ROLES[moderatorAverageRoleInfo.role] }</span>
 			<span>{ moderator.username }</span>

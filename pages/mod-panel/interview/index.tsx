@@ -95,7 +95,7 @@ const InnerContainer = styled.div`
 	gap: 16px;
 	padding: 16px;
 	justify-content: center;
-	border-bottom: 2px solid #242424;
+	border-bottom: 2px solid var(--border-color);
 `;
 
 const Box = styled.div`

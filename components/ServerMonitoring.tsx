@@ -44,7 +44,7 @@ const Container = styled(VerticalLayout)`
 const ServerContent = styled(HorizontalLayout)`
 	gap: 8px;
 	justify-content: space-between;
-	border-bottom: 2px solid #242424;
+	border-bottom: 2px solid var(--border-color);
 	padding-bottom: 8px;
 `;
 

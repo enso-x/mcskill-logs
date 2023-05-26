@@ -9,6 +9,7 @@
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
   --accent-color: #722ed1;
+  --border-color: #303030;
 
   --primary-glow: conic-gradient(
     from 180deg at 50% 50%,

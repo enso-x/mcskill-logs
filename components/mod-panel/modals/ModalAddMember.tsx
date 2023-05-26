@@ -8,6 +8,7 @@ import { HorizontalLayout, VerticalLayout } from '@/components/Styled';
 import { SERVERS } from '@/interfaces/Server';
 import { EUserRoles, IUser, IUserServerRoleInfo, ROLES } from '@/interfaces/User';
 import { getAverageUserRoleInfo, getUserRoleInfoForServer } from '@/helpers/users';
+import { MinecraftSkin } from '@/components/mod-panel/MinecraftSkin';
 
 const ContentContainer = styled.div`
 	height: 100%;
@@ -33,7 +34,9 @@ const SkinContainer = styled.div`
 `;
 
 const DrawerControls = styled(HorizontalLayout)`
-	justify-content: flex-end;
+	justify-content: space-between;
+	border-top: 2px solid var(--border-color);
+	padding-top: 24px;
 `;
 
 interface IModalAddMemberProps {
@@ -271,11 +274,7 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 					       onChange={ handleWarningsChange } addonBefore="Предупреждения"/>
 					{ debouncedUsername && (
 						<SkinContainer>
-							<img style={ {
-								width: '128px',
-								alignSelf: 'center'
-							} } src={ `/api/users/getSkin?username=${ debouncedUsername }&mode=1` }
-							     alt="Skin preview"/>
+							<MinecraftSkin username={ debouncedUsername } mode={ 1 }/>
 						</SkinContainer>
 					) }
 					<DrawerControls>

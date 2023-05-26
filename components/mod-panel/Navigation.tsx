@@ -14,7 +14,7 @@ const Sidebar = styled.div`
 	justify-content: space-between;
 	width: 240px;
 	flex-shrink: 0;
-	border-right: 2px solid #242424;
+	border-right: 2px solid var(--border-color);
 `;
 
 const NavigationContainer = styled.div`
@@ -38,7 +38,7 @@ const SidebarItem = styled.div<ISidebarItemProps>`
 	}
 
 	&:not(:last-child) {
-		border-bottom: 1px solid #242424;
+		border-bottom: 1px solid var(--border-color);
 	}
 `;
 
