@@ -12,7 +12,7 @@ export default function App({ Component, pageProps }: AppProps) {
 	useEffect(() => {
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker
-				.register('./sw/service-worker.js')
+				.register('/sw/service-worker.js')
 				.then((reg) => {
 					console.log('ServiceWorker registered.');
 				})
