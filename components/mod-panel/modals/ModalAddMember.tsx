@@ -40,6 +40,11 @@ const DrawerControls = styled(HorizontalLayout)`
 	padding-top: 24px;
 `;
 
+const Hr = styled.hr`
+	border: none;
+	border-bottom: 1px solid var(--border-color);
+`;
+
 interface IModalAddMemberProps {
 	user: IUser;
 	edit?: IUser;
@@ -218,6 +223,7 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 						<Input placeholder="Кол-во баллов"
 						       value={ points[server]?.toString() ?? '0' }
 						       onChange={ handlePointsChange(server) } addonBefore="Кол-во баллов"/>
+						<Hr/>
 					</VerticalLayout>
 				),
 			};
