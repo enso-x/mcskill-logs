@@ -14,7 +14,7 @@ const Sidebar = styled.div`
 	justify-content: space-between;
 	width: 240px;
 	flex-shrink: 0;
-	border-right: 2px solid var(--border-color);
+	border-right: 1px solid var(--border-color);
 `;
 
 const NavigationContainer = styled.div`

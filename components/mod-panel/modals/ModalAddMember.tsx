@@ -35,7 +35,7 @@ const SkinContainer = styled.div`
 
 const DrawerControls = styled(HorizontalLayout)`
 	justify-content: space-between;
-	border-top: 2px solid var(--border-color);
+	border-top: 1px solid var(--border-color);
 	padding-top: 24px;
 `;
 

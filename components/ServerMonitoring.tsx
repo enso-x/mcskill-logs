@@ -37,14 +37,14 @@ const Container = styled(VerticalLayout)`
 	.ant-collapse-item > .ant-collapse-content > .ant-collapse-content-box {
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
+		gap: 12px;
 	}
 `;
 
 const ServerContent = styled(HorizontalLayout)`
 	gap: 8px;
 	justify-content: space-between;
-	border-bottom: 2px solid var(--border-color);
+	border-bottom: 1px solid var(--border-color);
 	padding-bottom: 8px;
 `;
 

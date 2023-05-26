@@ -14,7 +14,7 @@ const HeaderContainer = styled.div`
 	grid-template-columns: 1fr 1fr 1fr;
 	align-items: center;
 	height: 64px;
-	border-bottom: 2px solid var(--border-color);
+	border-bottom: 1px solid var(--border-color);
 	padding: 8px 16px;
 `;
 
