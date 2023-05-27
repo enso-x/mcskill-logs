@@ -34,7 +34,6 @@ export function MinecraftSkinViewer3D({
 				setSkinData(imageData);
 				const image = new Image();
 				image.onload = () => {
-					console.log(image.width, image.height);
 					const imageScale = image.width / 64;
 
 					const canvas = document.createElement('canvas');
