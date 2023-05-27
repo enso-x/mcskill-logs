@@ -247,7 +247,7 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 				<ContentContainer>
 					<Select
 						mode="multiple"
-						disabled={ isDisabled(EUserRoles.curator) }
+						disabled={ isDisabled(EUserRoles.gm) }
 						style={ { width: '100%' } }
 						placeholder="Сервер"
 						defaultValue={ [] }

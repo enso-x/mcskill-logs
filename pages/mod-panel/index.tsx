@@ -242,7 +242,7 @@ const ModPanelIndexPage: NextPage<ModPanelIndexPageProps> = ({
 					{/*	) : null*/}
 					{/*}*/}
 					{
-						user && getAverageUserRoleInfo(user).role >= EUserRoles.curator ? (
+						user && getAverageUserRoleInfo(user).role >= EUserRoles.gm ? (
 							<ModalAddMember user={ user } onSubmit={ updateUserList }/>
 						) : null
 					}
