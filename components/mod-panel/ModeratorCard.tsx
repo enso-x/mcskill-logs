@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { EditOutlined } from '@ant-design/icons';
 
@@ -99,6 +99,12 @@ export function ModeratorCard({
 		if (e.currentTarget.contains(e.relatedTarget as Node)) return;
 		setIsCardHovered(false);
 	};
+
+	useEffect(() => {
+		return () => {
+			setIsCardHovered(false);
+		};
+	}, []);
 
 	return (
 		<ModeratorCardContainer onMouseEnter={ handleCardMouseEnter } onMouseOut={ handleCardMouseOut }>
