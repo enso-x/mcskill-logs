@@ -38,6 +38,14 @@ export const calculatePointsForOnlineTime = (duration: number, pointsPerWeek = 1
 	return Math.round(duration >= secondsPerWeek ? pointsForFullOnline : pointsForPartialOnline);
 };
 
+const startOfDateMoment = (date: string): moment.Moment => {
+	return moment(`${ toUTC(date) } 00:00:00`);
+};
+
+const dateTimeToMoment = (date: string, time: string): moment.Moment => {
+	return moment(`${ toUTC(date) } ${ time }`);
+};
+
 interface IServerLogResponse {
 	date: string;
 	text: string;
@@ -62,7 +70,7 @@ export const fetchServerConnectionLogsForPeriod = async (server: IServer, days: 
 
 interface IUserDuration {
 	duration: moment.Duration;
-	lastLogin: string;
+	lastLogin: moment.Moment;
 }
 
 type TUsersOnlineDuration = Record<string, IUserDuration>;
@@ -77,15 +85,17 @@ export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernam
 	const usernamesReg = new RegExp(usernames.map(username => ` ${ username } `).join('|'), 'i');
 	const notEndedModerators: Set<string> = new Set();
 
-	const addDurationForUser = (username: string, date: string, time: string) => {
+	const getDurationBetweenMoments = (startMoment: moment.Moment, endMoment: moment.Moment): moment.Duration => {
+		return moment.duration(endMoment.diff(startMoment))
+	};
+
+	const addDurationForUser = (username: string, duration: moment.Duration) => {
 		if (!durations[username]) return;
 
-		const leftTime = `${ toUTC(date) } ${ time }`;
-		const lastLoginMoment = moment(durations[username].lastLogin);
-		const leftGameMoment = moment(leftTime);
+		durations[username].duration = durations[username].duration.add(duration);
+	};
 
-		durations[username].duration = durations[username].duration.add(moment.duration(leftGameMoment.diff(lastLoginMoment)));
-
+	const checkAndDeleteUserFromNotEnded = (username: string) => {
 		if (notEndedModerators.has(username)) {
 			notEndedModerators.delete(username);
 		}
@@ -100,19 +110,23 @@ export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernam
 			if (data) {
 				if (!durations[data.playerName]) durations[data.playerName] = {
 					duration: moment.duration(0),
-					lastLogin: `${ toUTC(log.date) } 00:00:00`
+					lastLogin: startOfDateMoment(log.date)
 				};
 				if (data.actionType === 'left the game') {
-					addDurationForUser(data.playerName, log.date, data.time);
+					const duration = getDurationBetweenMoments(durations[data.playerName].lastLogin, dateTimeToMoment(log.date, data.time));
+					addDurationForUser(data.playerName, duration);
+					checkAndDeleteUserFromNotEnded(data.playerName);
 				} else {
-					durations[data.playerName].lastLogin = `${ toUTC(log.date) } ${ data.time }`;
+					durations[data.playerName].lastLogin = dateTimeToMoment(log.date, data.time);
 					notEndedModerators.add(data.playerName);
 				}
 			}
 
 			if (i === lines.length - 1 && li === logs.length - 1 && notEndedModerators.size > 0) {
 				notEndedModerators.forEach(moderatorName => {
-					addDurationForUser(moderatorName, log.date, '00:00:00');
+					const duration = getDurationBetweenMoments(durations[moderatorName].lastLogin, startOfDateMoment(log.date).add(1, 'day'));
+					addDurationForUser(moderatorName, duration);
+					checkAndDeleteUserFromNotEnded(moderatorName);
 				});
 			}
 		});
