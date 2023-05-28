@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, FC } from 'react';
 import styled from 'styled-components';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Spin } from 'antd';
@@ -8,19 +8,61 @@ interface IMinecraftSkinViewerContainerProps {
 }
 
 const MinecraftSkinViewerContainer = styled.div<IMinecraftSkinViewerContainerProps>`
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
 	.mc-skin-viewer * {
-		background-image: url(${props => props.imageData});
+		background-image: url(${ props => props.imageData });
 	}
 `;
 
-const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
+const antIcon = <LoadingOutlined style={ { fontSize: 24 } } spin/>;
+
+interface IBlockPartsProps {
+	className: string;
+	is2D?: boolean;
+}
+
+const BlockParts: FC<IBlockPartsProps> = ({
+	className,
+	is2D
+}) => {
+	return is2D ? (
+		<div className={ className }>
+			<div className="front"></div>
+			<div className="accessory">
+				<div className="front"></div>
+			</div>
+		</div>
+	) : (
+		<div className={ className }>
+			<div className="top"></div>
+			<div className="left"></div>
+			<div className="front"></div>
+			<div className="right"></div>
+			<div className="back"></div>
+			<div className="bottom"></div>
+			<div className="accessory">
+				<div className="top"></div>
+				<div className="left"></div>
+				<div className="front"></div>
+				<div className="right"></div>
+				<div className="back"></div>
+				<div className="bottom"></div>
+			</div>
+		</div>
+	);
+};
 
 interface IMinecraftSkinViewer3DProps {
 	username: string;
+	is2D?: boolean;
 }
 
 export function MinecraftSkinViewer3D({
-	username
+	username,
+	is2D,
 }: IMinecraftSkinViewer3DProps) {
 	const [ skinType, setSkinType ] = useState<string>('');
 	const [ skinData, setSkinData ] = useState<string>('');
@@ -58,104 +100,14 @@ export function MinecraftSkinViewer3D({
 		<MinecraftSkinViewerContainer imageData={ skinData }>
 			{
 				skinData.length ? (
-					<div className={ `mc-skin-viewer mc-skin-viewer-11x legacy legacy-cape ${ skinType } spin` }>
+					<div className={ `mc-skin-viewer mc-skin-viewer-11x legacy legacy-cape ${ skinType } ${is2D ? '' : 'spin'}` }>
 						<div className="player">
-							<div className="head">
-								<div className="top"></div>
-								<div className="left"></div>
-								<div className="front"></div>
-								<div className="right"></div>
-								<div className="back"></div>
-								<div className="bottom"></div>
-								<div className="accessory">
-									<div className="top"></div>
-									<div className="left"></div>
-									<div className="front"></div>
-									<div className="right"></div>
-									<div className="back"></div>
-									<div className="bottom"></div>
-								</div>
-							</div>
-							<div className="body">
-								<div className="top"></div>
-								<div className="left"></div>
-								<div className="front"></div>
-								<div className="right"></div>
-								<div className="back"></div>
-								<div className="bottom"></div>
-								<div className="accessory">
-									<div className="top"></div>
-									<div className="left"></div>
-									<div className="front"></div>
-									<div className="right"></div>
-									<div className="back"></div>
-									<div className="bottom"></div>
-								</div>
-							</div>
-							<div className="left-arm">
-								<div className="top"></div>
-								<div className="left"></div>
-								<div className="front"></div>
-								<div className="right"></div>
-								<div className="back"></div>
-								<div className="bottom"></div>
-								<div className="accessory">
-									<div className="top"></div>
-									<div className="left"></div>
-									<div className="front"></div>
-									<div className="right"></div>
-									<div className="back"></div>
-									<div className="bottom"></div>
-								</div>
-							</div>
-							<div className="right-arm">
-								<div className="top"></div>
-								<div className="left"></div>
-								<div className="front"></div>
-								<div className="right"></div>
-								<div className="back"></div>
-								<div className="bottom"></div>
-								<div className="accessory">
-									<div className="top"></div>
-									<div className="left"></div>
-									<div className="front"></div>
-									<div className="right"></div>
-									<div className="back"></div>
-									<div className="bottom"></div>
-								</div>
-							</div>
-							<div className="left-leg">
-								<div className="top"></div>
-								<div className="left"></div>
-								<div className="front"></div>
-								<div className="right"></div>
-								<div className="back"></div>
-								<div className="bottom"></div>
-								<div className="accessory">
-									<div className="top"></div>
-									<div className="left"></div>
-									<div className="front"></div>
-									<div className="right"></div>
-									<div className="back"></div>
-									<div className="bottom"></div>
-								</div>
-							</div>
-							<div className="right-leg">
-								<div className="top"></div>
-								<div className="left"></div>
-								<div className="front"></div>
-								<div className="right"></div>
-								<div className="back"></div>
-								<div className="bottom"></div>
-								<div className="accessory">
-									<div className="top"></div>
-									<div className="left"></div>
-									<div className="front"></div>
-									<div className="right"></div>
-									<div className="back"></div>
-									<div className="bottom"></div>
-								</div>
-							</div>
+							<BlockParts className="head" is2D={is2D}/>
+							<BlockParts className="body" is2D={is2D}/>
+							<BlockParts className="left-arm" is2D={is2D}/>
+							<BlockParts className="right-arm" is2D={is2D}/>
+							<BlockParts className="left-leg" is2D={is2D}/>
+							<BlockParts className="right-leg" is2D={is2D}/>
 							{/*<div className="cape">*/ }
 							{/*	<div className="top"></div>*/ }
 							{/*	<div className="left"></div>*/ }
@@ -167,7 +119,7 @@ export function MinecraftSkinViewer3D({
 						</div>
 					</div>
 				) : (
-					<Spin indicator={antIcon} />
+					<Spin indicator={ antIcon }/>
 				)
 			}
 		</MinecraftSkinViewerContainer>

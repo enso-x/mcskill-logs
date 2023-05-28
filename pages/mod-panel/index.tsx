@@ -133,7 +133,7 @@ const ModPanelIndexPage: NextPage<ModPanelIndexPageProps> = ({
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				lastWeek: moment().get('week')
+				lastWeek: moment().subtract(1, 'day').get('week')
 			})
 		}).then(res => res.json());
 
@@ -229,7 +229,7 @@ const ModPanelIndexPage: NextPage<ModPanelIndexPageProps> = ({
 				</HorizontalLayout>
 				<HorizontalLayout>
 					{
-						settings && settings.lastWeek < moment().get('week') && user && getAverageUserRoleInfo(user).role >= EUserRoles.curator ? (
+						settings && settings.lastWeek < moment().subtract(1, 'day').get('week') && user && getAverageUserRoleInfo(user).role >= EUserRoles.curator ? (
 							<Button type="primary" loading={ pointsInProgress }
 							        onClick={ calcOnlineForRecentWeek }>
 								Начислить очки за неделю
@@ -260,7 +260,7 @@ const ModPanelIndexPage: NextPage<ModPanelIndexPageProps> = ({
 							               onlineStatus={ onlineAPI.getUserOnlineStatus(modUser, onlineStatus) }
 							               onUpdate={ updateUserList }/>
 							{
-								hasJuniorRole(modUser) && settings && settings.lastWeek < moment().get('week') && user && getAverageUserRoleInfo(user).role >= EUserRoles.curator ? (
+								hasJuniorRole(modUser) && settings && settings.lastWeek < moment().subtract(1, 'day').get('week') && user && getAverageUserRoleInfo(user).role >= EUserRoles.curator ? (
 									<ModeratorCardCheckboxContainer>
 										<Checkbox checked={ selectedUsers.includes(modUser.discord_id) }
 										          onChange={ handleUserSelectedChange(modUser) }>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { EditOutlined } from '@ant-design/icons';
 
@@ -9,13 +9,25 @@ import { InfinityIcon } from '@/components/mod-panel/icons/Infinity';
 import { EUserRoles, IUser, ROLES } from '@/interfaces/User';
 import { IUserOnlineStatus } from '@/helpers/mod-panel/online';
 import { getAverageUserRoleInfo } from '@/helpers/users';
-import { MinecraftSkin } from '@/components/mod-panel/MinecraftSkin';
+import { MinecraftSkinViewer3D } from '@/components/mod-panel/MinecraftSkinViewer3D';
 
 const ButtonsContainer = styled(VerticalLayout)`
 	gap: 8px;
 	position: absolute;
 	align-self: flex-end;
 	opacity: 0;
+`;
+
+const SkinContainer = styled.div`
+	display: flex;
+
+	> div {
+		height: 128px;
+
+		.mc-skin-viewer {
+			transform: scale(0.34) translateY(40px);
+		}
+	}
 `;
 
 const ModeratorCardContainer = styled.div`
@@ -46,7 +58,7 @@ const CardOnlineIndicator = styled(OnlineIndicator)`
 
 const PointsContainer = styled(HorizontalLayout)`
 	gap: 8px;
-	
+
 	span {
 		line-height: 24px;
 	}
@@ -67,6 +79,8 @@ export function ModeratorCard({
 }: IModeratorCardProps) {
 	if (!user) return null;
 
+	const [ isCardHovered, setIsCardHovered ] = useState<boolean>(false);
+
 	const userAverageRoleInfo = getAverageUserRoleInfo(user);
 	const moderatorAverageRoleInfo = getAverageUserRoleInfo(moderator);
 
@@ -75,8 +89,19 @@ export function ModeratorCard({
 			|| userAverageRoleInfo.role === EUserRoles.creator;
 	};
 
+	const handleCardMouseEnter = () => {
+		if (!isCardHovered) {
+			setIsCardHovered(true);
+		}
+	};
+
+	const handleCardMouseOut: React.MouseEventHandler<HTMLDivElement> = (e) => {
+		if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+		setIsCardHovered(false);
+	};
+
 	return (
-		<ModeratorCardContainer>
+		<ModeratorCardContainer onMouseEnter={ handleCardMouseEnter } onMouseOut={ handleCardMouseOut }>
 			<CardOnlineIndicator title={ onlineStatus.title } $online={ onlineStatus.isOnline }/>
 			<ButtonsContainer>
 				{
@@ -93,16 +118,18 @@ export function ModeratorCard({
 					) : null
 				}
 			</ButtonsContainer>
-			<MinecraftSkin username={ moderator.username } mode={ 1 }/>
+			<SkinContainer>
+				<MinecraftSkinViewer3D username={ moderator.username } is2D={ !isCardHovered }/>
+			</SkinContainer>
 			<span
 				className={ EUserRoles[moderatorAverageRoleInfo.role] }>{ ROLES[moderatorAverageRoleInfo.role] }</span>
 			<span>{ moderator.username }</span>
 			<PointsContainer>
 				Баллы: { moderatorAverageRoleInfo.points >= 0 ? (
-					<span>{ moderatorAverageRoleInfo.points }</span>
-				): (
-					<InfinityIcon/>
-				) }
+				<span>{ moderatorAverageRoleInfo.points }</span>
+			) : (
+				<InfinityIcon/>
+			) }
 			</PointsContainer>
 		</ModeratorCardContainer>
 	);
