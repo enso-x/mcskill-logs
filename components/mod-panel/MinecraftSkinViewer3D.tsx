@@ -94,7 +94,7 @@ export function MinecraftSkinViewer3D({
 			};
 			reader.readAsDataURL(imageBlob);
 		})();
-	}, []);
+	}, [ username ]);
 
 	return (
 		<MinecraftSkinViewerContainer imageData={ skinData }>
