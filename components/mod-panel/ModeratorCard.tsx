@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { EditOutlined } from '@ant-design/icons';
 
 import { HorizontalLayout, VerticalLayout, OnlineIndicator } from '@/components/Styled';
@@ -30,7 +30,12 @@ const SkinContainer = styled.div`
 	}
 `;
 
-const ModeratorCardContainer = styled.div`
+interface IModeratorCardContainerProps {
+	verbs: number;
+	warnings: number;
+}
+
+const ModeratorCardContainer = styled.div<IModeratorCardContainerProps>`
 	display: flex;
 	flex-direction: column;
 	min-width: 240px;
@@ -49,6 +54,48 @@ const ModeratorCardContainer = styled.div`
 			opacity: 1;
 		}
 	}
+
+	${ props => props.warnings ? css`
+		border: 1px solid ${props.warnings === 1 ? '#560000' : '#9a0000' };
+		${props.warnings === 2 ? 'background: #1e0000;' : null}
+		${props.warnings === 3 ? css`
+			background: #1e0000;
+			
+			&::after {
+				content: '!';
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				width: 24px;
+				height: 24px;
+				background: #9a0000;
+				border-radius: 4px;
+				position: absolute;
+				bottom: 8px;
+				left: 8px;
+			}
+		` : null}
+	` : props.verbs ? css`
+		border: 1px solid ${props.verbs === 1 ? '#5e4600' : '#9a7200' };
+		${props.verbs === 2 ? 'background: #1e1600;' : null}
+		${props.verbs === 3 ? css`
+			background: #1e1600;
+			
+			&::after {
+				content: '!';
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				width: 24px;
+				height: 24px;
+				background: #9a7200;
+				border-radius: 4px;
+				position: absolute;
+				bottom: 8px;
+				left: 8px;
+			}
+		` : null}
+	` : null }
 `;
 
 const CardOnlineIndicator = styled(OnlineIndicator)`
@@ -107,7 +154,8 @@ export function ModeratorCard({
 	}, []);
 
 	return (
-		<ModeratorCardContainer onMouseEnter={ handleCardMouseEnter } onMouseOut={ handleCardMouseOut }>
+		<ModeratorCardContainer onMouseEnter={ handleCardMouseEnter } onMouseOut={ handleCardMouseOut }
+		                        verbs={ moderator.verbs } warnings={ moderator.warnings }>
 			<CardOnlineIndicator title={ onlineStatus.title } $online={ onlineStatus.isOnline }/>
 			<ButtonsContainer>
 				{
