@@ -130,7 +130,7 @@ export function ModeratorCard({
 
 	const [ isHovered, setIsHovered ] = useState(false);
 	const [ durationLogs, setDurationLogs ] = useState<string>('');
-	const isHoveredDebounced = useDebounce(isHovered, 40);
+	const isHoveredDebounced = useDebounce(isHovered, 100);
 
 	const userAverageRoleInfo = getAverageUserRoleInfo(user);
 	const moderatorAverageRoleInfo = getAverageUserRoleInfo(moderator);
