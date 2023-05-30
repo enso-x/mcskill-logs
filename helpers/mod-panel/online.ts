@@ -1,30 +1,15 @@
 import moment from 'moment/moment';
 
-import { getDaysBetweenDates, toUTC } from '@/helpers/datetime';
-import { EUserRoles, IUser } from '@/interfaces/User';
+import { getDaysBetweenDates, momentDurationToString, timeToSeconds, toUTC } from '@/helpers/datetime';
+import { IUser } from '@/interfaces/User';
 import { IServer } from '@/interfaces/Server';
-import { getUserRoleInfoForServer, getUserServersKeys } from '@/helpers/users';
 
 const dateFormatter = new Intl.DateTimeFormat('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' });
 const timePattern = (group: string | null = null) => `\\[(?${ group ? `<${ group }>` : ':' }\\d{2}:\\d{2}(?::\\d{2})?)]`;
 const namePattern = (group: string | null = null) => `(?${ group ? `<${ group }>` : ':' }[A-Za-z_0-9-]+)`;
 const connectionRegExp = new RegExp(`${timePattern('time')} ${namePattern('playerName')} (?<actionType>(?:logged in)|(?:left the game))\\n?`, 'i');
 
-export const getUsernames = (users: IUser[]): string[] => {
-	return users.map(user => user.username);
-};
-
-export const getJuniorUsernamesForServer = (server: IServer, users: IUser[]): string[] => {
-	return getUsernames(users.filter(user => {
-		const userRoleInfoForServer = getUserRoleInfoForServer(user, server.value);
-		return getUserServersKeys(user).includes(server.value) && userRoleInfoForServer && userRoleInfoForServer.role <= EUserRoles.moder;
-	}));
-};
-
-export const timeToSeconds = (time: string): number => {
-	const [ hours, minutes, seconds ] = time.split(':').map(Number);
-	return (hours * 60 + minutes) * 60 + seconds;
-};
+export const DURATION_LOGS_STORAGE_KEY = '[pixelmon][panel][duration-logs]';
 
 export const calculatePointsForOnlineTime = (duration: number, pointsPerWeek = 15, onlinePerWeek = '21:00:00', overtimeMultiplier = 1.1) => {
 	const secondsPerWeek = timeToSeconds(onlinePerWeek);
@@ -75,7 +60,7 @@ interface IUserDuration {
 
 type TUsersOnlineDuration = Record<string, IUserDuration>;
 
-export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernames: string[]): Promise<TUsersOnlineDuration> => {
+export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernames: string[], isDebugMode: boolean = false): Promise<TUsersOnlineDuration> => {
 	const startOfWeek = moment().startOf('week').subtract(1, 'week').add(1, 'day').toDate();
 	const endOfWeek = moment().endOf('week').subtract(1, 'week').add(1, 'day').toDate();
 
@@ -84,9 +69,10 @@ export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernam
 	const durations: TUsersOnlineDuration = {};
 	const usernamesReg = new RegExp(usernames.map(username => ` ${ username } `).join('|'), 'i');
 	const notEndedModerators: Set<string> = new Set();
+	const durationLogs: Record<string, string> = {};
 
 	const getDurationBetweenMoments = (startMoment: moment.Moment, endMoment: moment.Moment): moment.Duration => {
-		return moment.duration(endMoment.diff(startMoment))
+		return moment.duration(endMoment.diff(startMoment));
 	};
 
 	const addDurationForUser = (username: string, duration: moment.Duration) => {
@@ -105,9 +91,11 @@ export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernam
 		const lines = log.text.split('\n').filter((line: string) => line.length && usernamesReg.test(line));
 
 		lines.forEach((line: string, i: number) => {
+
 			const data = connectionRegExp.exec(line)?.groups;
 
 			if (data) {
+				if (!durationLogs[data.playerName]) durationLogs[data.playerName] = '';
 				if (!durations[data.playerName]) durations[data.playerName] = {
 					duration: moment.duration(0),
 					lastLogin: startOfDateMoment(log.date)
@@ -116,23 +104,56 @@ export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernam
 					const duration = getDurationBetweenMoments(durations[data.playerName].lastLogin, dateTimeToMoment(log.date, data.time));
 					addDurationForUser(data.playerName, duration);
 					checkAndDeleteUserFromNotEnded(data.playerName);
+
+					durationLogs[data.playerName] += `Выход: ${ dateTimeToMoment(log.date, data.time).format('DD.MM.YYYY HH:mm') }\n`;
+					durationLogs[data.playerName] += `Длительность онлайна: ${ momentDurationToString(duration) }\n`;
+					durationLogs[data.playerName] += `Общий онлайн на данный момент: ${ momentDurationToString(durations[data.playerName].duration) }\n`;
+					durationLogs[data.playerName] += `-------------------------------------------\n`;
 				} else {
 					durations[data.playerName].lastLogin = dateTimeToMoment(log.date, data.time);
 					notEndedModerators.add(data.playerName);
+
+					durationLogs[data.playerName] += `Вход: ${ dateTimeToMoment(log.date, data.time).format('DD.MM.YYYY HH:mm') }\n`;
 				}
 			}
 
 			if (i === lines.length - 1 && li === logs.length - 1 && notEndedModerators.size > 0) {
 				notEndedModerators.forEach(moderatorName => {
-					const duration = getDurationBetweenMoments(durations[moderatorName].lastLogin, startOfDateMoment(log.date).add(1, 'day'));
+					const logoutMoment = startOfDateMoment(log.date).add(1, 'day');
+					const duration = getDurationBetweenMoments(durations[moderatorName].lastLogin, logoutMoment);
 					addDurationForUser(moderatorName, duration);
 					checkAndDeleteUserFromNotEnded(moderatorName);
+
+					durationLogs[moderatorName] += `Выход: ${ logoutMoment.format('DD.MM.YYYY HH:mm') }\n`;
+					durationLogs[moderatorName] += `Длительность онлайна: ${ momentDurationToString(duration) }\n`;
+					durationLogs[moderatorName] += `Общий онлайн на данный момент: ${ momentDurationToString(durations[moderatorName].duration) }\n`;
+					durationLogs[moderatorName] += `-------------------------------------------\n`;
 				});
 			}
 		});
 	});
 
+	for (let username in durationLogs) {
+		durationLogs[username] = `Общее время игры с [${ moment(startOfWeek).format('DD.MM.YYYY HH:mm:ss') }] по [${ moment(endOfWeek).format('DD.MM.YYYY HH:mm:ss') }]: ${ momentDurationToString(durations[username].duration) }\n-------------------------------------------\n` + durationLogs[username];
+
+		if (isDebugMode) {
+			console.groupCollapsed(username);
+			console.log(durationLogs[username]);
+			console.groupEnd();
+		}
+
+		localStorage.setItem(DURATION_LOGS_STORAGE_KEY + username, durationLogs[username]);
+	}
+
 	return durations;
+};
+
+export const clearPreviousDurationLogsFromLocalStorage = () => {
+	for (let localStorageKey in localStorage) {
+		if (localStorageKey.startsWith(DURATION_LOGS_STORAGE_KEY)) {
+			localStorage.removeItem(localStorageKey);
+		}
+	}
 };
 
 export interface IUserOnlineStatus {

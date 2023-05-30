@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import styled, { css } from 'styled-components';
-import { EditOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
+import { EditOutlined, FieldTimeOutlined } from '@ant-design/icons';
 
 import { HorizontalLayout, VerticalLayout, OnlineIndicator } from '@/components/Styled';
 import { ModalAddMember } from '@/components/mod-panel/modals/ModalAddMember';
 import { ModalDeleteMember } from '@/components/mod-panel/modals/ModalDeleteMember';
 import { InfinityIcon } from '@/components/mod-panel/icons/Infinity';
 import { EUserRoles, IUser, ROLES } from '@/interfaces/User';
-import { IUserOnlineStatus } from '@/helpers/mod-panel/online';
+import { DURATION_LOGS_STORAGE_KEY, IUserOnlineStatus } from '@/helpers/mod-panel/online';
 import { getAverageUserRoleInfo } from '@/helpers/users';
 import { MinecraftSkinViewer3D } from '@/components/mod-panel/MinecraftSkinViewer3D';
 
@@ -56,11 +57,11 @@ const ModeratorCardContainer = styled.div<IModeratorCardContainerProps>`
 	}
 
 	${ props => props.warnings ? css`
-		border: 1px solid ${props.warnings === 1 ? '#560000' : '#9a0000' };
-		${props.warnings === 2 ? 'background: #1e0000;' : null}
-		${props.warnings === 3 ? css`
+		border: 1px solid ${ props.warnings === 1 ? '#560000' : '#9a0000' };
+		${ props.warnings === 2 ? 'background: #1e0000;' : null }
+		${ props.warnings === 3 ? css`
 			background: #1e0000;
-			
+
 			&::after {
 				content: '!';
 				display: flex;
@@ -74,13 +75,13 @@ const ModeratorCardContainer = styled.div<IModeratorCardContainerProps>`
 				bottom: 8px;
 				left: 8px;
 			}
-		` : null}
+		` : null }
 	` : props.verbs ? css`
-		border: 1px solid ${props.verbs === 1 ? '#5e4600' : '#9a7200' };
-		${props.verbs === 2 ? 'background: #1e1600;' : null}
-		${props.verbs === 3 ? css`
+		border: 1px solid ${ props.verbs === 1 ? '#5e4600' : '#9a7200' };
+		${ props.verbs === 2 ? 'background: #1e1600;' : null }
+		${ props.verbs === 3 ? css`
 			background: #1e1600;
-			
+
 			&::after {
 				content: '!';
 				display: flex;
@@ -94,7 +95,7 @@ const ModeratorCardContainer = styled.div<IModeratorCardContainerProps>`
 				bottom: 8px;
 				left: 8px;
 			}
-		` : null}
+		` : null }
 	` : null }
 `;
 
@@ -127,6 +128,7 @@ export function ModeratorCard({
 	if (!user) return null;
 
 	const [ isCardHovered, setIsCardHovered ] = useState<boolean>(false);
+	const [ durationLogs, setDurationLogs ] = useState<string>('');
 
 	const userAverageRoleInfo = getAverageUserRoleInfo(user);
 	const moderatorAverageRoleInfo = getAverageUserRoleInfo(moderator);
@@ -147,17 +149,38 @@ export function ModeratorCard({
 		setIsCardHovered(false);
 	};
 
+	const handleDurationLogsClick = () => {
+		const link = document.createElement('a');
+		link.setAttribute('href', `data:text/plain;charset=utf-8,${ durationLogs }`);
+		link.setAttribute('download', `${ moderator.username }.log`);
+		link.style.display = 'none';
+		document.body.append(link);
+		link.click();
+		link.remove();
+	};
+
 	useEffect(() => {
+		const durationLogsData = localStorage.getItem(DURATION_LOGS_STORAGE_KEY + moderator.username);
+		if (durationLogsData && durationLogsData.length) {
+			setDurationLogs(durationLogsData);
+		}
 		return () => {
 			setIsCardHovered(false);
 		};
-	}, []);
+	}, [ moderator ]);
 
 	return (
 		<ModeratorCardContainer onMouseEnter={ handleCardMouseEnter } onMouseOut={ handleCardMouseOut }
 		                        verbs={ moderator.verbs } warnings={ moderator.warnings }>
 			<CardOnlineIndicator title={ onlineStatus.title } $online={ onlineStatus.isOnline }/>
 			<ButtonsContainer>
+				{
+					hasAccess() && durationLogs.length ? (
+						<Button onClick={ handleDurationLogsClick }>
+							<FieldTimeOutlined/>
+						</Button>
+					) : null
+				}
 				{
 					hasAccess() ? (
 						<ModalAddMember user={ user } edit={ moderator }

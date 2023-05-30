@@ -1,25 +1,22 @@
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import moment from 'moment';
 import { NextPage } from 'next';
 import { useSession } from 'next-auth/react';
 import { JWT } from 'next-auth/jwt';
-import { Button, Select, Input, Checkbox } from 'antd';
+import { Select, Input, Checkbox } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 
 import { protectedRoute } from '@/middleware/protectedRoute';
 import { useDebounce } from '@/helpers';
-import { filterAndSortUsers, getAverageUserRoleInfo, getUserRoleInfoForServer, hasJuniorRole } from '@/helpers/users';
-import { momentDurationToString } from '@/helpers/datetime';
-import { timeToSeconds } from '@/helpers/mod-panel/online';
+import { filterAndSortUsers, getAverageUserRoleInfo, getUsernames, hasJuniorRole } from '@/helpers/users';
 import { onlineAPI } from '@/helpers/mod-panel';
 import { ModPanelPage, ModPanelPageControls, ModPanelPageContent } from '@/components/mod-panel/ModPanelPage';
 import { HorizontalLayout } from '@/components/Styled';
 import { ModeratorCard } from '@/components/mod-panel/ModeratorCard';
 import { ModalAddMember } from '@/components/mod-panel/modals/ModalAddMember';
+import { useCalculateOnlinePoints } from '@/components/mod-panel/CalculateOnlinePoints';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { SERVERS } from '@/interfaces/Server';
-import { ISettings } from '@/models/Settings';
 
 const ModPanelPageContentStyled = styled(ModPanelPageContent)`
 	display: flex;
@@ -73,73 +70,26 @@ const ModPanelIndexPage: NextPage<ModPanelIndexPageProps> = ({
 	const [ onlineStatus, setOnlineStatus ] = useState<any>({});
 	const [ selectedServers, setSelectedServers ] = useState<string[]>([]);
 	const [ selectedUsers, setSelectedUsers ] = useState<string[]>([]);
-	const [ settings, setSettings ] = useState<ISettings>();
-	const [ pointsInProgress, setPointsInProgress ] = useState<boolean>(false);
 	const debouncedServers = useDebounce(selectedServers, 200);
+	const { canCalculatePoints, calculatePointsControls } = useCalculateOnlinePoints({
+		user,
+		users: allUsers,
+		selectedUsers,
+		afterSubmit: async () => {
+			await updateUserList();
+			setSelectedUsers([]);
+		}
+	});
 
 	const fetchOnlineStatuses = async () => {
 		for (let server of Object.values(SERVERS)) {
-			const statuses = await onlineAPI.fetchUsersOnlineStatusForServer(server, onlineAPI.getUsernames(allUsers));
+			const statuses = await onlineAPI.fetchUsersOnlineStatusForServer(server, getUsernames(allUsers));
 
 			setOnlineStatus((state: any) => ({
 				...state,
 				[server.value]: statuses
 			}));
 		}
-	};
-
-	const calcOnlineForRecentWeek = async () => {
-		if (!settings) return;
-
-		setPointsInProgress(true);
-
-		let clipboardText = `\`\`\`asciidoc\n`;
-
-		for (let server of Object.values(SERVERS)) {
-			const onlineForRecentWeek = await onlineAPI.fetchOnlineForRecentWeekForServer(server, onlineAPI.getJuniorUsernamesForServer(server, allUsers));
-			clipboardText += `[ ${ server.label } ]\n`;
-
-			for (let [ username, value ] of Object.entries(onlineForRecentWeek)) {
-				const duration = (value as any).duration;
-				const moderator = users.find(user => user.username === username);
-
-				if (!moderator) continue;
-
-				const moderatorRoleInfo = getUserRoleInfoForServer(moderator, server.value);
-				const pointsPerWeekByRole = moderatorRoleInfo ?
-					moderatorRoleInfo.role === EUserRoles.trainee ? settings.pointsPerWeekForTrainee :
-						moderatorRoleInfo.role === EUserRoles.helper ? settings.pointsPerWeekForHelper :
-							moderatorRoleInfo.role === EUserRoles.moder ? settings.pointsPerWeekForModerator :
-								settings.pointsPerWeekForTrainee : settings.pointsPerWeekForTrainee;
-				const userOnlineSeconds = duration.as('seconds');
-				const earnedPoints = userOnlineSeconds > timeToSeconds(settings.onlinePerWeek ?? '21:00:00')
-					? onlineAPI.calculatePointsForOnlineTime(userOnlineSeconds, pointsPerWeekByRole, settings.onlinePerWeek, settings.overtimeMultiplier)
-					: selectedUsers.includes(moderator.discord_id) ? pointsPerWeekByRole : 0;
-
-				await onlineAPI.updateUserPointsForServer(moderator, server.value, earnedPoints);
-
-				clipboardText += `${ username }: ${ momentDurationToString(duration) } (+${ earnedPoints })\n`;
-			}
-			clipboardText += `\n`;
-		}
-		clipboardText += `\`\`\``;
-
-		await navigator.clipboard.writeText(clipboardText);
-		await updateUserList();
-
-		const [ newSettings ] = await fetch('/api/settings/update', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				lastWeek: moment().subtract(1, 'day').get('week')
-			})
-		}).then(res => res.json());
-
-		setSettings(newSettings);
-		setPointsInProgress(false);
-		setSelectedUsers([]);
 	};
 
 	// const resetPoints = async () => {
@@ -197,8 +147,6 @@ const ModPanelIndexPage: NextPage<ModPanelIndexPageProps> = ({
 	useEffect(() => {
 		(async () => {
 			if (user) {
-				const [ appSettings ] = await fetch('/api/settings/get').then(res => res.json());
-				setSettings(appSettings);
 				await fetchOnlineStatuses();
 			}
 		})();
@@ -228,19 +176,7 @@ const ModPanelIndexPage: NextPage<ModPanelIndexPageProps> = ({
 					<Input placeholder="Фильтр по нику" value={ userFilter } onChange={ handleUserFilter }/>
 				</HorizontalLayout>
 				<HorizontalLayout>
-					{
-						settings && settings.lastWeek < moment().subtract(1, 'day').get('week') && user && getAverageUserRoleInfo(user).role >= EUserRoles.curator ? (
-							<Button type="primary" loading={ pointsInProgress }
-							        onClick={ calcOnlineForRecentWeek }>
-								Начислить очки за неделю
-							</Button>
-						) : null
-					}
-					{/*{*/}
-					{/*	settings && settings.lastWeek < moment().get('week') && user && getAverageUserRoleInfo(user).role >= EUserRoles.curator ?(*/}
-					{/*		<Button type="primary" danger loading={ pointsInProgress } onClick={ resetPoints }>Ресетнуть все очки</Button>*/}
-					{/*	) : null*/}
-					{/*}*/}
+					{ calculatePointsControls }
 					{
 						user && getAverageUserRoleInfo(user).role >= EUserRoles.gm ? (
 							<ModalAddMember user={ user } onSubmit={ updateUserList }/>
@@ -260,7 +196,7 @@ const ModPanelIndexPage: NextPage<ModPanelIndexPageProps> = ({
 							               onlineStatus={ onlineAPI.getUserOnlineStatus(modUser, onlineStatus) }
 							               onUpdate={ updateUserList }/>
 							{
-								hasJuniorRole(modUser) && settings && settings.lastWeek < moment().subtract(1, 'day').get('week') && user && getAverageUserRoleInfo(user).role >= EUserRoles.curator ? (
+								hasJuniorRole(modUser) && canCalculatePoints ? (
 									<ModeratorCardCheckboxContainer>
 										<Checkbox checked={ selectedUsers.includes(modUser.discord_id) }
 										          onChange={ handleUserSelectedChange(modUser) }>

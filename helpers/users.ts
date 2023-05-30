@@ -1,4 +1,9 @@
 import { EUserRoles, IUser, IUserServerRoleInfo } from '@/interfaces/User';
+import { IServer } from '@/interfaces/Server';
+
+export const getUsernames = (users: IUser[]): string[] => {
+	return users.map(user => user.username);
+};
 
 export const filterAndSortUsers = (currentUser: IUser, userList: IUser[]): IUser[] => {
 	if (!currentUser || !userList) {
@@ -22,6 +27,13 @@ export const getAverageUserRoleInfo = (user: IUser): IUserServerRoleInfo => {
 	});
 
 	return result;
+};
+
+export const getJuniorUsernamesForServer = (server: IServer, users: IUser[]): string[] => {
+	return getUsernames(users.filter(user => {
+		const userRoleInfoForServer = getUserRoleInfoForServer(user, server.value);
+		return getUserServersKeys(user).includes(server.value) && userRoleInfoForServer && userRoleInfoForServer.role <= EUserRoles.moder;
+	}));
 };
 
 export const getUserRoleInfoForServer = (user: IUser, server: string): IUserServerRoleInfo | null => {
