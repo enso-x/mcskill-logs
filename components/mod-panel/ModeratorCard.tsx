@@ -175,17 +175,17 @@ export function ModeratorCard({
 			<CardOnlineIndicator title={ onlineStatus.title } $online={ onlineStatus.isOnline }/>
 			<ButtonsContainer>
 				{
-					hasAccess() && durationLogs.length ? (
-						<Button onClick={ handleDurationLogsClick }>
-							<FieldTimeOutlined/>
-						</Button>
-					) : null
-				}
-				{
 					hasAccess() ? (
 						<ModalAddMember user={ user } edit={ moderator }
 						                buttonContent={ <EditOutlined/> }
 						                onSubmit={ onUpdate }/>
+					) : null
+				}
+				{
+					hasAccess() && durationLogs.length ? (
+						<Button onClick={ handleDurationLogsClick }>
+							<FieldTimeOutlined/>
+						</Button>
 					) : null
 				}
 				{
