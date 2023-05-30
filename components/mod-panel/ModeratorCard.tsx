@@ -11,6 +11,7 @@ import { EUserRoles, IUser, ROLES } from '@/interfaces/User';
 import { DURATION_LOGS_STORAGE_KEY, IUserOnlineStatus } from '@/helpers/mod-panel/online';
 import { getAverageUserRoleInfo } from '@/helpers/users';
 import { MinecraftSkinViewer3D } from '@/components/mod-panel/MinecraftSkinViewer3D';
+import { useDebounce } from '@/helpers';
 
 const ButtonsContainer = styled(VerticalLayout)`
 	gap: 8px;
@@ -127,8 +128,9 @@ export function ModeratorCard({
 }: IModeratorCardProps) {
 	if (!user) return null;
 
-	const [ isCardHovered, setIsCardHovered ] = useState<boolean>(false);
+	const [ isHovered, setIsHovered ] = useState(false);
 	const [ durationLogs, setDurationLogs ] = useState<string>('');
+	const isHoveredDebounced = useDebounce(isHovered, 40);
 
 	const userAverageRoleInfo = getAverageUserRoleInfo(user);
 	const moderatorAverageRoleInfo = getAverageUserRoleInfo(moderator);
@@ -138,15 +140,21 @@ export function ModeratorCard({
 			|| userAverageRoleInfo.role === EUserRoles.creator;
 	};
 
-	const handleCardMouseEnter = () => {
-		if (!isCardHovered) {
-			setIsCardHovered(true);
-		}
+	const handleMouseEnter = () => {
+		setIsHovered(true);
 	};
 
-	const handleCardMouseOut: React.MouseEventHandler<HTMLDivElement> = (e) => {
-		if (e.currentTarget.contains(e.relatedTarget as Node)) return;
-		setIsCardHovered(false);
+	const handleMouseOut = (event: React.MouseEvent<HTMLDivElement>) => {
+		const containerElement = event.currentTarget;
+		const relatedTarget = event.relatedTarget;
+
+		if (containerElement && relatedTarget) {
+			const isLeavingContainer = !containerElement.contains(relatedTarget as Node);
+
+			if (isLeavingContainer) {
+				setIsHovered(false);
+			}
+		}
 	};
 
 	const handleDurationLogsClick = () => {
@@ -165,12 +173,12 @@ export function ModeratorCard({
 			setDurationLogs(durationLogsData);
 		}
 		return () => {
-			setIsCardHovered(false);
+			setIsHovered(false);
 		};
 	}, [ moderator ]);
 
 	return (
-		<ModeratorCardContainer onMouseEnter={ handleCardMouseEnter } onMouseOut={ handleCardMouseOut }
+		<ModeratorCardContainer onMouseEnter={ handleMouseEnter } onMouseOut={ handleMouseOut }
 		                        verbs={ moderator.verbs } warnings={ moderator.warnings }>
 			<CardOnlineIndicator title={ onlineStatus.title } $online={ onlineStatus.isOnline }/>
 			<ButtonsContainer>
@@ -196,7 +204,7 @@ export function ModeratorCard({
 				}
 			</ButtonsContainer>
 			<SkinContainer>
-				<MinecraftSkinViewer3D username={ moderator.username } is2D={ !isCardHovered }/>
+				<MinecraftSkinViewer3D username={ moderator.username } is2D={ !isHoveredDebounced }/>
 			</SkinContainer>
 			<span
 				className={ EUserRoles[moderatorAverageRoleInfo.role] }>{ ROLES[moderatorAverageRoleInfo.role] }</span>
