@@ -1,32 +1,22 @@
-import React, { ChangeEvent, useState } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 import { NextPage } from 'next';
-import { JWT } from 'next-auth/jwt';
 import { Button, Input, Typography } from 'antd';
 
-import { protectedRoute } from '@/middleware/protectedRoute';
 import { ModPanelPage, ModPanelPageContent } from '@/components/mod-panel/ModPanelPage';
-import { EUserRoles, IUser } from '@/interfaces/User';
+import { Loading, LoadingContainer } from '@/components/mod-panel/Loading';
+import { EUserRoles } from '@/interfaces/User';
 import { ISettings } from '@/models/Settings';
 
 const { Text } = Typography;
 
-interface ModPanelSettingsPageProps {
-	discord: JWT;
-	user: IUser;
-	settings: ISettings;
-}
+const ModPanelSettingsPage: NextPage = () => {
+	const [ settings, setSettings ] = useState<ISettings>();
 
-const ModPanelSettingsPage: NextPage<ModPanelSettingsPageProps> = ({
-	discord,
-	user,
-	settings: appSettings
-}) => {
-	const [ settings, setSettings ] = useState<ISettings>(appSettings);
-	const [ onlinePerWeek, setOnlinePerWeek ] = useState<string>(settings.onlinePerWeek);
-	const [ pointsPerWeekForTrainee, setPointsPerWeekForTrainee ] = useState<string>(settings.pointsPerWeekForTrainee.toString());
-	const [ pointsPerWeekForHelper, setPointsPerWeekForHelper ] = useState<string>(settings.pointsPerWeekForHelper.toString());
-	const [ pointsPerWeekForModerator, setPointsPerWeekForModerator ] = useState<string>(settings.pointsPerWeekForModerator.toString());
-	const [ overtimeMultiplier, setOvertimeMultiplier ] = useState<string>(settings.overtimeMultiplier.toString());
+	const [ onlinePerWeek, setOnlinePerWeek ] = useState<string>('00:00:00');
+	const [ pointsPerWeekForTrainee, setPointsPerWeekForTrainee ] = useState<string>('0');
+	const [ pointsPerWeekForHelper, setPointsPerWeekForHelper ] = useState<string>('0');
+	const [ pointsPerWeekForModerator, setPointsPerWeekForModerator ] = useState<string>('0');
+	const [ overtimeMultiplier, setOvertimeMultiplier ] = useState<string>('0');
 	const [ saveInProgress, setSaveInProgress ] = useState<boolean>(false);
 
 	const handleOnlinePerWeekChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -50,11 +40,13 @@ const ModPanelSettingsPage: NextPage<ModPanelSettingsPageProps> = ({
 	};
 
 	const hasChanges = () => {
-		return settings.onlinePerWeek !== onlinePerWeek ||
-			   settings.pointsPerWeekForTrainee.toString() !== pointsPerWeekForTrainee ||
-			   settings.pointsPerWeekForHelper.toString() !== pointsPerWeekForHelper ||
-			   settings.pointsPerWeekForModerator.toString() !== pointsPerWeekForModerator ||
-			   settings.overtimeMultiplier.toString() !== overtimeMultiplier;
+		return settings && (
+		   settings.onlinePerWeek !== onlinePerWeek ||
+		   settings.pointsPerWeekForTrainee.toString() !== pointsPerWeekForTrainee ||
+		   settings.pointsPerWeekForHelper.toString() !== pointsPerWeekForHelper ||
+		   settings.pointsPerWeekForModerator.toString() !== pointsPerWeekForModerator ||
+		   settings.overtimeMultiplier.toString() !== overtimeMultiplier
+		);
 	};
 
 	const updateSettings = async () => {
@@ -77,47 +69,58 @@ const ModPanelSettingsPage: NextPage<ModPanelSettingsPageProps> = ({
 		setSaveInProgress(false);
 	};
 
+	useEffect(() => {
+		(async () => {
+			const [ appSettings ] = await fetch('/api/settings/get').then<ISettings[]>(res => res.json());
+
+			if (appSettings) {
+				setSettings(appSettings);
+			}
+		})();
+	}, []);
+
+	useEffect(() => {
+		if (settings) {
+			setOnlinePerWeek(settings.onlinePerWeek);
+			setPointsPerWeekForTrainee(settings.pointsPerWeekForTrainee.toString());
+			setPointsPerWeekForHelper(settings.pointsPerWeekForHelper.toString());
+			setPointsPerWeekForModerator(settings.pointsPerWeekForModerator.toString());
+			setOvertimeMultiplier(settings.overtimeMultiplier.toString());
+		}
+	}, [ settings ]);
+
 	return (
 		<ModPanelPage needRole={EUserRoles.curator}>
-			<ModPanelPageContent>
-				<Text>Онлайн за неделю</Text>
-				<Input value={ onlinePerWeek } placeholder="Онлайн за неделю"
-				       onChange={ handleOnlinePerWeekChange }/>
-				<Text>Очки за неделю для Стажера</Text>
-				<Input value={ pointsPerWeekForTrainee } placeholder="Очки за неделю для Стажера"
-				       onChange={ handlePointsPerWeekForTraineeChange }/>
-				<Text>Очки за неделю для Помощника</Text>
-				<Input value={ pointsPerWeekForHelper } placeholder="Очки за неделю для Помощника"
-				       onChange={ handlePointsPerWeekForHelperChange }/>
-				<Text>Очки за неделю для Модератора</Text>
-				<Input value={ pointsPerWeekForModerator } placeholder="Очки за неделю для Модератора"
-				       onChange={ handlePointsPerWeekForModeratorChange }/>
-				<Text>Множитель за овертайм</Text>
-				<Input value={ overtimeMultiplier } placeholder="Множитель за овертайм"
-				       onChange={ handleOvertimeMultiplierChange }/>
-				<Button type="primary" loading={ saveInProgress }
-				        disabled={ !hasChanges() }
-				        onClick={ updateSettings }>Сохранить</Button>
-			</ModPanelPageContent>
+			{
+				!settings ? (
+					<LoadingContainer>
+						<Loading/>
+					</LoadingContainer>
+				) : (
+					<ModPanelPageContent>
+						<Text>Онлайн за неделю</Text>
+						<Input value={ onlinePerWeek } placeholder="Онлайн за неделю"
+						       onChange={ handleOnlinePerWeekChange }/>
+						<Text>Очки за неделю для Стажера</Text>
+						<Input value={ pointsPerWeekForTrainee } placeholder="Очки за неделю для Стажера"
+						       onChange={ handlePointsPerWeekForTraineeChange }/>
+						<Text>Очки за неделю для Помощника</Text>
+						<Input value={ pointsPerWeekForHelper } placeholder="Очки за неделю для Помощника"
+						       onChange={ handlePointsPerWeekForHelperChange }/>
+						<Text>Очки за неделю для Модератора</Text>
+						<Input value={ pointsPerWeekForModerator } placeholder="Очки за неделю для Модератора"
+						       onChange={ handlePointsPerWeekForModeratorChange }/>
+						<Text>Множитель за овертайм</Text>
+						<Input value={ overtimeMultiplier } placeholder="Множитель за овертайм"
+						       onChange={ handleOvertimeMultiplierChange }/>
+						<Button type="primary" loading={ saveInProgress }
+						        disabled={ !settings || !hasChanges() }
+						        onClick={ updateSettings }>Сохранить</Button>
+					</ModPanelPageContent>
+				)
+			}
 		</ModPanelPage>
 	);
 };
 
-export const getServerSideProps = protectedRoute<ModPanelSettingsPageProps>(async (context) => {
-	const { siteFetch } = context;
-	const [ settings ] = await siteFetch<ISettings[]>('/api/settings/get');
-
-	return ({
-		props: {
-			discord: context.session?.discord ?? null,
-			user: context.session?.user ?? null,
-			settings
-		}
-	});
-});
-
 export default ModPanelSettingsPage;
-
-export const config = {
-	runtime: 'nodejs'
-};

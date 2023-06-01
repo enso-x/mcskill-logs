@@ -12,6 +12,7 @@ import { DURATION_LOGS_STORAGE_KEY, IUserOnlineStatus } from '@/helpers/mod-pane
 import { getAverageUserRoleInfo } from '@/helpers/users';
 import { MinecraftSkinViewer3D } from '@/components/mod-panel/MinecraftSkinViewer3D';
 import { useDebounce } from '@/helpers';
+import Link from 'next/link';
 
 const ButtonsContainer = styled(VerticalLayout)`
 	gap: 8px;
@@ -46,6 +47,7 @@ const ModeratorCardContainer = styled.div<IModeratorCardContainerProps>`
 	padding: 16px;
 	border: 1px solid var(--border-color);
 	border-radius: 8px;
+	color: #fff;
 
 	img {
 		max-height: 128px;
@@ -164,7 +166,9 @@ export function ModeratorCard({
 		}
 	};
 
-	const handleDurationLogsClick = () => {
+	const handleDurationLogsClick = (e: React.MouseEvent) => {
+		e.preventDefault();
+
 		const link = document.createElement('a');
 		link.setAttribute('href', `data:text/plain;charset=utf-8,${ durationLogs }`);
 		link.setAttribute('download', `${ moderator.username }.log`);
@@ -185,44 +189,50 @@ export function ModeratorCard({
 	}, [ moderator ]);
 
 	return (
-		<ModeratorCardContainer onMouseEnter={ handleMouseEnter } onMouseOut={ handleMouseOut } onMouseLeave={ handleMouseOut }
-		                        verbs={ moderator.verbs } warnings={ moderator.warnings }>
-			<CardOnlineIndicator title={ onlineStatus.title } $online={ onlineStatus.isOnline }/>
-			<ButtonsContainer>
-				{
-					hasAccess() ? (
-						<ModalAddMember user={ user } edit={ moderator }
-						                buttonContent={ <EditOutlined/> }
-						                onSubmit={ onUpdate }/>
-					) : null
-				}
-				{
-					hasAccess() && durationLogs.length ? (
-						<Button onClick={ handleDurationLogsClick }>
-							<FieldTimeOutlined/>
-						</Button>
-					) : null
-				}
-				{
-					hasAccess() ? (
-						<ModalDeleteMember user={ moderator }
-						                   onSubmit={ onUpdate }/>
-					) : null
-				}
-			</ButtonsContainer>
-			<SkinContainer>
-				<MinecraftSkinViewer3D username={ moderator.username } is2D={ !isHoveredDebounced }/>
-			</SkinContainer>
-			<span
-				className={ EUserRoles[moderatorAverageRoleInfo.role] }>{ ROLES[moderatorAverageRoleInfo.role] }</span>
-			<span>{ moderator.username }</span>
-			<PointsContainer>
-				Баллы: { moderatorAverageRoleInfo.points >= 0 ? (
-				<span>{ moderatorAverageRoleInfo.points }</span>
-			) : (
-				<InfinityIcon/>
-			) }
-			</PointsContainer>
-		</ModeratorCardContainer>
+		<Link href={ `/mod-panel/user/${ moderator.discord_id }` }>
+			<ModeratorCardContainer onMouseEnter={ handleMouseEnter } onMouseOut={ handleMouseOut }
+			                        onMouseLeave={ handleMouseOut }
+			                        verbs={ moderator.verbs } warnings={ moderator.warnings }>
+				<CardOnlineIndicator title={ onlineStatus.title } $online={ onlineStatus.isOnline }/>
+				<ButtonsContainer onClick={(e) => {
+					e.preventDefault();
+				}}>
+					{
+						hasAccess() ? (
+							<ModalAddMember user={ user } edit={ moderator }
+							                buttonContent={ <EditOutlined/> }
+							                onSubmit={ onUpdate }/>
+						) : null
+					}
+					{
+						hasAccess() && durationLogs.length ? (
+							<Button onClick={ handleDurationLogsClick }>
+								<FieldTimeOutlined/>
+							</Button>
+						) : null
+					}
+					{
+						hasAccess() ? (
+							<ModalDeleteMember user={ moderator }
+							                   onSubmit={ onUpdate }/>
+						) : null
+					}
+				</ButtonsContainer>
+
+				<SkinContainer>
+					<MinecraftSkinViewer3D username={ moderator.username } is2D={ !isHoveredDebounced }/>
+				</SkinContainer>
+				<span
+					className={ EUserRoles[moderatorAverageRoleInfo.role] }>{ ROLES[moderatorAverageRoleInfo.role] }</span>
+				<span>{ moderator.username }</span>
+				<PointsContainer>
+					Баллы: { moderatorAverageRoleInfo.points >= 0 ? (
+					<span>{ moderatorAverageRoleInfo.points }</span>
+				) : (
+					<InfinityIcon/>
+				) }
+				</PointsContainer>
+			</ModeratorCardContainer>
+		</Link>
 	);
 }

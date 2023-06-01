@@ -2,12 +2,13 @@ import React from 'react';
 import styled from 'styled-components';
 
 import { Page } from '@/components/Page';
+import { LoadingContainer, Loading } from '@/components/mod-panel/Loading';
 import { NotAuthorized } from '@/components/mod-panel/errors/NotAuthorized';
 import { Forbidden } from '@/components/mod-panel/errors/Forbidden';
 import { Header } from '@/components/mod-panel/Header';
 import { Navigation } from '@/components/mod-panel/Navigation';
-import { EUserRoles, IUser } from '@/interfaces/User';
-import { signOut, useSession } from 'next-auth/react';
+import { EUserRoles } from '@/interfaces/User';
+import { useSession } from 'next-auth/react';
 import { getAverageUserRoleInfo } from '@/helpers/users';
 
 const AppContainer = styled.div`
@@ -72,7 +73,11 @@ export function ModPanelPage({
 	const { data: session } = useSession();
 
 	if (session === undefined) {
-		return null;
+		return (
+			<LoadingContainer>
+				<Loading/>
+			</LoadingContainer>
+		);
 	}
 
 	const averageUserRoleInfo = session ? session.user ? getAverageUserRoleInfo(session.user) : null : null;

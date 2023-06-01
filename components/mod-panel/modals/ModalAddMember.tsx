@@ -1,13 +1,17 @@
 import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { Button, Input, Drawer, Select, Tabs } from 'antd';
 import styled from 'styled-components';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined } from '@ant-design/icons';
 
 import { useDebounce } from '@/helpers';
 import { HorizontalLayout, VerticalLayout } from '@/components/Styled';
 import { SERVERS } from '@/interfaces/Server';
 import { EUserRoles, IUser, IUserServerRoleInfo, ROLES } from '@/interfaces/User';
-import { getAverageUserRoleInfo, getUserRoleInfoForServer } from '@/helpers/users';
+import {
+	getUserHasAccess,
+	getUserHasAccessForServer,
+	getUserRoleInfoForServer
+} from '@/helpers/users';
 import { MinecraftSkinViewer3D } from '@/components/mod-panel/MinecraftSkinViewer3D';
 
 const ContentContainer = styled.div`
@@ -15,6 +19,7 @@ const ContentContainer = styled.div`
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
+	overflow: auto;
 
 	.ant-select-show-search:where(.css-dev-only-do-not-override-a1szv).ant-select:not(.ant-select-customize-input) .ant-select-selector {
 		cursor: pointer;
@@ -48,14 +53,12 @@ interface IModalAddMemberProps {
 	user: IUser;
 	edit?: IUser;
 	buttonContent?: React.ReactNode;
-	selectedServers?: string[];
 	onSubmit?: () => void;
 }
 
 export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 	user,
 	edit,
-	selectedServers,
 	buttonContent,
 	onSubmit
 }) => {
@@ -177,20 +180,13 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 		setRolesInfo(newRolesInfo);
 	}, [ serverSelectValues, roles, points ]);
 
-	const isDisabled = (role: EUserRoles): boolean => {
-		const userRole = user ? getAverageUserRoleInfo(user)?.role ?? EUserRoles.player : EUserRoles.player;
-		const moderatorRole = edit ? getAverageUserRoleInfo(edit)?.role ?? EUserRoles.player : EUserRoles.player;
-		return moderatorRole
-			? userRole !== EUserRoles.creator && userRole < role || moderatorRole > userRole
-			: false;
-	};
+	const hasAccess = getUserHasAccess(user, edit);
 
 	const allowedServers = useMemo(() => {
 		return serverSelectValues.filter(server => {
-			const userServerRole = getUserRoleInfoForServer(user, server)?.role ?? EUserRoles.player;
-			const moderatorServerRole = edit ? getUserRoleInfoForServer(edit, server)?.role ?? EUserRoles.player : EUserRoles.player;
+			const hasAccessForServer = getUserHasAccessForServer(user, edit, server);
 
-			return userServerRole >= EUserRoles.gm && (moderatorServerRole < userServerRole);
+			return hasAccessForServer(EUserRoles.gm);
 		}).sort();
 	}, [ serverSelectValues ]);
 
@@ -246,20 +242,17 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 				<ContentContainer>
 					<Select
 						mode="multiple"
-						disabled={ isDisabled(EUserRoles.gm) }
+						disabled={ !hasAccess(EUserRoles.gm) }
 						style={ { width: '100%' } }
 						placeholder="Сервер"
 						defaultValue={ [] }
 						value={ serverSelectValues }
 						onChange={ handleServerSelectChange }
 						options={ Object.values(SERVERS).map((server) => {
-							const userRole = getUserRoleInfoForServer(user, server.value)?.role ?? EUserRoles.player;
-							const moderatorRole = edit ? getUserRoleInfoForServer(edit, server.value)?.role ?? EUserRoles.player : EUserRoles.player;
+							const hasAccessForServer = getUserHasAccessForServer(user, edit, server.value);
 
 							return {
-								disabled: userRole < EUserRoles.gm
-									? true
-									: moderatorRole >= userRole,
+								disabled: !hasAccessForServer(EUserRoles.gm),
 								label: server.label,
 								value: server.value
 							};
@@ -270,13 +263,13 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 							<Tabs items={ tabItems }/>
 						) : null
 					}
-					<Input placeholder="Никнейм" value={ username } disabled={ isDisabled(EUserRoles.gm) }
+					<Input placeholder="Никнейм" value={ username } disabled={ !hasAccess(EUserRoles.gm) }
 					       onChange={ handleUsernameChange } addonBefore="Никнейм"/>
-					<Input placeholder="Discord ID" value={ discordID } disabled={ isDisabled(EUserRoles.gm) }
+					<Input placeholder="Discord ID" value={ discordID } disabled={ !hasAccess(EUserRoles.gm) }
 					       onChange={ handleDiscordIDChange } addonBefore="Discord ID"/>
-					<Input placeholder="Устники" value={ verbs } disabled={ isDisabled(EUserRoles.st) }
+					<Input placeholder="Устники" value={ verbs } disabled={ !hasAccess(EUserRoles.st) }
 					       onChange={ handleVerbsChange } addonBefore="Устники"/>
-					<Input placeholder="Предупреждения" value={ warnings } disabled={ isDisabled(EUserRoles.st) }
+					<Input placeholder="Предупреждения" value={ warnings } disabled={ !hasAccess(EUserRoles.st) }
 					       onChange={ handleWarningsChange } addonBefore="Предупреждения"/>
 					{ debouncedUsername && (
 						<SkinContainer>

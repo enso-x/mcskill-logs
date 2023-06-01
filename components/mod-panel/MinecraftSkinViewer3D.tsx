@@ -1,9 +1,8 @@
 import { useEffect, useState, FC } from 'react';
 import styled from 'styled-components';
-import { LoadingOutlined } from '@ant-design/icons';
-import { Spin } from 'antd';
 
 import { getImage2DContext, getImageFromBase64, loadImageAsBase64 } from '@/helpers/image';
+import { Loading } from '@/components/mod-panel/Loading';
 
 interface IMinecraftSkinViewerContainerProps {
 	imageData: string;
@@ -18,8 +17,6 @@ const MinecraftSkinViewerContainer = styled.div<IMinecraftSkinViewerContainerPro
 		background-image: url(${ props => props.imageData });
 	}
 `;
-
-const antIcon = <LoadingOutlined style={ { fontSize: 24 } } spin/>;
 
 interface IBlockPartsProps {
 	className: string;
@@ -117,7 +114,7 @@ export function MinecraftSkinViewer3D({
 						</div>
 					</div>
 				) : (
-					<Spin indicator={ antIcon }/>
+					<Loading/>
 				)
 			}
 		</MinecraftSkinViewerContainer>

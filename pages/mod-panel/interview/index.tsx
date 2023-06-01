@@ -1,7 +1,6 @@
 import React, { ChangeEventHandler, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { NextPage } from 'next';
-import { JWT } from 'next-auth/jwt';
 import { Button, Card, Descriptions, Input, InputNumber, Select, Space, Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 
@@ -9,6 +8,8 @@ import { protectedRoute } from '@/middleware/protectedRoute';
 import { ModPanelPage, ModPanelPageContent, ModPanelPageControls } from '@/components/mod-panel/ModPanelPage';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { ITestResult } from '@/models/TestResult';
+import { useSession } from 'next-auth/react';
+import { Loading, LoadingContainer } from '../../../components/mod-panel/Loading';
 
 const { Title } = Typography;
 
@@ -118,17 +119,8 @@ const ModPanelPageContentStyled = styled(ModPanelPageContent)`
 	gap: 0;
 `;
 
-interface ModPanelInterviewPageProps {
-	discord: JWT;
-	user: IUser;
-	testResults: ITestResultsTableData[];
-}
-
-const ModPanelInterviewPage: NextPage<ModPanelInterviewPageProps> = ({
-	discord,
-	user,
-	testResults
-}) => {
+const ModPanelInterviewPage: NextPage = () => {
+	const { data: session } = useSession();
 	const [ step, setStep ] = useState<string>('');
 	const [ grades, setGrades ] = useState<{ name: string; fileName: string; }[]>([]);
 	const [ selectedGrade, setSelectedGrade ] = useState<string>('');
@@ -141,6 +133,11 @@ const ModPanelInterviewPage: NextPage<ModPanelInterviewPageProps> = ({
 	const [ currentQuestionPointsValue, setCurrentQuestionPointsValue ] = useState<string>('0');
 	const [ currentQuestionPoints, setCurrentQuestionPoints ] = useState<number>(0);
 	const [ results, setResults ] = useState<{ question: string; points: number; }[]>([]);
+	const [ testResults, setTestResults ] = useState<ITestResultsTableData[]>([]);
+
+	const user = useMemo(() => {
+		return session && session.user;
+	}, [ session ]);
 
 	const shuffleArray = (array: any[]) => {
 		let currentIndex = array.length;
@@ -156,25 +153,6 @@ const ModPanelInterviewPage: NextPage<ModPanelInterviewPageProps> = ({
 
 		return array;
 	};
-
-	useEffect(() => {
-		fetch('/api/grades/available', {
-			method: 'POST',
-			headers: {
-				'content-type': 'application/json'
-			},
-			body: JSON.stringify({
-				userId: user?.discord_id ?? ''
-			})
-		}).then(async (response) => {
-			if (response.status === 200) {
-				const data = await response.json();
-				setGrades(data);
-				setStep('init');
-				setSelectedGrade(data[0].fileName);
-			}
-		});
-	}, []);
 
 	const onSelectChange = (value: string) => {
 		setSelectedGrade(value);
@@ -277,6 +255,34 @@ const ModPanelInterviewPage: NextPage<ModPanelInterviewPageProps> = ({
 	}, [ testResults ]);
 
 	useEffect(() => {
+		(async () => {
+			const testResults = await fetch('/api/test-results').then<ITestResultsTableData[]>(res => res.json());
+
+			if (testResults) {
+				setTestResults(testResults);
+			}
+
+			if (user) {
+				const availableGrades = await fetch('/api/grades/available', {
+					method: 'POST',
+					headers: {
+						'content-type': 'application/json'
+					},
+					body: JSON.stringify({
+						userId: user?.discord_id ?? ''
+					})
+				}).then(res => res.json());
+
+				if (availableGrades) {
+					setGrades(availableGrades);
+					setStep('init');
+					setSelectedGrade(availableGrades[0].fileName);
+				}
+			}
+		})();
+	}, [ user ]);
+
+	useEffect(() => {
 		if (step === 'results' && results.length === questionsCount) {
 			fetch('/api/test-results/add', {
 				method: 'POST',
@@ -300,178 +306,171 @@ const ModPanelInterviewPage: NextPage<ModPanelInterviewPageProps> = ({
 	return (
 		<ModPanelPage needRole={ EUserRoles.st }>
 			{
-				step === 'init' || step === 'settings' ? (
-					<ModPanelPageControls>
+				!session || !testResults ? (
+					<LoadingContainer>
+						<Loading/>
+					</LoadingContainer>
+				) : (
+					<>
 						{
-							step === 'init' && (
-								<>
-									<div style={ { display: 'flex', justifyContent: 'flex-end' } }>
-										<Select<string> style={ { width: 200 } }
-										                getPopupContainer={ () => {
-											                return document.body;
-										                } } defaultActiveFirstOption
-										                defaultValue={ selectedGrade }
-										                onChange={ onSelectChange }
-										                options={ selectGrades }/>
-									</div>
-									<Button type="primary" onClick={ onClickSetup }>Настройки
-										тестирования</Button>
-								</>
-							)
+							step === 'init' || step === 'settings' ? (
+								<ModPanelPageControls>
+									{
+										step === 'init' && (
+											<>
+												<div style={ { display: 'flex', justifyContent: 'flex-end' } }>
+													<Select<string> style={ { width: 200 } }
+													                getPopupContainer={ () => {
+														                return document.body;
+													                } } defaultActiveFirstOption
+													                defaultValue={ selectedGrade }
+													                onChange={ onSelectChange }
+													                options={ selectGrades }/>
+												</div>
+												<Button type="primary" onClick={ onClickSetup }>Настройки
+													тестирования</Button>
+											</>
+										)
+									}
+									{
+										step === 'settings' && grade && (
+											<Box>
+												<div>
+													<Input type="text" value={ playerName }
+													       placeholder={ 'Player name' }
+													       onChange={ onPlayerNameChange }/>
+												</div>
+												<div>
+													<Input type="text" value={ questionsCountValue }
+													       placeholder={ 'Question count' }
+													       onChange={ onQuestionCountChange }
+													       addonAfter={ `/ ${ grade.questions.length }` }/>
+												</div>
+												<Button type="primary" onClick={ onClickBegin }>Начать</Button>
+											</Box>
+										)
+									}
+								</ModPanelPageControls>
+							) : null
 						}
-						{
-							step === 'settings' && grade && (
-								<Box>
-									<div>
-										<Input type="text" value={ playerName }
-										       placeholder={ 'Player name' }
-										       onChange={ onPlayerNameChange }/>
-									</div>
-									<div>
-										<Input type="text" value={ questionsCountValue }
-										       placeholder={ 'Question count' }
-										       onChange={ onQuestionCountChange }
-										       addonAfter={ `/ ${ grade.questions.length }` }/>
-									</div>
-									<Button type="primary" onClick={ onClickBegin }>Начать</Button>
-								</Box>
-							)
-						}
-					</ModPanelPageControls>
-				) : null
+						<ModPanelPageContentStyled>
+							{
+								step === 'test' || step === 'results' ? (
+									<InnerContainer>
+										{
+											step === 'test' && grade && playerName && questions.length && (
+												<Space direction="vertical" size={ 16 }>
+													<Descriptions bordered
+													              column={ {
+														              xxl: 1,
+														              xl: 1,
+														              lg: 1,
+														              md: 1,
+														              sm: 1,
+														              xs: 1
+													              } }>
+														<Descriptions.Item
+															label="Player name">{ playerName }</Descriptions.Item>
+														<Descriptions.Item
+															label="Grade">{ grade.name }</Descriptions.Item>
+													</Descriptions>
+													<Card
+														title={ `Question: ${ currentQuestion + 1 } / ${ questionsCount }` }
+														bordered>
+														<Descriptions
+															column={ {
+																xxl: 1,
+																xl: 1,
+																lg: 1,
+																md: 1,
+																sm: 1,
+																xs: 1
+															} }>
+															<Descriptions.Item
+																label="Question">{ questions[currentQuestion].question }</Descriptions.Item>
+															<Descriptions.Item
+																label="Answer">{ questions[currentQuestion].answer }</Descriptions.Item>
+														</Descriptions>
+														<Space size={ 16 }>
+															<InputNumber<string> addonBefore="Points"
+															                     stringMode={ true }
+															                     min={ '0' }
+															                     step={ '0.1' }
+															                     controls={ false }
+															                     value={ currentQuestionPointsValue }
+															                     onChange={ onCurrentQuestionPointsChange }
+															/>
+															{
+																currentQuestion < (questionsCount - 1) ? (
+																	<Button
+																		onClick={ onClickNextQuestion }>Next</Button>
+																) : (
+																	<Button type="primary"
+																	        onClick={ onClickGetResults }>Get
+																		results</Button>
+																)
+															}
+														</Space>
+													</Card>
+												</Space>
+											)
+										}
+										{
+											step === 'results' && grade && playerName && results.length && (
+												<Space direction="vertical" size={ 16 }>
+													<Descriptions bordered
+													              column={ {
+														              xxl: 1,
+														              xl: 1,
+														              lg: 1,
+														              md: 1,
+														              sm: 1,
+														              xs: 1
+													              } }>
+														<Descriptions.Item
+															label="Player name">{ playerName }</Descriptions.Item>
+														<Descriptions.Item
+															label="Grade">{ grade.name }</Descriptions.Item>
+														<Descriptions.Item
+															label="Question count">{ questionsCount }</Descriptions.Item>
+													</Descriptions>
+													<Box>
+														<Title level={ 3 }
+														       style={ { marginBottom: 0 } }>Results</Title>
+														<Table bordered pagination={ false }
+														       columns={ resultTableColumns }
+														       dataSource={ results.map((result, i) => ({
+															       key: i + 1,
+															       question: result.question,
+															       points: result.points
+														       })) } scroll={ { y: 320 } } footer={ () => (
+															<span>Points: { resultPoints } / { questionsCount } ( { resultPercent }% )</span>
+														) }/>
+													</Box>
+												</Space>
+											)
+										}
+									</InnerContainer>
+								) : null
+							}
+							{
+								testResults.length ? (
+									<Table style={ {
+										width: '100%',
+										display: 'flex',
+										flexDirection: 'column',
+										overflowY: 'auto',
+										padding: '16px'
+									} } bordered columns={ testResultsTableColumns }
+									       dataSource={ preparedTestResults }/>
+								) : null
+							}
+						</ModPanelPageContentStyled>
+					</>
+				)
 			}
-			<ModPanelPageContentStyled>
-				{
-					step === 'test' || step === 'results' ? (
-						<InnerContainer>
-							{
-								step === 'test' && grade && playerName && questions.length && (
-									<Space direction="vertical" size={ 16 }>
-										<Descriptions bordered
-										              column={ {
-											              xxl: 1,
-											              xl: 1,
-											              lg: 1,
-											              md: 1,
-											              sm: 1,
-											              xs: 1
-										              } }>
-											<Descriptions.Item
-												label="Player name">{ playerName }</Descriptions.Item>
-											<Descriptions.Item
-												label="Grade">{ grade.name }</Descriptions.Item>
-										</Descriptions>
-										<Card
-											title={ `Question: ${ currentQuestion + 1 } / ${ questionsCount }` }
-											bordered>
-											<Descriptions
-												column={ {
-													xxl: 1,
-													xl: 1,
-													lg: 1,
-													md: 1,
-													sm: 1,
-													xs: 1
-												} }>
-												<Descriptions.Item
-													label="Question">{ questions[currentQuestion].question }</Descriptions.Item>
-												<Descriptions.Item
-													label="Answer">{ questions[currentQuestion].answer }</Descriptions.Item>
-											</Descriptions>
-											<Space size={ 16 }>
-												<InputNumber<string> addonBefore="Points"
-												                     stringMode={ true }
-												                     min={ '0' }
-												                     step={ '0.1' }
-												                     controls={ false }
-												                     value={ currentQuestionPointsValue }
-												                     onChange={ onCurrentQuestionPointsChange }
-												/>
-												{
-													currentQuestion < (questionsCount - 1) ? (
-														<Button
-															onClick={ onClickNextQuestion }>Next</Button>
-													) : (
-														<Button type="primary"
-														        onClick={ onClickGetResults }>Get
-															results</Button>
-													)
-												}
-											</Space>
-										</Card>
-									</Space>
-								)
-							}
-							{
-								step === 'results' && grade && playerName && results.length && (
-									<Space direction="vertical" size={ 16 }>
-										<Descriptions bordered
-										              column={ {
-											              xxl: 1,
-											              xl: 1,
-											              lg: 1,
-											              md: 1,
-											              sm: 1,
-											              xs: 1
-										              } }>
-											<Descriptions.Item
-												label="Player name">{ playerName }</Descriptions.Item>
-											<Descriptions.Item
-												label="Grade">{ grade.name }</Descriptions.Item>
-											<Descriptions.Item
-												label="Question count">{ questionsCount }</Descriptions.Item>
-										</Descriptions>
-										<Box>
-											<Title level={ 3 }
-											       style={ { marginBottom: 0 } }>Results</Title>
-											<Table bordered pagination={ false }
-											       columns={ resultTableColumns }
-											       dataSource={ results.map((result, i) => ({
-												       key: i + 1,
-												       question: result.question,
-												       points: result.points
-											       })) } scroll={ { y: 320 } } footer={ () => (
-												<span>Points: { resultPoints } / { questionsCount } ( { resultPercent }% )</span>
-											) }/>
-										</Box>
-									</Space>
-								)
-							}
-						</InnerContainer>
-					) : null
-				}
-				{
-					testResults.length ? (
-						<Table style={ {
-							width: '100%',
-							display: 'flex',
-							flexDirection: 'column',
-							overflowY: 'auto',
-							padding: '16px'
-						} } bordered columns={ testResultsTableColumns }
-						       dataSource={ preparedTestResults }/>
-					) : null
-				}
-			</ModPanelPageContentStyled>
 		</ModPanelPage>
 	);
 };
 
-export const getServerSideProps = protectedRoute<ModPanelInterviewPageProps>(async (context) => {
-	const { siteFetch } = context;
-	const testResults = await siteFetch<ITestResultsTableData[]>(`/api/test-results`);
-
-	return ({
-		props: {
-			discord: context.session?.discord ?? null,
-			user: context.session?.user ?? null,
-			testResults
-		}
-	});
-});
-
 export default ModPanelInterviewPage;
-
-export const config = {
-	runtime: 'nodejs'
-};

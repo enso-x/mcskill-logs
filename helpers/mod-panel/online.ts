@@ -167,6 +167,8 @@ export interface IUserOnlineStatus {
 
 type TUsersOnlineStatus = Record<string, IUserOnlineStatus>;
 
+export type TUserServerOnlineStatus = Record<string, TUsersOnlineStatus>;
+
 export const fetchUsersOnlineStatusForServer = async (server: IServer, usernames: string[]): Promise<TUsersOnlineStatus> => {
 	const [ response ] = await fetchServerConnectionLogsForPeriod(server, [ new Date() ]);
 
@@ -188,7 +190,7 @@ export const fetchUsersOnlineStatusForServer = async (server: IServer, usernames
 	return onlineStatuses;
 };
 
-export const getUserOnlineStatus = (user: IUser, statuses: Record<string, TUsersOnlineStatus>): IUserOnlineStatus => {
+export const getUserOnlineStatus = (user: IUser, statuses: TUserServerOnlineStatus): IUserOnlineStatus => {
 	const offlineStatus: IUserOnlineStatus = {
 		title: 'Offline',
 		isOnline: false

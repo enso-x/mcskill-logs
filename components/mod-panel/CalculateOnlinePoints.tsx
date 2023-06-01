@@ -2,7 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Checkbox } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 
-import { getAverageUserRoleInfo, getJuniorUsernamesForServer, getUserRoleInfoForServer } from '@/helpers/users';
+import {
+	getAverageUserRoleInfo,
+	getJuniorUsernamesForServer,
+	getUserHasAccess,
+	getUserRoleInfoForServer
+} from '@/helpers/users';
 import { timeToSeconds, getCurrentWeek, momentDurationToString } from '@/helpers/datetime';
 import { onlineAPI } from '@/helpers/mod-panel';
 import { EUserRoles, IUser } from '@/interfaces/User';
@@ -10,7 +15,7 @@ import { ISettings } from '@/models/Settings';
 import { SERVERS } from '@/interfaces/Server';
 
 interface ICalculateOnlinePointsProps {
-	user: IUser;
+	user: IUser | undefined;
 	users: IUser[];
 	selectedUsers: string[];
 	afterSubmit?: () => Promise<void>;
@@ -22,13 +27,6 @@ export const useCalculateOnlinePoints = ({
 	selectedUsers,
 	afterSubmit
 }: ICalculateOnlinePointsProps) => {
-	if (!user) {
-		return {
-			canCalculatePoints: false,
-			calculatePointsControls: null
-		};
-	}
-
 	const [ settings, setSettings ] = useState<ISettings>();
 	const [ isDebugMode, setIsDebugMode ] = useState<boolean>(false);
 	const [ calculateInProgress, setCalculateInProgress ] = useState<boolean>(false);
@@ -100,24 +98,24 @@ export const useCalculateOnlinePoints = ({
 
 	useEffect(() => {
 		(async () => {
-			if (user) {
-				const [ appSettings ] = await fetch('/api/settings/get').then(res => res.json());
-				setSettings(appSettings);
-			}
+			const [ appSettings ] = await fetch('/api/settings/get').then(res => res.json());
+			setSettings(appSettings);
 		})();
 	}, []);
 
-	const canCalculatePoints = useMemo<boolean>(() => {
-		if (!settings) return false;
+	const hasAccess = getUserHasAccess(user, null);
 
-		return isDebugMode || settings.lastWeek < getCurrentWeek() && getAverageUserRoleInfo(user).role >= EUserRoles.curator;
+	const canCalculatePoints = useMemo<boolean>(() => {
+		if (!user || !settings) return false;
+
+		return isDebugMode || settings.lastWeek < getCurrentWeek() && hasAccess(EUserRoles.curator);
 	}, [ user, settings, isDebugMode ]);
 
 	const calculatePointsControls = useMemo(() => {
-		return (
+		return !user ? null : (
 			<>
 				{
-					getAverageUserRoleInfo(user).role >= EUserRoles.curator && (
+					hasAccess(EUserRoles.curator) && (
 						<Checkbox checked={ isDebugMode }
 						          onChange={ handleDebugModeChange }>
 							Режим отладки подсчета очков

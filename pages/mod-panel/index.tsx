@@ -1,15 +1,11 @@
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { NextPage } from 'next';
 import { useSession } from 'next-auth/react';
-import { JWT } from 'next-auth/jwt';
 import { Select, Input, Checkbox } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 
-import { protectedRoute } from '@/middleware/protectedRoute';
-import { useDebounce } from '@/helpers';
-import { filterAndSortUsers, getAverageUserRoleInfo, getUsernames, hasJuniorRole } from '@/helpers/users';
-import { onlineAPI } from '@/helpers/mod-panel';
+import { Loading, LoadingContainer } from '@/components/mod-panel/Loading';
 import { ModPanelPage, ModPanelPageControls, ModPanelPageContent } from '@/components/mod-panel/ModPanelPage';
 import { HorizontalLayout } from '@/components/Styled';
 import { ModeratorCard } from '@/components/mod-panel/ModeratorCard';
@@ -17,6 +13,16 @@ import { ModalAddMember } from '@/components/mod-panel/modals/ModalAddMember';
 import { useCalculateOnlinePoints } from '@/components/mod-panel/CalculateOnlinePoints';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { SERVERS } from '@/interfaces/Server';
+import { useDebounce } from '@/helpers';
+import {
+	filterAndSortUsers,
+	getUserHasAccess,
+	getUsernames,
+	hasJuniorRole
+} from '@/helpers/users';
+import { onlineAPI } from '@/helpers/mod-panel';
+import { TUserServerOnlineStatus } from '@/helpers/mod-panel/online';
+
 
 const ModPanelPageContentStyled = styled(ModPanelPageContent)`
 	display: flex;
@@ -27,12 +33,6 @@ const ModPanelPageContentStyled = styled(ModPanelPageContent)`
 	align-items: flex-start;
 	overflow-y: auto;
 `;
-
-interface ModPanelIndexPageProps {
-	discord: JWT;
-	user: IUser;
-	allUsers: IUser[];
-}
 
 const ModeratorCardCheckboxContainer = styled.div`
 	position: absolute;
@@ -59,18 +59,22 @@ const ModeratorCardContainer = styled.div`
 	}
 `;
 
-const ModPanelIndexPage: NextPage<ModPanelIndexPageProps> = ({
-	discord,
-	user,
-	allUsers
-}) => {
-	const { update: updateSession } = useSession();
-	const [ users, setUsers ] = useState<IUser[]>(filterAndSortUsers(user, allUsers));
+const ModPanelIndexPage: NextPage = () => {
+	const { data: session, update: updateSession } = useSession();
+	const [ allUsers, setAllUsers ] = useState<IUser[]>([]);
 	const [ userFilter, setUserFilter ] = useState<string>('');
-	const [ onlineStatus, setOnlineStatus ] = useState<any>({});
+	const [ onlineStatus, setOnlineStatus ] = useState<TUserServerOnlineStatus>({});
 	const [ selectedServers, setSelectedServers ] = useState<string[]>([]);
 	const [ selectedUsers, setSelectedUsers ] = useState<string[]>([]);
 	const debouncedServers = useDebounce(selectedServers, 200);
+
+	const user = useMemo(() => {
+		return session?.user;
+	}, [ session ]);
+	const filteredUsers = useMemo(() => {
+		return user ? filterAndSortUsers(user, allUsers) : [];
+	}, [ user, allUsers ]);
+
 	const { canCalculatePoints, calculatePointsControls } = useCalculateOnlinePoints({
 		user,
 		users: allUsers,
@@ -83,7 +87,7 @@ const ModPanelIndexPage: NextPage<ModPanelIndexPageProps> = ({
 
 	const fetchOnlineStatuses = async () => {
 		for (let server of Object.values(SERVERS)) {
-			const statuses = await onlineAPI.fetchUsersOnlineStatusForServer(server, getUsernames(allUsers));
+			const statuses = await onlineAPI.fetchUsersOnlineStatusForServer(server, getUsernames(filteredUsers));
 
 			setOnlineStatus((state: any) => ({
 				...state,
@@ -91,25 +95,6 @@ const ModPanelIndexPage: NextPage<ModPanelIndexPageProps> = ({
 			}));
 		}
 	};
-
-	// const resetPoints = async () => {
-	// 	setPointsInProgress(true);
-	// 	// const filteredModerators = users.filter(user => user.role <= EUserRoles.moder);
-	// 	// for (let moderator of filteredModerators) {
-	// 	// 	await fetch('/api/users/edit', {
-	// 	// 		method: 'POST',
-	// 	// 		headers: {
-	// 	// 			'Content-Type': 'application/json'
-	// 	// 		},
-	// 	// 		body: JSON.stringify({
-	// 	// 			discord_id: moderator.discord_id,
-	// 	// 			points: 0
-	// 	// 		})
-	// 	// 	});
-	// 	// }
-	// 	// await updateUserList();
-	// 	setPointsInProgress(false);
-	// };
 
 	const updateUserList = async () => {
 		if (user) {
@@ -124,7 +109,7 @@ const ModPanelIndexPage: NextPage<ModPanelIndexPageProps> = ({
 					updateSession();
 				}
 			});
-			setUsers(filterAndSortUsers(user, newUsers));
+			setAllUsers(newUsers);
 		}
 	};
 
@@ -144,90 +129,89 @@ const ModPanelIndexPage: NextPage<ModPanelIndexPageProps> = ({
 		}
 	};
 
+	const hasAccess = getUserHasAccess(user, null);
+
 	useEffect(() => {
 		(async () => {
-			if (user) {
-				await fetchOnlineStatuses();
-			}
+			const allUsers = await fetch(`/api/users/getAll`).then(res => res.json());
+			setAllUsers(allUsers);
 		})();
 	}, []);
 
 	useEffect(() => {
-		updateUserList();
+		(async () => {
+			await fetchOnlineStatuses();
+		})();
+	}, [ filteredUsers ]);
+
+	useEffect(() => {
+		(async () => {
+			await updateUserList();
+		})();
 	}, [ debouncedServers ]);
 
 	return (
 		<ModPanelPage>
-			<ModPanelPageControls>
-				<HorizontalLayout>
-					<Select
-						mode="multiple"
-						allowClear
-						style={ { width: '240px', cursor: 'pointer', flexShrink: 0 } }
-						placeholder="Сервер"
-						defaultValue={ [] }
-						value={ selectedServers }
-						onChange={ handleServerSelectChange }
-						options={ Object.values(SERVERS).map((server) => ({
-							label: server.label,
-							value: server.value
-						})) }
-					/>
-					<Input placeholder="Фильтр по нику" value={ userFilter } onChange={ handleUserFilter }/>
-				</HorizontalLayout>
-				<HorizontalLayout>
-					{ calculatePointsControls }
-					{
-						user && getAverageUserRoleInfo(user).role >= EUserRoles.gm ? (
-							<ModalAddMember user={ user } onSubmit={ updateUserList }/>
-						) : null
-					}
-				</HorizontalLayout>
-			</ModPanelPageControls>
-			<ModPanelPageContentStyled>
-				{
-					filterAndSortUsers(
-						user,
-						users.filter(moderator => moderator.username.toLowerCase().includes(userFilter.toLowerCase()))
-					).map(modUser => (
-						<ModeratorCardContainer key={ modUser.discord_id }>
-							<ModeratorCard user={ user }
-							               moderator={ modUser }
-							               onlineStatus={ onlineAPI.getUserOnlineStatus(modUser, onlineStatus) }
-							               onUpdate={ updateUserList }/>
+			{
+				!session ? (
+					<LoadingContainer>
+						<Loading/>
+					</LoadingContainer>
+				) : (
+					<>
+						<ModPanelPageControls>
+							<HorizontalLayout>
+								<Select
+									mode="multiple"
+									allowClear
+									style={ { width: '240px', cursor: 'pointer', flexShrink: 0 } }
+									placeholder="Сервер"
+									defaultValue={ [] }
+									value={ selectedServers }
+									onChange={ handleServerSelectChange }
+									options={ Object.values(SERVERS).map((server) => ({
+										label: server.label,
+										value: server.value
+									})) }
+								/>
+								<Input placeholder="Фильтр по нику" value={ userFilter } onChange={ handleUserFilter }/>
+							</HorizontalLayout>
+							<HorizontalLayout>
+								{ calculatePointsControls }
+								{
+									user && hasAccess(EUserRoles.gm) ? (
+										<ModalAddMember user={ user } onSubmit={ updateUserList }/>
+									) : null
+								}
+							</HorizontalLayout>
+						</ModPanelPageControls>
+						<ModPanelPageContentStyled>
 							{
-								hasJuniorRole(modUser) && canCalculatePoints ? (
-									<ModeratorCardCheckboxContainer>
-										<Checkbox checked={ selectedUsers.includes(modUser.discord_id) }
-										          onChange={ handleUserSelectedChange(modUser) }>
-											Предупредил об онлайне
-										</Checkbox>
-									</ModeratorCardCheckboxContainer>
-								) : null
+								user && filteredUsers.filter(moderator => moderator.username.toLowerCase().includes(userFilter.toLowerCase())).map(modUser => (
+									<ModeratorCardContainer key={ modUser.discord_id }>
+										<ModeratorCard user={ user }
+										               moderator={ modUser }
+										               onlineStatus={ onlineAPI.getUserOnlineStatus(modUser, onlineStatus) }
+										               onUpdate={ updateUserList }/>
+										{
+											hasJuniorRole(modUser) && canCalculatePoints ? (
+												<ModeratorCardCheckboxContainer>
+													<Checkbox checked={ selectedUsers.includes(modUser.discord_id) }
+													          onChange={ handleUserSelectedChange(modUser) }>
+														Предупредил об онлайне
+													</Checkbox>
+												</ModeratorCardCheckboxContainer>
+											) : null
+										}
+									</ModeratorCardContainer>
+								))
 							}
-						</ModeratorCardContainer>
-					))
-				}
-			</ModPanelPageContentStyled>
+						</ModPanelPageContentStyled>
+					</>
+				)
+			}
 		</ModPanelPage>
 	);
 };
 
-export const getServerSideProps = protectedRoute<ModPanelIndexPageProps>(async (context) => {
-	const { siteFetch } = context;
-	const allUsers = await siteFetch<IUser[]>('/api/users/getAll');
-
-	return ({
-		props: {
-			discord: context.session?.discord ?? null,
-			user: context.session?.user ?? null,
-			allUsers: allUsers ?? []
-		}
-	});
-});
-
 export default ModPanelIndexPage;
-
-export const config = {
-	runtime: 'nodejs'
-};

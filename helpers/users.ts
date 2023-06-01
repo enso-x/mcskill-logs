@@ -47,3 +47,15 @@ export const getUserServersKeys = (user: IUser): string[] => {
 export const hasJuniorRole = (user: IUser): boolean => {
 	return user.roles.some(roleInfo => roleInfo.role <= EUserRoles.moder);
 };
+
+export const getUserHasAccess = (user: IUser | undefined | null, moderator: IUser | undefined | null) => (minimalRole: EUserRoles) => {
+	const userRole = (user) ? getAverageUserRoleInfo(user)?.role ?? EUserRoles.player : EUserRoles.player;
+	const moderatorRole = moderator ? getAverageUserRoleInfo(moderator)?.role ?? EUserRoles.player : EUserRoles.player;
+	return (userRole >= minimalRole && userRole > moderatorRole);
+};
+
+export const getUserHasAccessForServer = (user: IUser | undefined | null, moderator: IUser | undefined | null, serverKey: string) => (minimalRole: EUserRoles) => {
+	const userRole = (user) ? getUserRoleInfoForServer(user, serverKey)?.role ?? EUserRoles.player : EUserRoles.player;
+	const moderatorRole = moderator ? getUserRoleInfoForServer(moderator, serverKey)?.role ?? EUserRoles.player : EUserRoles.player;
+	return (userRole >= minimalRole && userRole > moderatorRole);
+};

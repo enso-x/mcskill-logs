@@ -1,17 +1,16 @@
 import React, { ChangeEvent, useEffect, useState } from 'react';
+import styled from 'styled-components';
 import { NextPage } from 'next';
-import { JWT } from 'next-auth/jwt';
 import { Select, Table, Input, DatePicker } from 'antd';
 
-import { protectedRoute } from '@/middleware/protectedRoute';
 import { useDebounce } from '@/helpers';
+import { Loading, LoadingContainer } from '@/components/mod-panel/Loading';
 import { ModPanelPage, ModPanelPageControls, ModPanelPageContent } from '@/components/mod-panel/ModPanelPage';
 import { HorizontalLayout } from '@/components/Styled';
 import { PUNISHMENT_TYPES } from '@/interfaces/PunishmentType';
 import { SERVERS } from '@/interfaces/Server';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { IPunishment } from '@/models/Punishment';
-import styled from 'styled-components';
 
 const { RangePicker } = DatePicker;
 
@@ -29,20 +28,9 @@ const ModPageControlsStyled = styled(ModPanelPageControls)`
 	gap: 16px;
 `;
 
-interface ModPanelPunishmentsPageProps {
-	discord: JWT;
-	user: IUser;
-	allUsers: IUser[];
-	allPunishments: IPunishment[];
-}
-
-const ModPanelPunishmentsPage: NextPage<ModPanelPunishmentsPageProps> = ({
-	discord,
-	user,
-	allUsers,
-	allPunishments
-}) => {
-	const [ punishments, setPunishments ] = useState<IPunishment[]>(allPunishments);
+const ModPanelPunishmentsPage: NextPage = () => {
+	const [ allUsers, setAllUsers ] = useState<IUser[]>([]);
+	const [ punishments, setPunishments ] = useState<IPunishment[]>([]);
 	const [ playerName, setPlayerName ] = useState<string>('');
 	const [ reason, setReason ] = useState<string>('');
 	const [ selectedServers, setSelectedServers ] = useState<string[]>([]);
@@ -146,96 +134,95 @@ const ModPanelPunishmentsPage: NextPage<ModPanelPunishmentsPageProps> = ({
 	};
 
 	useEffect(() => {
+		(async () => {
+			const newUsers = await fetch('/api/users/getAll').then<IUser[]>(res => res.json());
+			setAllUsers(newUsers);
+			await fetchPunishments();
+		})();
+	}, []);
+
+	useEffect(() => {
 		fetchPunishments();
 	}, [ debouncedPlayerName, debouncedServers, debouncedModerators, debouncedTypes, debouncedReason, debouncedRange ]);
 
 	return (
-		<ModPanelPage needRole={EUserRoles.helper}>
-			<ModPageControlsStyled>
-				<HorizontalLayout>
-					<Select
-						mode="multiple"
-						allowClear
-						style={ { width: '240px', cursor: 'pointer' } }
-						placeholder="Сервер"
-						defaultValue={ [] }
-						value={ selectedServers }
-						onChange={ handleServerSelectChange }
-						options={ Object.values(SERVERS).map((server) => ({
-							label: server.label,
-							value: server.label
-						})) }
-					/>
-					<Select
-						mode="multiple"
-						allowClear
-						style={ { width: '240px', cursor: 'pointer' } }
-						placeholder="Модератор"
-						defaultValue={ [] }
-						value={ selectedModerators }
-						onChange={ handleModeratorSelectChange }
-						options={ Object.values(allUsers).map((user) => ({
-							label: user.username,
-							value: user.discord_id
-						})) }
-					/>
-					<Select
-						mode="multiple"
-						allowClear
-						style={ { width: '240px', cursor: 'pointer' } }
-						placeholder="Тип нарушения"
-						defaultValue={ [] }
-						value={ selectedTypes }
-						onChange={ handleTypesSelectChange }
-						options={ Object.values(PUNISHMENT_TYPES).map((type) => ({
-							label: type.description,
-							value: type.label
-						})) }
-					/>
-				</HorizontalLayout>
-				<HorizontalLayout>
-					<Input style={ {
-						width: '240px'
-					} } placeholder="Ник игрока" value={ playerName }
-					       onChange={ handlePlayerName }/>
-					<Input style={ {
-						width: '240px'
-					} } placeholder="Причина" value={ reason }
-					       onChange={ handleReason }/>
-					<RangePicker onChange={ handleRangeChange }
-					             format="YYYY-MM-DD"/>
-				</HorizontalLayout>
-			</ModPageControlsStyled>
-			<ModPanelPageContent>
-				<Table bordered style={ {
-					width: '100%'
-				} } dataSource={ punishments.map(punish => {
-					//@ts-ignore
-					punish.key = punish.timestamp.toString();
-					return punish;
-				}) } columns={ columns }/>
-			</ModPanelPageContent>
+		<ModPanelPage needRole={ EUserRoles.helper }>
+			{
+				!allUsers.length ? (
+					<LoadingContainer>
+						<Loading/>
+					</LoadingContainer>
+				) : (
+					<>
+						<ModPageControlsStyled>
+							<HorizontalLayout>
+								<Select
+									mode="multiple"
+									allowClear
+									style={ { width: '240px', cursor: 'pointer' } }
+									placeholder="Сервер"
+									defaultValue={ [] }
+									value={ selectedServers }
+									onChange={ handleServerSelectChange }
+									options={ Object.values(SERVERS).map((server) => ({
+										label: server.label,
+										value: server.label
+									})) }
+								/>
+								<Select
+									mode="multiple"
+									allowClear
+									style={ { width: '240px', cursor: 'pointer' } }
+									placeholder="Модератор"
+									defaultValue={ [] }
+									value={ selectedModerators }
+									onChange={ handleModeratorSelectChange }
+									options={ Object.values(allUsers).map((user) => ({
+										label: user.username,
+										value: user.discord_id
+									})) }
+								/>
+								<Select
+									mode="multiple"
+									allowClear
+									style={ { width: '240px', cursor: 'pointer' } }
+									placeholder="Тип нарушения"
+									defaultValue={ [] }
+									value={ selectedTypes }
+									onChange={ handleTypesSelectChange }
+									options={ Object.values(PUNISHMENT_TYPES).map((type) => ({
+										label: type.description,
+										value: type.label
+									})) }
+								/>
+							</HorizontalLayout>
+							<HorizontalLayout>
+								<Input style={ {
+									width: '240px'
+								} } placeholder="Ник игрока" value={ playerName }
+								       onChange={ handlePlayerName }/>
+								<Input style={ {
+									width: '240px'
+								} } placeholder="Причина" value={ reason }
+								       onChange={ handleReason }/>
+								<RangePicker onChange={ handleRangeChange }
+								             format="YYYY-MM-DD"/>
+							</HorizontalLayout>
+						</ModPageControlsStyled>
+						<ModPanelPageContent>
+							<Table bordered style={ {
+								width: '100%'
+							} } dataSource={ punishments.map(punish => {
+								//@ts-ignore
+								punish.key = punish.timestamp.toString();
+								return punish;
+							}) } columns={ columns }/>
+						</ModPanelPageContent>
+					</>
+				)
+			}
 		</ModPanelPage>
 	);
 };
 
-export const getServerSideProps = protectedRoute<ModPanelPunishmentsPageProps>(async (context) => {
-	const { siteFetch } = context;
-	const allUsers = await siteFetch<IUser[]>('/api/users/getAll');
-	const allPunishments = await siteFetch<IPunishment[]>('/api/punishments/get', { method: 'POST' });
-
-	return ({
-		props: {
-			discord: context.session?.discord ?? null,
-			user: context.session?.user ?? null,
-			allUsers,
-			allPunishments
-		}
-	});
-});
-
 export default ModPanelPunishmentsPage;
-
-export const config = {
-	runtime: 'nodejs'
-};

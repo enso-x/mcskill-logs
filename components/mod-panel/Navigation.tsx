@@ -51,18 +51,24 @@ const ROUTES = [
 	},
 	{
 		id: 'route-1',
+		label: 'Профиль',
+		url: '/mod-panel/user/[discord_id]',
+		role: EUserRoles.player
+	},
+	{
+		id: 'route-2',
 		label: 'Наказания',
 		url: '/mod-panel/punishments',
 		role: EUserRoles.helper
 	},
 	{
-		id: 'route-2',
+		id: 'route-3',
 		label: 'Интервью',
 		url: '/mod-panel/interview',
 		role: EUserRoles.st
 	},
 	{
-		id: 'route-3',
+		id: 'route-4',
 		label: 'Настройки',
 		url: '/mod-panel/settings',
 		role: EUserRoles.curator
@@ -83,13 +89,18 @@ export function Navigation() {
 		<Sidebar>
 			<NavigationContainer>
 			{
-				ROUTES.filter(route => averageUserRoleInfo && route.role <= averageUserRoleInfo.role).map(route => (
-					<SidebarItem key={ route.id } $active={ router.route === route.url }>
-						<Link href={ route.url }>
-							{ route.label }
-						</Link>
-					</SidebarItem>
-				))
+				ROUTES.filter(route => averageUserRoleInfo && route.role <= averageUserRoleInfo.role).map(route => {
+					const isSameUrl = router.route === route.url;
+					const url = isSameUrl ? router.asPath : route.url.replace('[discord_id]', session?.user.discord_id);
+					return (
+						<SidebarItem key={ route.id } $active={ isSameUrl }>
+							<Link
+								href={ url }>
+								{ route.label }
+							</Link>
+						</SidebarItem>
+					);
+				})
 			}
 			</NavigationContainer>
 			<ServerMonitoring/>
