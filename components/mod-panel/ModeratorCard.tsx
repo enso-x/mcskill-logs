@@ -149,6 +149,13 @@ export function ModeratorCard({
 		const relatedTarget = event.relatedTarget;
 
 		if (containerElement && relatedTarget) {
+			const isLeavingWindow = relatedTarget === globalThis;
+
+			if (isLeavingWindow) {
+				setIsHovered(false);
+				return;
+			}
+
 			const isLeavingContainer = !containerElement.contains(relatedTarget as Node);
 
 			if (isLeavingContainer) {
@@ -178,7 +185,7 @@ export function ModeratorCard({
 	}, [ moderator ]);
 
 	return (
-		<ModeratorCardContainer onMouseEnter={ handleMouseEnter } onMouseOut={ handleMouseOut }
+		<ModeratorCardContainer onMouseEnter={ handleMouseEnter } onMouseOut={ handleMouseOut } onMouseLeave={ handleMouseOut }
 		                        verbs={ moderator.verbs } warnings={ moderator.warnings }>
 			<CardOnlineIndicator title={ onlineStatus.title } $online={ onlineStatus.isOnline }/>
 			<ButtonsContainer>

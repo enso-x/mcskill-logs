@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Spin } from 'antd';
 
+import { getImage2DContext, getImageFromBase64, loadImageAsBase64 } from '@/helpers/image';
+
 interface IMinecraftSkinViewerContainerProps {
 	imageData: string;
 }
@@ -69,30 +71,26 @@ export function MinecraftSkinViewer3D({
 
 	useEffect(() => {
 		(async () => {
-			const reader = new FileReader();
-			const imageBlob = await fetch(`/api/users/getSkin?username=${ username }&mode=full`).then(res => res.blob());
-			reader.onload = () => {
-				const imageData = reader.result as string;
-				setSkinData(imageData);
-				const image = new Image();
-				image.onload = () => {
-					const imageScale = image.width / 64;
+			const imageBase64 = await loadImageAsBase64(`/api/users/getSkin?username=${ username }&mode=full`);
+			if (!imageBase64) return;
 
-					const canvas = document.createElement('canvas');
-					canvas.width = image.width;
-					canvas.height = image.height;
-					canvas.style.imageRendering = 'pixelated';
+			setSkinData(imageBase64);
 
-					const ctx = canvas.getContext('2d');
-					if (ctx) {
-						ctx.drawImage(image, 0, 0, image.width, image.height);
-						const pixelData = ctx.getImageData(50 * imageScale, 16 * imageScale, 2 * imageScale, 4 * imageScale);
-						setSkinType(pixelData.data.every(byte => byte === 0) ? 'slim' : '');
-					}
-				};
-				image.src = imageData;
-			};
-			reader.readAsDataURL(imageBlob);
+			const imageElement = await getImageFromBase64(imageBase64);
+			if (!imageElement) return;
+
+			const imageContext = await getImage2DContext(imageElement);
+			if (!imageContext) return;
+
+			const imageScaleFactor = imageElement.width / 64;
+			const isSkinTypeSlim = imageContext.getImageData(
+				50 * imageScaleFactor,
+				16 * imageScaleFactor,
+				2 * imageScaleFactor,
+				4 * imageScaleFactor
+			).data.every(byte => byte === 0);
+
+			setSkinType(isSkinTypeSlim ? 'slim' : '');
 		})();
 	}, [ username ]);
 

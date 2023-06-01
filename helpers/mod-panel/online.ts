@@ -69,7 +69,7 @@ export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernam
 	const durations: TUsersOnlineDuration = {};
 	const usernamesReg = new RegExp(usernames.map(username => ` ${ username } `).join('|'), 'i');
 	const notEndedModerators: Set<string> = new Set();
-	const durationLogs: Record<string, string> = {};
+	const durationLogs: Record<string, string[]> = {};
 
 	const getDurationBetweenMoments = (startMoment: moment.Moment, endMoment: moment.Moment): moment.Duration => {
 		return moment.duration(endMoment.diff(startMoment));
@@ -87,62 +87,66 @@ export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernam
 		}
 	};
 
-	logs.forEach((log, li) => {
+	const appendLogoutToLog = (username: string, logoutMoment: moment.Moment, onlineDuration: moment.Duration) => {
+		durationLogs[username].push(`Выход: ${ logoutMoment.format('DD.MM.YYYY HH:mm') }`);
+		durationLogs[username].push(`Длительность онлайна: ${ momentDurationToString(onlineDuration) }`);
+		durationLogs[username].push(`Общий онлайн на данный момент: ${ momentDurationToString(durations[username].duration) }`);
+		durationLogs[username].push(`-------------------------------------------`);
+	};
+
+	logs.forEach((log, logIndex) => {
 		const lines = log.text.split('\n').filter((line: string) => line.length && usernamesReg.test(line));
 
-		lines.forEach((line: string, i: number) => {
+		lines.forEach((line: string, lineIndex: number) => {
 
 			const data = connectionRegExp.exec(line)?.groups;
 
 			if (data) {
-				if (!durationLogs[data.playerName]) durationLogs[data.playerName] = '';
+				if (!durationLogs[data.playerName]) durationLogs[data.playerName] = [];
 				if (!durations[data.playerName]) durations[data.playerName] = {
 					duration: moment.duration(0),
 					lastLogin: startOfDateMoment(log.date)
 				};
 				if (data.actionType === 'left the game') {
 					const duration = getDurationBetweenMoments(durations[data.playerName].lastLogin, dateTimeToMoment(log.date, data.time));
+
 					addDurationForUser(data.playerName, duration);
 					checkAndDeleteUserFromNotEnded(data.playerName);
-
-					durationLogs[data.playerName] += `Выход: ${ dateTimeToMoment(log.date, data.time).format('DD.MM.YYYY HH:mm') }\n`;
-					durationLogs[data.playerName] += `Длительность онлайна: ${ momentDurationToString(duration) }\n`;
-					durationLogs[data.playerName] += `Общий онлайн на данный момент: ${ momentDurationToString(durations[data.playerName].duration) }\n`;
-					durationLogs[data.playerName] += `-------------------------------------------\n`;
+					appendLogoutToLog(data.playerName, dateTimeToMoment(log.date, data.time), duration);
 				} else {
 					durations[data.playerName].lastLogin = dateTimeToMoment(log.date, data.time);
 					notEndedModerators.add(data.playerName);
 
-					durationLogs[data.playerName] += `Вход: ${ dateTimeToMoment(log.date, data.time).format('DD.MM.YYYY HH:mm') }\n`;
+					durationLogs[data.playerName].push(`Вход: ${ dateTimeToMoment(log.date, data.time).format('DD.MM.YYYY HH:mm') }`);
 				}
 			}
 
-			if (i === lines.length - 1 && li === logs.length - 1 && notEndedModerators.size > 0) {
+			if (lineIndex === lines.length - 1 && logIndex === logs.length - 1 && notEndedModerators.size > 0) {
 				notEndedModerators.forEach(moderatorName => {
 					const logoutMoment = startOfDateMoment(log.date).add(1, 'day');
 					const duration = getDurationBetweenMoments(durations[moderatorName].lastLogin, logoutMoment);
+
 					addDurationForUser(moderatorName, duration);
 					checkAndDeleteUserFromNotEnded(moderatorName);
-
-					durationLogs[moderatorName] += `Выход: ${ logoutMoment.format('DD.MM.YYYY HH:mm') }\n`;
-					durationLogs[moderatorName] += `Длительность онлайна: ${ momentDurationToString(duration) }\n`;
-					durationLogs[moderatorName] += `Общий онлайн на данный момент: ${ momentDurationToString(durations[moderatorName].duration) }\n`;
-					durationLogs[moderatorName] += `-------------------------------------------\n`;
+					appendLogoutToLog(moderatorName, logoutMoment, duration);
 				});
 			}
 		});
 	});
 
 	for (let username in durationLogs) {
-		durationLogs[username] = `Общее время игры с [${ moment(startOfWeek).format('DD.MM.YYYY HH:mm:ss') }] по [${ moment(endOfWeek).format('DD.MM.YYYY HH:mm:ss') }]: ${ momentDurationToString(durations[username].duration) }\n-------------------------------------------\n` + durationLogs[username];
+		durationLogs[username].unshift(`-------------------------------------------`);
+		durationLogs[username].unshift(`Общее время игры с [${ moment(startOfWeek).format('DD.MM.YYYY HH:mm:ss') }] по [${ moment(endOfWeek).format('DD.MM.YYYY HH:mm:ss') }]: ${ momentDurationToString(durations[username].duration) }`);
+
+		const logsString = durationLogs[username].join('\n');
 
 		if (isDebugMode) {
 			console.groupCollapsed(username);
-			console.log(durationLogs[username]);
+			console.log(logsString);
 			console.groupEnd();
 		}
 
-		localStorage.setItem(DURATION_LOGS_STORAGE_KEY + username, durationLogs[username]);
+		localStorage.setItem(DURATION_LOGS_STORAGE_KEY + username, logsString);
 	}
 
 	return durations;
@@ -175,7 +179,7 @@ export const fetchUsersOnlineStatusForServer = async (server: IServer, usernames
 		if (data) {
 			if (!onlineStatuses[data.playerName]) onlineStatuses[data.playerName] = {
 				title: server.label,
-				isOnline: true
+				isOnline: false // Проверить завтра
 			};
 			onlineStatuses[data.playerName].isOnline = data.actionType !== 'left the game';
 		}
