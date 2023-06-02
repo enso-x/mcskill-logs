@@ -215,6 +215,7 @@ const ShopGroupItem = ({
 					value={ selectedPrice }
 					onChange={ handleDurationSelectChange }
 					options={ prices }
+					getPopupContainer={(triggerNode) => triggerNode}
 				/>
 				<ValueContainer>
 					Цена (баллы): <span>{ selectedPrice }</span>
