@@ -50,7 +50,7 @@ const ModPanelOrdersPage: NextPage = () => {
 
 	const columns = [
 		{
-			title: '',
+			title: '*',
 			dataIndex: 'image',
 			key: 'image',
 			render: (_: any, record: IOrder) => {
