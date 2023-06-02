@@ -120,8 +120,6 @@ const ShopGroupItem = ({
 	beforeSubmit,
 	onSubmit
 }: IShopGroupItemProps) => {
-	const containerRef = useRef<HTMLDivElement | null>(null);
-
 	const userRoleForSelectedServer = useMemo(() => {
 		return user && getUserRoleInfoForServer(user, selectedServer);
 	}, [ user, selectedServer ]);
@@ -205,7 +203,7 @@ const ShopGroupItem = ({
 	};
 
 	return (
-		<ItemGroupCard key={ shopGroup.group_id } ref={ containerRef }>
+		<ItemGroupCard key={ shopGroup.group_id }>
 			<ItemCardGroupImage
 				src={ `https://mcskill.net/templates/shop/assets/images/groups/${ shopGroup.img }` }
 				alt="Group image"/>
