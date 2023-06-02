@@ -39,7 +39,7 @@ const HeaderTitle = styled.div`
 `;
 
 const HeaderLogo = styled.img`
-	max-height: 48px;
+	max-height: 32px;
 `;
 
 const HeaderControls = styled.div`
