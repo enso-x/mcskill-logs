@@ -1,19 +1,20 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { NextPage } from 'next';
-import { Button, Input, Select, Tabs } from 'antd';
+import { useSession } from 'next-auth/react';
+import { Input, Select, Tabs } from 'antd';
 
 import { ModPanelPage, ModPanelPageControls, ModPanelPageContent } from '@/components/mod-panel/ModPanelPage';
 import { Loading, LoadingContainer } from '@/components/mod-panel/Loading';
+import { ConfirmModal } from '@/components/mod-panel/modals/ConfirmModal';
+import { HorizontalLayout, VerticalLayout } from '@/components/Styled';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { EOrderType } from '@/interfaces/Order';
 import { IShopCategory, IShopGroupItem, IShopItem } from '@/interfaces/Shop';
 import { SERVERS } from '@/interfaces/Server';
-import { useSession } from 'next-auth/react';
+
 import { getUserRoleInfoForServer } from '@/helpers/users';
-import { HorizontalLayout, VerticalLayout } from '@/components/Styled';
 import { IShopServiceItem, SERVICES } from '@/data/mod-panel/services';
-import { ConfirmModal } from '@/components/mod-panel/modals/ConfirmModal';
 
 const ModPanelPageContentStyled = styled(ModPanelPageContent)`
 	height: 100%;

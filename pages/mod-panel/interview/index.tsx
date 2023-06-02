@@ -1,15 +1,14 @@
 import React, { ChangeEventHandler, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { NextPage } from 'next';
+import { useSession } from 'next-auth/react';
 import { Button, Card, Descriptions, Input, InputNumber, Select, Space, Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 
-import { protectedRoute } from '@/middleware/protectedRoute';
+import { Loading, LoadingContainer } from '@/components/mod-panel/Loading';
 import { ModPanelPage, ModPanelPageContent, ModPanelPageControls } from '@/components/mod-panel/ModPanelPage';
-import { EUserRoles, IUser } from '@/interfaces/User';
+import { EUserRoles } from '@/interfaces/User';
 import { ITestResult } from '@/models/TestResult';
-import { useSession } from 'next-auth/react';
-import { Loading, LoadingContainer } from '../../../components/mod-panel/Loading';
 
 const { Title } = Typography;
 
