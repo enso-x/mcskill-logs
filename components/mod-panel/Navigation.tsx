@@ -5,8 +5,8 @@ import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 
 import { ServerMonitoring } from '@/components/ServerMonitoring';
-import { EUserRoles } from '@/interfaces/User';
-import { getAverageUserRoleInfo } from '@/helpers/users';
+import { EUserRoles, IUser } from '@/interfaces/User';
+import { getAverageUserRoleInfo, hasJuniorRole } from '@/helpers/users';
 
 const Sidebar = styled.div`
 	display: flex;
@@ -42,36 +42,54 @@ const SidebarItem = styled.div<ISidebarItemProps>`
 	}
 `;
 
+const getDefaultRouteFilter = (role: EUserRoles) => (user: IUser | null) => {
+	const averageUserRole = user ? getAverageUserRoleInfo(user).role : EUserRoles.player;
+
+	return averageUserRole >= role;
+};
+
 const ROUTES = [
 	{
-		id: 'route-0',
+		id: 'user-list',
 		label: 'Мод состав',
 		url: '/mod-panel',
-		role: EUserRoles.player
+		filter: getDefaultRouteFilter(EUserRoles.player)
 	},
 	{
-		id: 'route-1',
+		id: 'profile',
 		label: 'Профиль',
 		url: '/mod-panel/user/[discord_id]',
-		role: EUserRoles.player
+		filter: getDefaultRouteFilter(EUserRoles.player)
 	},
 	{
-		id: 'route-2',
+		id: 'shop',
+		label: 'Магазин',
+		url: '/mod-panel/shop',
+		filter: (user: IUser | null) => user && hasJuniorRole(user)
+	},
+	{
+		id: 'orders',
+		label: 'Заказы',
+		url: '/mod-panel/orders',
+		filter: getDefaultRouteFilter(EUserRoles.trainee)
+	},
+	{
+		id: 'punishments',
 		label: 'Наказания',
 		url: '/mod-panel/punishments',
-		role: EUserRoles.helper
+		filter: getDefaultRouteFilter(EUserRoles.helper)
 	},
 	{
-		id: 'route-3',
+		id: 'interview',
 		label: 'Интервью',
 		url: '/mod-panel/interview',
-		role: EUserRoles.st
+		filter: getDefaultRouteFilter(EUserRoles.st)
 	},
 	{
-		id: 'route-4',
+		id: 'settings',
 		label: 'Настройки',
 		url: '/mod-panel/settings',
-		role: EUserRoles.curator
+		filter: getDefaultRouteFilter(EUserRoles.curator)
 	},
 ];
 
@@ -83,25 +101,23 @@ export function Navigation() {
 		return null;
 	}
 
-	const averageUserRoleInfo = session.user ? getAverageUserRoleInfo(session.user) : null;
-
 	return (
 		<Sidebar>
 			<NavigationContainer>
-			{
-				ROUTES.filter(route => averageUserRoleInfo && route.role <= averageUserRoleInfo.role).map(route => {
-					const isSameUrl = router.route === route.url;
-					const url = isSameUrl ? router.asPath : route.url.replace('[discord_id]', session?.user.discord_id);
-					return (
-						<SidebarItem key={ route.id } $active={ isSameUrl }>
-							<Link
-								href={ url }>
-								{ route.label }
-							</Link>
-						</SidebarItem>
-					);
-				})
-			}
+				{
+					ROUTES.filter(route => route.filter(session.user)).map(route => {
+						const isSameUrl = router.route === route.url;
+						const url = isSameUrl ? router.asPath : route.url.replace('[discord_id]', session?.user.discord_id);
+						return (
+							<SidebarItem key={ route.id } $active={ isSameUrl }>
+								<Link
+									href={ url }>
+									{ route.label }
+								</Link>
+							</SidebarItem>
+						);
+					})
+				}
 			</NavigationContainer>
 			<ServerMonitoring/>
 		</Sidebar>

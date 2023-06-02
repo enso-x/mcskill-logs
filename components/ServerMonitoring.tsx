@@ -27,7 +27,7 @@ interface IServerInfo {
 }
 
 const Container = styled(VerticalLayout)`
-	padding: 8px;
+	padding: 16px;
 	gap: 8px;
 
 	.ant-collapse > .ant-collapse-item > .ant-collapse-header {

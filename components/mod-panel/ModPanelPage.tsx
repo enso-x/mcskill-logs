@@ -60,6 +60,23 @@ export const ModPanelPageContent = styled.div`
 	.ant-table-wrapper .ant-table-container table tr:not(thead > tr):last-child > *:first-child {
 		border-end-start-radius: 8px;
 	}
+
+	&::-webkit-scrollbar {
+		width: 12px;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		width: 6px;
+		border: 4px solid transparent;
+		background-color: rgba(255, 255, 255, 0);
+		background-clip: content-box;
+		border-radius: 6px;
+		transition: background-color 0.2s ease-in-out;
+	}
+
+	&:hover::-webkit-scrollbar-thumb {
+		background-color: rgba(255, 255, 255, .1);
+	}
 `;
 
 interface IModPanelPageProps extends React.PropsWithChildren {

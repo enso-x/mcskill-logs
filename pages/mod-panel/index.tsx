@@ -31,7 +31,24 @@ const ModPanelPageContentStyled = styled(ModPanelPageContent)`
 	padding: 16px;
 	flex-wrap: wrap;
 	align-items: flex-start;
-	overflow-y: auto;
+	overflow: auto;
+
+	&::-webkit-scrollbar {
+		width: 12px;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		width: 6px;
+		border: 4px solid transparent;
+		background-color: rgba(255, 255, 255, 0);
+		background-clip: content-box;
+		border-radius: 6px;
+		transition: background-color 0.2s ease-in-out;
+	}
+
+	&:hover::-webkit-scrollbar-thumb {
+		background-color: rgba(255, 255, 255, .1);
+	}
 `;
 
 const ModeratorCardCheckboxContainer = styled.div`
