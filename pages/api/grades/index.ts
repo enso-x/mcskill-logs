@@ -1,7 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'node:fs';
-import allowedUsers from '@/data/protection/allowed';
 
 const ERROR_RESPONSE: string = '';
 
@@ -9,7 +8,7 @@ const handler = async (
 	req: NextApiRequest,
 	res: NextApiResponse<{ name: string, questions: any[] }>
 ) => {
-	if (!req.body || !req.body.file || !req.body.userId || !allowedUsers.includes(req.body.userId)) {
+	if (!req.body || !req.body.file) {
 		return res.status(404).write(ERROR_RESPONSE);
 	}
 
