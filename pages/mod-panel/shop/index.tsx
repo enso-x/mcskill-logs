@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { NextPage } from 'next';
 import { Button, Input, Select, Tabs } from 'antd';
@@ -120,6 +120,8 @@ const ShopGroupItem = ({
 	beforeSubmit,
 	onSubmit
 }: IShopGroupItemProps) => {
+	const containerRef = useRef<HTMLDivElement | null>(null);
+
 	const userRoleForSelectedServer = useMemo(() => {
 		return user && getUserRoleInfoForServer(user, selectedServer);
 	}, [ user, selectedServer ]);
@@ -203,7 +205,7 @@ const ShopGroupItem = ({
 	};
 
 	return (
-		<ItemGroupCard key={ shopGroup.group_id }>
+		<ItemGroupCard key={ shopGroup.group_id } ref={ containerRef }>
 			<ItemCardGroupImage
 				src={ `https://mcskill.net/templates/shop/assets/images/groups/${ shopGroup.img }` }
 				alt="Group image"/>
@@ -215,7 +217,7 @@ const ShopGroupItem = ({
 					value={ selectedPrice }
 					onChange={ handleDurationSelectChange }
 					options={ prices }
-					getPopupContainer={(triggerNode) => triggerNode.parentNode}
+					getPopupContainer={ () => document.body }
 				/>
 				<ValueContainer>
 					Цена (баллы): <span>{ selectedPrice }</span>
