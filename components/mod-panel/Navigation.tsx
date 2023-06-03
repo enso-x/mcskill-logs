@@ -74,6 +74,12 @@ const ROUTES = [
 		filter: getDefaultRouteFilter(EUserRoles.trainee)
 	},
 	{
+		id: 'vacations',
+		label: 'Отпуска',
+		url: '/mod-panel/vacations',
+		filter: getDefaultRouteFilter(EUserRoles.helper)
+	},
+	{
 		id: 'punishments',
 		label: 'Наказания',
 		url: '/mod-panel/punishments',

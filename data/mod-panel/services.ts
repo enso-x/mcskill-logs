@@ -83,5 +83,11 @@ export const SERVICES: IShopServiceItem[] = [
 		name: 'Перенос покемона на следующий вайп',
 		img: '/pixelmon/services/transfer-on-wipe.png',
 		price: 60
+	},
+	{
+		id: 'moderator-head',
+		name: 'Голова мод состава (исключая админ состав)',
+		img: '/pixelmon/services/moderator-head.png',
+		price: 500
 	}
 ];

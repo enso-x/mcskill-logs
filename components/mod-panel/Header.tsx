@@ -39,7 +39,7 @@ const HeaderTitle = styled.div`
 `;
 
 const HeaderLogo = styled.img`
-	max-height: 32px;
+	max-height: 42px;
 `;
 
 const HeaderControls = styled.div`
@@ -88,8 +88,7 @@ export function Header() {
 				}
 			</HeaderUserInfo>
 			<HeaderTitle>
-				<HeaderLogo src="/images/logo.png"/>
-				<span>Pixelmon Mod panel</span>
+				<HeaderLogo src="/images/logo.svg"/>
 			</HeaderTitle>
 			<HeaderControls>
 				<Button danger onClick={ handleLogout }>

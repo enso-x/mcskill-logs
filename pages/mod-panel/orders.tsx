@@ -78,10 +78,9 @@ const ModPanelOrdersPage: NextPage = () => {
 			dataIndex: 'username',
 			key: 'username',
 			render: (_: any, record: IOrder) => {
-				const author = allUsers.find(au => au.discord_id === record.username.toString());
 				return (
 					<span>
-						{ author ? author.username : record.username.toString() }
+						{ record.username }
 					</span>
 				);
 			},
@@ -132,8 +131,7 @@ const ModPanelOrdersPage: NextPage = () => {
 		},
 		{
 			title: 'Действия',
-			dataIndex: 'status',
-			key: 'status',
+			key: 'actions',
 			render: (_: any, record: IOrder) => {
 				const hasAccessForServer = getUserHasAccessForServer(user, null, record.server);
 

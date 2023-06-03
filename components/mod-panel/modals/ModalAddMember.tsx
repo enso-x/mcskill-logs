@@ -1,7 +1,7 @@
 import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { Button, Input, Drawer, Select, Tabs } from 'antd';
 import styled from 'styled-components';
-import { PlusOutlined, EditOutlined } from '@ant-design/icons';
+import { PlusOutlined } from '@ant-design/icons';
 
 import { useDebounce } from '@/helpers';
 import { HorizontalLayout, VerticalLayout } from '@/components/Styled';
