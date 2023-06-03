@@ -146,7 +146,7 @@ const ModPanelVacationsPage: NextPage = () => {
 	};
 
 	const fetchVacations = async () => {
-		const newOrders = await fetch(`/api/vacations/get`, {
+		const newVacations = await fetch(`/api/vacations/get`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
@@ -157,7 +157,7 @@ const ModPanelVacationsPage: NextPage = () => {
 				to: to
 			})
 		}).then(res => res.json());
-		setVacations(newOrders);
+		setVacations(newVacations);
 	};
 
 	const hasAccess = getUserHasAccess(user, null);

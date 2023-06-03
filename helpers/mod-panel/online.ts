@@ -1,8 +1,15 @@
 import moment from 'moment/moment';
 
-import { getDaysBetweenDates, momentDurationToString, timeToSeconds, toUTC } from '@/helpers/datetime';
+import {
+	getDaysBetweenDates,
+	momentDurationToString,
+	momentRangeOverlaps,
+	timeToSeconds,
+	toUTC
+} from '@/helpers/datetime';
 import { IUser } from '@/interfaces/User';
 import { IServer } from '@/interfaces/Server';
+import { IVacation } from '@/interfaces/Vacation';
 
 const dateFormatter = new Intl.DateTimeFormat('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' });
 const timePattern = (group: string | null = null) => `\\[(?${ group ? `<${ group }>` : ':' }\\d{2}:\\d{2}(?::\\d{2})?)]`;
@@ -53,6 +60,24 @@ export const fetchServerConnectionLogsForPeriod = async (server: IServer, days: 
 	});
 };
 
+export const fetchModeratorVacations = async (username: string): Promise<IVacation[]> => {
+	const vacations = await fetch(`/api/vacations/get`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			username
+		})
+	}).then<IVacation[]>(res => res.json());
+
+	if (vacations) {
+		return vacations;
+	}
+
+	return [];
+};
+
 interface IUserDuration {
 	duration: moment.Duration;
 	lastLogin: moment.Moment;
@@ -65,6 +90,21 @@ export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernam
 	const endOfWeek = moment().endOf('week').subtract(1, 'week').add(1, 'day').toDate();
 
 	const logs = await fetchServerConnectionLogsForPeriod(server, getDaysBetweenDates(startOfWeek, endOfWeek));
+
+	const usersVacations: Record<string, IVacation | undefined> = {};
+
+	for (let username of usernames) {
+		const vacations = await fetchModeratorVacations(username);
+
+		if (vacations) {
+			usersVacations[username] = vacations.find(vacation => {
+				const vacationFrom = moment(vacation.from);
+				const vacationTo = moment(vacation.to);
+
+				return momentRangeOverlaps(moment(startOfWeek), moment(endOfWeek), vacationFrom, vacationTo);
+			});
+		}
+	}
 
 	const durations: TUsersOnlineDuration = {};
 	const usernamesReg = new RegExp(usernames.map(username => ` ${ username } `).join('|'), 'i');
@@ -102,33 +142,56 @@ export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernam
 			const data = connectionRegExp.exec(line)?.groups;
 
 			if (data) {
+				const vacation = usersVacations[data.playerName];
+				const logMoment = dateTimeToMoment(log.date, data.time)
+				const isOnVacation = vacation && logMoment.isBetween(vacation.from, vacation.to);
+
 				if (!durationLogs[data.playerName]) durationLogs[data.playerName] = [];
-				if (!durations[data.playerName]) durations[data.playerName] = {
-					duration: moment.duration(0),
-					lastLogin: startOfDateMoment(log.date)
-				};
-				if (data.actionType === 'left the game') {
-					const duration = getDurationBetweenMoments(durations[data.playerName].lastLogin, dateTimeToMoment(log.date, data.time));
 
-					addDurationForUser(data.playerName, duration);
-					checkAndDeleteUserFromNotEnded(data.playerName);
-					appendLogoutToLog(data.playerName, dateTimeToMoment(log.date, data.time), duration);
+				if (!isOnVacation) {
+					if (!durations[data.playerName]) {
+						durations[data.playerName] = {
+							duration: moment.duration(0),
+							lastLogin: startOfDateMoment(log.date)
+						};
+						durationLogs[data.playerName].push(`Вход: ${ startOfDateMoment(log.date).format('DD.MM.YYYY HH:mm') }`);
+					}
+
+					if (data.actionType === 'left the game') {
+						const duration = getDurationBetweenMoments(durations[data.playerName].lastLogin, logMoment);
+
+						addDurationForUser(data.playerName, duration);
+						checkAndDeleteUserFromNotEnded(data.playerName);
+						appendLogoutToLog(data.playerName, dateTimeToMoment(log.date, data.time), duration);
+					} else {
+						durations[data.playerName].lastLogin = logMoment;
+						notEndedModerators.add(data.playerName);
+
+						durationLogs[data.playerName].push(`Вход: ${ dateTimeToMoment(log.date, data.time).format('DD.MM.YYYY HH:mm') }`);
+					}
 				} else {
-					durations[data.playerName].lastLogin = dateTimeToMoment(log.date, data.time);
-					notEndedModerators.add(data.playerName);
-
-					durationLogs[data.playerName].push(`Вход: ${ dateTimeToMoment(log.date, data.time).format('DD.MM.YYYY HH:mm') }`);
+					if (!durationLogs[data.playerName].length) {
+						durationLogs[data.playerName].push('Отпуск');
+						durationLogs[data.playerName].push(`-------------------------------------------`);
+					}
 				}
 			}
 
 			if (lineIndex === lines.length - 1 && logIndex === logs.length - 1 && notEndedModerators.size > 0) {
 				notEndedModerators.forEach(moderatorName => {
-					const logoutMoment = startOfDateMoment(log.date).add(1, 'day');
-					const duration = getDurationBetweenMoments(durations[moderatorName].lastLogin, logoutMoment);
+					const vacation = usersVacations[moderatorName];
+					const logoutMoment = startOfDateMoment(log.date).endOf('day');
+					const isOnVacation = vacation && logoutMoment.isBetween(vacation.from, vacation.to);
 
-					addDurationForUser(moderatorName, duration);
-					checkAndDeleteUserFromNotEnded(moderatorName);
-					appendLogoutToLog(moderatorName, logoutMoment, duration);
+					if (!isOnVacation) {
+						const duration = getDurationBetweenMoments(durations[moderatorName].lastLogin, logoutMoment);
+
+						if (!usersVacations[moderatorName]) {
+							addDurationForUser(moderatorName, duration);
+						}
+						checkAndDeleteUserFromNotEnded(moderatorName);
+						appendLogoutToLog(moderatorName, logoutMoment, duration);
+					}
 				});
 			}
 		});
@@ -136,7 +199,7 @@ export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernam
 
 	for (let username in durationLogs) {
 		durationLogs[username].unshift(`-------------------------------------------`);
-		durationLogs[username].unshift(`Общее время игры с [${ moment(startOfWeek).format('DD.MM.YYYY HH:mm:ss') }] по [${ moment(endOfWeek).format('DD.MM.YYYY HH:mm:ss') }]: ${ momentDurationToString(durations[username].duration) }`);
+		durationLogs[username].unshift(`Общее время игры с [${ moment(startOfWeek).format('DD.MM.YYYY HH:mm:ss') }] по [${ moment(endOfWeek).format('DD.MM.YYYY HH:mm:ss') }]: ${ momentDurationToString(durations[username] ? durations[username].duration : moment.duration(0)) }`);
 
 		const logsString = durationLogs[username].join('\n');
 

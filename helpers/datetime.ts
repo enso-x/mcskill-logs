@@ -19,6 +19,14 @@ export const getDaysBetweenDates = (date1: Date, date2: Date): Date[] => {
 	return result;
 };
 
+export const momentRangeOverlaps = (a_start: moment.Moment, a_end: moment.Moment, b_start: moment.Moment, b_end: moment.Moment) => {
+	if (a_start.isSameOrBefore(b_start) && b_start.isSameOrBefore(a_end)) return true;
+	if (a_start.isSameOrBefore(b_end) && b_end.isSameOrBefore(a_end)) return true;
+	if (b_start.isBefore(a_start) && a_end.isBefore(b_end)) return true;
+
+	return false;
+};
+
 export const momentDurationToString = (duration: any): string => {
 	const days = duration._data.days;
 	const hours = duration._data.hours;
