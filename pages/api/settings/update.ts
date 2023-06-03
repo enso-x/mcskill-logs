@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
 import connectDB from '@/middleware/mongodb';
-import { ISettings, Settings } from '@/models/Settings';
+import { ISettings } from '@/interfaces/Settings';
+import { Settings } from '@/models/Settings';
 
 const handler = async (
 	req: NextApiRequest,

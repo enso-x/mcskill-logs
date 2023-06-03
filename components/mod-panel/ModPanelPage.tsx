@@ -48,6 +48,12 @@ export const ModPanelPageContent = styled.div`
 	gap: 16px;
 	padding: 16px;
 	overflow-y: auto;
+	
+	font-family: 'Exo 2', sans-serif;
+	
+	.ant-typography, .ant-input, .ant-button, .ant-tabs {
+		font-family: 'Exo 2', sans-serif;
+	}
 
 	.ant-table-wrapper .ant-table-container {
 		border-radius: 8px;

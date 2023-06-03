@@ -3,7 +3,6 @@ import { Button, Checkbox } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 
 import {
-	getAverageUserRoleInfo,
 	getJuniorUsernamesForServer,
 	getUserHasAccess,
 	getUserRoleInfoForServer
@@ -11,7 +10,7 @@ import {
 import { timeToSeconds, getCurrentWeek, momentDurationToString } from '@/helpers/datetime';
 import { onlineAPI } from '@/helpers/mod-panel';
 import { EUserRoles, IUser } from '@/interfaces/User';
-import { ISettings } from '@/models/Settings';
+import { ISettings } from '@/interfaces/Settings';
 import { SERVERS } from '@/interfaces/Server';
 
 interface ICalculateOnlinePointsProps {
@@ -41,6 +40,10 @@ export const useCalculateOnlinePoints = ({
 		let clipboardText = `\`\`\`asciidoc\n`;
 
 		for (let server of Object.values(SERVERS)) {
+			const serverSettings = settings.servers.find(serverSettings => serverSettings.server === server.value);
+
+			if (!serverSettings) continue;
+
 			const onlineForRecentWeek = await onlineAPI.fetchOnlineForRecentWeekForServer(server, getJuniorUsernamesForServer(server, users), isDebugMode);
 			clipboardText += `[ ${ server.label } ]\n`;
 
@@ -52,13 +55,13 @@ export const useCalculateOnlinePoints = ({
 
 				const moderatorRoleInfo = getUserRoleInfoForServer(moderator, server.value);
 				const pointsPerWeekByRole = moderatorRoleInfo ?
-					moderatorRoleInfo.role === EUserRoles.trainee ? settings.pointsPerWeekForTrainee :
-						moderatorRoleInfo.role === EUserRoles.helper ? settings.pointsPerWeekForHelper :
-							moderatorRoleInfo.role === EUserRoles.moder ? settings.pointsPerWeekForModerator :
-								settings.pointsPerWeekForTrainee : settings.pointsPerWeekForTrainee;
+					moderatorRoleInfo.role === EUserRoles.trainee ? serverSettings.pointsPerWeekForTrainee :
+						moderatorRoleInfo.role === EUserRoles.helper ? serverSettings.pointsPerWeekForHelper :
+							moderatorRoleInfo.role === EUserRoles.moder ? serverSettings.pointsPerWeekForModerator :
+								serverSettings.pointsPerWeekForTrainee : serverSettings.pointsPerWeekForTrainee;
 				const userOnlineSeconds = duration.as('seconds');
-				const earnedPoints = userOnlineSeconds > timeToSeconds(settings.onlinePerWeek ?? '21:00:00')
-					? onlineAPI.calculatePointsForOnlineTime(userOnlineSeconds, pointsPerWeekByRole, settings.onlinePerWeek, settings.overtimeMultiplier)
+				const earnedPoints = userOnlineSeconds > timeToSeconds(serverSettings.onlinePerWeek ?? '21:00:00')
+					? onlineAPI.calculatePointsForOnlineTime(userOnlineSeconds, pointsPerWeekByRole, serverSettings.onlinePerWeek, serverSettings.overtimeMultiplier)
 					: selectedUsers.includes(moderator.discord_id) ? pointsPerWeekByRole : 0;
 
 				if (!isDebugMode) {

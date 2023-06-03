@@ -25,7 +25,7 @@ export default function App({ Component, pageProps }: AppProps) {
 			<ConfigProvider theme={ {
 				algorithm: darkAlgorithm,
 				token: {
-					colorPrimary: '#722ed1',
+					colorPrimary: '#722ed2',
 				}
 			} }>
 				<Component { ...pageProps } />

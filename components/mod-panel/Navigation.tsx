@@ -65,7 +65,7 @@ const ROUTES = [
 		id: 'shop',
 		label: 'Магазин',
 		url: '/mod-panel/shop',
-		filter: (user: IUser | null) => user && hasJuniorRole(user)
+		filter: getDefaultRouteFilter(EUserRoles.helper)//(user: IUser | null) => user && hasJuniorRole(user)
 	},
 	{
 		id: 'orders',
