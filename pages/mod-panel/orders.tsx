@@ -193,14 +193,22 @@ const ModPanelOrdersPage: NextPage = () => {
 					}
 				};
 
-				return hasAccessForServer(EUserRoles.st) && record.status === EOrderStatus.created ? (
+				return record.status === EOrderStatus.created ? (
 					<HorizontalLayout>
-						<Button onClick={ handleConfirmOrder }>
-							<CheckOutlined/>
-						</Button>
-						<Button danger onClick={ handleCancelOrder }>
-							<CloseCircleOutlined/>
-						</Button>
+						{
+							hasAccessForServer(EUserRoles.st) ? (
+								< Button onClick={ handleConfirmOrder }>
+									<CheckOutlined/>
+								</Button>
+							) : null
+						}
+						{
+							user && (user.username === record.username) || hasAccessForServer(EUserRoles.st) ? (
+								<Button danger onClick={ handleCancelOrder }>
+									<CloseCircleOutlined/>
+								</Button>
+							) : null
+						}
 					</HorizontalLayout>
 				) : 'Недоступно';
 			},
