@@ -1,9 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import styled from 'styled-components';
 import moment from 'moment';
 import { NextPage } from 'next';
 import { useSession } from 'next-auth/react';
-import { Button, Select, Table } from 'antd';
+import { Button, DatePicker, Select, Table } from 'antd';
 import { CloseCircleOutlined, EditOutlined } from '@ant-design/icons';
 
 import { Loading, LoadingContainer } from '@/components/mod-panel/Loading';
@@ -14,6 +13,8 @@ import { EUserRoles, IUser } from '@/interfaces/User';
 import { getUserHasAccess } from '@/helpers/users';
 import { IVacation } from '@/interfaces/Vacation';
 import { ModalAddVacation } from '@/components/mod-panel/modals/ModalAddVacation';
+
+const { RangePicker } = DatePicker;
 
 const dateFormatter = Intl.DateTimeFormat('ru-RU', {
 	day: '2-digit',
@@ -28,12 +29,10 @@ const ModPanelVacationsPage: NextPage = () => {
 	const [ allUsers, setAllUsers ] = useState<IUser[]>([]);
 	const [ vacations, setVacations ] = useState<IVacation[]>([]);
 	const [ selectedModerators, setSelectedModerators ] = useState<string[]>([]);
-	const [ selectedTypes, setSelectedTypes ] = useState<string[]>([]);
-	const [ selectedStatuses, setSelectedStatuses ] = useState<string[]>([]);
+	const [ from, setFrom ] = useState<Date | null>(null);
+	const [ to, setTo ] = useState<Date | null>(null);
 
 	const debouncedModerators = useDebounce(selectedModerators, 200);
-	const debouncedTypes = useDebounce(selectedTypes, 200);
-	const debouncedStatuses = useDebounce(selectedStatuses, 200);
 
 	const user = useMemo(() => {
 		return session && session.user;
@@ -138,12 +137,12 @@ const ModPanelVacationsPage: NextPage = () => {
 		setSelectedModerators(value);
 	};
 
-	const handleTypesSelectChange = (value: string[]) => {
-		setSelectedTypes(value);
-	};
+	const handleRangeChange = (_: any, dates: string[]) => {
+		const startDate = moment(dates[0]).startOf('day').toDate();
+		const endDate = moment(dates[1]).endOf('day').toDate();
 
-	const handleStatusesSelectChange = (value: string[]) => {
-		setSelectedStatuses(value);
+		setFrom(startDate);
+		setTo(endDate);
 	};
 
 	const fetchVacations = async () => {
@@ -154,8 +153,8 @@ const ModPanelVacationsPage: NextPage = () => {
 			},
 			body: JSON.stringify({
 				username: debouncedModerators.join(','),
-				type: debouncedTypes.join(','),
-				status: debouncedStatuses.join(',')
+				from: from,
+				to: to
 			})
 		}).then(res => res.json());
 		setVacations(newOrders);
@@ -173,7 +172,7 @@ const ModPanelVacationsPage: NextPage = () => {
 
 	useEffect(() => {
 		fetchVacations();
-	}, [ debouncedModerators, debouncedTypes, debouncedStatuses ]);
+	}, [ debouncedModerators, from, to ]);
 
 	return (
 		<ModPanelPage needRole={ EUserRoles.trainee }>
@@ -198,6 +197,8 @@ const ModPanelVacationsPage: NextPage = () => {
 										value: user.discord_id
 									})) }
 								/>
+								<RangePicker allowEmpty={ [true, true] } onChange={ handleRangeChange }
+								             format="YYYY-MM-DD"/>
 							</HorizontalLayout>
 							<HorizontalLayout>
 								{

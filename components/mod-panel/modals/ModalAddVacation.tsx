@@ -6,8 +6,8 @@ import { Button, Drawer, Select, DatePicker, Typography } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 
 import { HorizontalLayout, VerticalLayout } from '@/components/Styled';
-import { IUser } from '@/interfaces/User';
 import { getUsernames } from '@/helpers/users';
+import { IUser } from '@/interfaces/User';
 import { IVacation } from '@/interfaces/Vacation';
 
 const { RangePicker } = DatePicker;
@@ -154,7 +154,7 @@ export const ModalAddVacation: React.FC<IModalAddMemberProps> = ({
 					</InputLayout>
 					<InputLayout>
 						Длительность отпуска
-						<RangePicker value={ [ dayjs(from), dayjs(to) ] } onChange={ handleRangeChange }
+						<RangePicker value={ [ dayjs(new Date(from)), dayjs(new Date(to)) ] } onChange={ handleRangeChange }
 						             format="YYYY-MM-DD"/>
 					</InputLayout>
 					<EmptySpace/>

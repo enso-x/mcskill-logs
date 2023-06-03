@@ -1,19 +1,14 @@
 import '../public/styles/globals.css';
 import '../public/styles/datepicker.minimal.css';
 import 'antd/dist/reset.css';
-import moment from 'moment';
 import { useEffect } from 'react';
 import type { AppProps } from 'next/app';
 import { SessionProvider } from 'next-auth/react';
 import { ConfigProvider, theme } from 'antd';
-import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 import ru_RU from 'antd/lib/locale/ru_RU';
 
 const { darkAlgorithm } = theme;
-
-dayjs.locale('ru');
-moment.locale('ru');
 
 export default function App({ Component, pageProps }: AppProps) {
 	useEffect(() => {
