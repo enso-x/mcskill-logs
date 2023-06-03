@@ -571,6 +571,12 @@ const ModPanelShopPage: NextPage = () => {
 		})();
 	}, []);
 
+	useEffect(() => {
+		if (user && user.roles.length) {
+			setSelectedServer(user.roles[0].server);
+		}
+	}, [ user ]);
+
 	return (
 		<ModPanelPage needRole={ EUserRoles.trainee }>
 			{
