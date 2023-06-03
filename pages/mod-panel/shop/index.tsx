@@ -587,10 +587,15 @@ const ModPanelShopPage: NextPage = () => {
 									placeholder="Сервер"
 									value={ selectedServer }
 									onChange={ handleServerSelectChange }
-									options={ user.roles.map((role) => ({
-										label: SERVERS[role.server].label,
-										value: role.server
-									})) }
+									options={ Object.values(SERVERS).map(server => {
+										const userHasServerRole = user.roles.some(role => role.server === server.value);
+
+										return {
+											disabled: !userHasServerRole,
+											label: server.label,
+											value: server.value
+										};
+									}) }
 								/>
 								<Input placeholder="Фильтр по имени" onInput={ handleFilterStringChange }/>
 							</HorizontalLayout>
