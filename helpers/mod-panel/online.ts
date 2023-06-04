@@ -86,8 +86,8 @@ interface IUserDuration {
 type TUsersOnlineDuration = Record<string, IUserDuration>;
 
 export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernames: string[], isDebugMode: boolean = false): Promise<TUsersOnlineDuration> => {
-	const startOfWeek = moment().startOf('week').subtract(1, 'week').add(1, 'day').toDate();
-	const endOfWeek = moment().endOf('week').subtract(1, 'week').add(1, 'day').toDate();
+	const startOfWeek = moment().subtract(1, 'day').startOf('week').subtract(1, 'week').add(1, 'day').toDate();
+	const endOfWeek = moment().subtract(1, 'day').endOf('week').subtract(1, 'week').add(1, 'day').toDate();
 
 	const logs = await fetchServerConnectionLogsForPeriod(server, getDaysBetweenDates(startOfWeek, endOfWeek));
 
@@ -134,6 +134,8 @@ export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernam
 		durationLogs[username].push(`-------------------------------------------`);
 	};
 
+	const vacationLogged: Record<string, boolean> = {};
+
 	logs.forEach((log, logIndex) => {
 		const lines = log.text.split('\n').filter((line: string) => line.length && usernamesReg.test(line));
 
@@ -148,17 +150,37 @@ export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernam
 
 				if (!durationLogs[data.playerName]) durationLogs[data.playerName] = [];
 
+				if (isOnVacation && !vacationLogged[data.playerName]) {
+					if (notEndedModerators.has(data.playerName)) {
+						const logoutMoment = startOfDateMoment(log.date).subtract(1, 'day').endOf('day');
+						const duration = getDurationBetweenMoments(durations[data.playerName].lastLogin, logoutMoment);
+
+						addDurationForUser(data.playerName, duration);
+						checkAndDeleteUserFromNotEnded(data.playerName);
+						appendLogoutToLog(data.playerName, logoutMoment, duration);
+					}
+
+					vacationLogged[data.playerName] = true;
+					durationLogs[data.playerName].push(`Отпуск c ${ moment(vacation.from).format('DD.MM.YYYY') } до ${ moment(vacation.to).format('DD.MM.YYYY') } (включительно)`);
+					durationLogs[data.playerName].push(`-------------------------------------------`);
+				}
+
 				if (!isOnVacation) {
 					if (!durations[data.playerName]) {
 						durations[data.playerName] = {
 							duration: moment.duration(0),
 							lastLogin: startOfDateMoment(log.date)
 						};
-						durationLogs[data.playerName].push(`Вход: ${ startOfDateMoment(log.date).format('DD.MM.YYYY HH:mm') }`);
+
+						notEndedModerators.add(data.playerName);
 					}
 
 					if (data.actionType === 'left the game') {
 						const duration = getDurationBetweenMoments(durations[data.playerName].lastLogin, logMoment);
+
+						if (!durationLogs[data.playerName].length) {
+							durationLogs[data.playerName].push(`Вход: ${ startOfDateMoment(log.date).format('DD.MM.YYYY HH:mm') }`);
+						}
 
 						addDurationForUser(data.playerName, duration);
 						checkAndDeleteUserFromNotEnded(data.playerName);
@@ -169,29 +191,17 @@ export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernam
 
 						durationLogs[data.playerName].push(`Вход: ${ dateTimeToMoment(log.date, data.time).format('DD.MM.YYYY HH:mm') }`);
 					}
-				} else {
-					if (!durationLogs[data.playerName].length) {
-						durationLogs[data.playerName].push('Отпуск');
-						durationLogs[data.playerName].push(`-------------------------------------------`);
-					}
 				}
 			}
 
 			if (lineIndex === lines.length - 1 && logIndex === logs.length - 1 && notEndedModerators.size > 0) {
 				notEndedModerators.forEach(moderatorName => {
-					const vacation = usersVacations[moderatorName];
 					const logoutMoment = startOfDateMoment(log.date).endOf('day');
-					const isOnVacation = vacation && logoutMoment.isBetween(vacation.from, vacation.to);
+					const duration = getDurationBetweenMoments(durations[moderatorName].lastLogin, logoutMoment);
 
-					if (!isOnVacation) {
-						const duration = getDurationBetweenMoments(durations[moderatorName].lastLogin, logoutMoment);
-
-						if (!usersVacations[moderatorName]) {
-							addDurationForUser(moderatorName, duration);
-						}
-						checkAndDeleteUserFromNotEnded(moderatorName);
-						appendLogoutToLog(moderatorName, logoutMoment, duration);
-					}
+					addDurationForUser(moderatorName, duration);
+					checkAndDeleteUserFromNotEnded(moderatorName);
+					appendLogoutToLog(moderatorName, logoutMoment, duration);
 				});
 			}
 		});
