@@ -88,9 +88,14 @@ const ModPanelIndexPage: NextPage = () => {
 	const user = useMemo(() => {
 		return session?.user;
 	}, [ session ]);
+
 	const filteredUsers = useMemo(() => {
 		return user ? filterAndSortUsers(user, allUsers) : [];
 	}, [ user, allUsers ]);
+
+	const hasOnlineStatuses = useMemo(() => {
+		return Object.values(onlineStatus).every(statusValue => Object.keys(statusValue).length > 0);
+	}, [ onlineStatus ]);
 
 	const { canCalculatePoints, calculatePointsControls } = useCalculateOnlinePoints({
 		user,
@@ -194,7 +199,7 @@ const ModPanelIndexPage: NextPage = () => {
 								<Input placeholder="Фильтр по нику" value={ userFilter } onChange={ handleUserFilter }/>
 							</HorizontalLayout>
 							<HorizontalLayout>
-								{ calculatePointsControls }
+								{ hasOnlineStatuses && calculatePointsControls }
 								{
 									user && hasAccess(EUserRoles.gm) ? (
 										<ModalAddMember user={ user } onSubmit={ updateUserList }/>
