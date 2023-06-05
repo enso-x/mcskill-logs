@@ -10,7 +10,14 @@ export default async function handler(
 	req: NextApiRequest,
 	res: NextApiResponse<any>
 ) {
-	const response = await fetch('https://mcskill.net/mpsl');
+	const response = await fetch('https://mcskill.net/mpsl', {
+		headers: {
+			accept: req.headers['accept'] ?? '',
+			referer: req.headers['referer'] ?? '',
+			'user-agent': req.headers['user-agent'] ?? '',
+			cookie: req.headers['cookie'] ?? ''
+		}
+	});
 	const userAgent = req.headers['user-agent'];
 
 	if (response.status !== 200) {
@@ -23,7 +30,7 @@ export default async function handler(
 		});
 		await page.waitForTimeout(5000);
 
-		res.status(200).send(await page.content());
+		return res.status(200).send('');
 	}
 
 	res.status(200).send('');

@@ -14,7 +14,14 @@ const handler = async (
 	const { urlBase, date } = req.body;
 
 	try {
-		const response = await fetch(`${ urlBase }${ date }.txt`);
+		const response = await fetch(`${ urlBase }${ date }.txt`, {
+			headers: {
+				accept: req.headers['accept'] ?? '',
+				referer: req.headers['referer'] ?? '',
+				'user-agent': req.headers['user-agent'] ?? '',
+				cookie: req.headers['cookie'] ?? ''
+			}
+		});
 
 		let result;
 

@@ -23,12 +23,19 @@ const updateLoop = (url: string) => {
 	}, 5 * 1000);
 };
 
-const initFetchDataLoop = (url: string) => {
+const initFetchDataLoop = (url: string, headers: Record<string, string>) => {
 	runningLoops[url] = true;
 
 	const update = async (): Promise<string> => {
 		if (runningLoops[url]) {
-			const response = await fetch(url);
+			const response = await fetch(url, {
+				headers: {
+					accept: headers['accept'] ?? '',
+					referer: headers['referer'] ?? '',
+					'user-agent': headers['user-agent'] ?? '',
+					cookie: headers['cookie'] ?? ''
+				}
+			});
 			cachedData[url] = await response.text();
 
 			await delay(1000);
@@ -53,7 +60,7 @@ const handler = async (
 	const queryUrl = req.query.url as string;
 
 	if (!cachedData[queryUrl]) {
-		const getData = initFetchDataLoop(queryUrl);
+		const getData = initFetchDataLoop(queryUrl, req.headers as Record<string, string>);
 		const text = await getData();
 		res.status(200).send(text);
 	} else {
