@@ -17,7 +17,7 @@ const URL = validateEnv('MONGODB_URL');
 const USER = validateEnv('MONGODB_USER');
 const PASSWORD = validateEnv('MONGODB_PASSWORD');
 
-export type DocumentType<T> = Document<unknown, {}, T> & MergeType<T & {_id: Types.ObjectId}, unknown>;
+export type DocumentType<T> = Document<unknown, {}, T> & MergeType<T & {_id: Types.ObjectId | string}, unknown>;
 export type ProjectionParameter<T> = ProjectionType<T> | null | undefined;
 export type OptionsParameter<T> = QueryOptions<T> | null | undefined;
 
