@@ -13,6 +13,7 @@ import { getAverageUserRoleInfo } from '@/helpers/users';
 import { MinecraftSkinViewer3D } from '@/components/mod-panel/MinecraftSkinViewer3D';
 import { useDebounce } from '@/helpers';
 import Link from 'next/link';
+import { UserRole } from '@/components/mod-panel/UserRole';
 
 const ButtonsContainer = styled(VerticalLayout)`
 	gap: 8px;
@@ -222,15 +223,17 @@ export function ModeratorCard({
 				<SkinContainer>
 					<MinecraftSkinViewer3D username={ moderator.username } is2D={ !isHoveredDebounced }/>
 				</SkinContainer>
-				<span
-					className={ EUserRoles[moderatorAverageRoleInfo.role] }>{ ROLES[moderatorAverageRoleInfo.role] }</span>
+				<UserRole roleInfo={moderatorAverageRoleInfo} />
 				<span>{ moderator.username }</span>
 				<PointsContainer>
-					Баллы: { moderatorAverageRoleInfo.points >= 0 ? (
-					<span>{ moderatorAverageRoleInfo.points }</span>
-				) : (
-					<InfinityIcon/>
-				) }
+					(
+						{ moderatorAverageRoleInfo.points >= 0 ? (
+							<span>{ moderatorAverageRoleInfo.points }</span>
+						) : (
+							<InfinityIcon/>
+						) }
+						<img src="/pixelmon/price-icon.png" alt="Points" title="Баллы"/>
+					)
 				</PointsContainer>
 			</ModeratorCardContainer>
 		</Link>

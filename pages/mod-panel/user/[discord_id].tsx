@@ -17,6 +17,7 @@ import { onlineAPI } from '@/helpers/mod-panel';
 import { IUserOnlineStatus, TUserServerOnlineStatus } from '@/helpers/mod-panel/online';
 import { EUserRoles, IUser, ROLES } from '@/interfaces/User';
 import { SERVERS } from '@/interfaces/Server';
+import { UserRole } from '@/components/mod-panel/UserRole';
 
 const SkinContainer = styled.div`
 	display: flex;
@@ -59,7 +60,7 @@ const ModPanelUserPage: NextPage = () => {
 						width: 240
 					} }>
 						<Descriptions.Item label="Роль">
-							<span className={ EUserRoles[role.role] }>{ ROLES[role.role] }</span>
+							<UserRole roleInfo={role} />
 						</Descriptions.Item>
 						<Descriptions.Item label="Кол-во баллов">
 							<PriceContainer>

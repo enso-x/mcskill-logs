@@ -9,6 +9,8 @@ import { HorizontalLayout } from '@/components/Styled';
 import { EUserRoles, ROLES } from '@/interfaces/User';
 import { getAverageUserRoleInfo } from '@/helpers/users';
 import { MinecraftFaceViewer } from '@/components/mod-panel/MinecraftFaceViewer';
+import { GlitchText } from '@/components/mod-panel/GlitchText';
+import { UserRole } from '@/components/mod-panel/UserRole';
 
 const HeaderContainer = styled.div`
 	display: grid;
@@ -77,7 +79,7 @@ export function Header() {
 				{
 					averageUserRoleInfo ? (
 						<>
-							<span>[<span className={ EUserRoles[averageUserRoleInfo.role] }>{ ROLES[averageUserRoleInfo.role] }</span>]</span>
+							<UserRole roleInfo={averageUserRoleInfo} before="[" after="]"/>
 							<PointsContainer>
 								(
 								<span>

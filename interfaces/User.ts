@@ -27,7 +27,7 @@ export const ROLES: Record<EUserRoles, string> = {
 	[EUserRoles.gd]: 'Гейм Дизайнер',
 	[EUserRoles.curator]: 'Куратор',
 	[EUserRoles.admin]: 'Администратор',
-	[EUserRoles.creator]: 'Создатель'
+	[EUserRoles.creator]: '?????????' //Создатель
 };
 
 export interface IUserServerRoleInfo {
