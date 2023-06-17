@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
-import connectDB from '@/middleware/mongodb';
+import connectDB, { getObjectIDsFromString } from '@/middleware/mongodb';
 import { IUser } from '@/interfaces/User';
 import { User } from '@/models/User';
 
@@ -10,9 +10,10 @@ const handler = async (
 ) => {
 	if (req.method === 'POST') {
 		try {
-			const [ alreadyHaveUser ] = await User.find({ discord_id: req.body.discord_id }).exec();
+			const { id, ...userRest } = req.body;
+			const [ alreadyHaveUser ] = await User.find({ _id: getObjectIDsFromString(id) }).exec(); // Если редактируем discord_id мы не сможем найти по нему пользователя, надо редактировать по ID
 			if (alreadyHaveUser) {
-				alreadyHaveUser.set(req.body);
+				alreadyHaveUser.set(userRest);
 				const result = await alreadyHaveUser.save();
 				return res.status(200).send([ result ]);
 			}

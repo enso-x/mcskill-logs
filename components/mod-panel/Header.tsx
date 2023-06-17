@@ -79,9 +79,14 @@ export function Header() {
 						<>
 							<span>[<span className={ EUserRoles[averageUserRoleInfo.role] }>{ ROLES[averageUserRoleInfo.role] }</span>]</span>
 							<PointsContainer>
-								Баллы: { averageUserRoleInfo.points >= 0 ? averageUserRoleInfo.points : (
-								<InfinityIcon/>
-							) }
+								(
+								<span>
+									{ averageUserRoleInfo.points >= 0 ? averageUserRoleInfo.points : (
+										<InfinityIcon/>
+									) }
+								</span>
+								<img src="/pixelmon/price-icon.png" alt="Points" title="Баллы"/>
+								)
 							</PointsContainer>
 						</>
 					) : null

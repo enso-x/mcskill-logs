@@ -50,6 +50,13 @@ const ModPanelPunishmentsPage: NextPage = () => {
 			title: 'Сервер',
 			dataIndex: 'server',
 			key: 'server',
+			render: (_: any, record: IPunishment) => {
+				return (
+					<span>
+						{ SERVERS[record.server].label }
+					</span>
+				);
+			},
 		},
 		{
 			title: 'Модератор',
@@ -166,7 +173,7 @@ const ModPanelPunishmentsPage: NextPage = () => {
 									onChange={ handleServerSelectChange }
 									options={ Object.values(SERVERS).map((server) => ({
 										label: server.label,
-										value: server.label
+										value: server.value
 									})) }
 								/>
 								<Select

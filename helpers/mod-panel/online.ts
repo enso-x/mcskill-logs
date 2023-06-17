@@ -291,7 +291,7 @@ export const updateUserPointsForServer = async (user: IUser, server: string, poi
 			'Content-Type': 'application/json'
 		},
 		body: JSON.stringify({
-			discord_id: user.discord_id,
+			id: user._id,
 			roles: user.roles.map(role => {
 				if (role.server === server) {
 					role.points = role.points + pointsToAdd;

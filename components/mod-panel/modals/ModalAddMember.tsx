@@ -99,6 +99,7 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
+				id: edit?._id ?? '',
 				username: username,
 				discord_id: discordID,
 				roles: rolesInfo,

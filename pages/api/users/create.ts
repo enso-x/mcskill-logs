@@ -10,12 +10,13 @@ const handler = async (
 ) => {
 	if (req.method === 'POST') {
 		try {
-			const [ alreadyHaveUser ] = await User.find({ discord_id: req.body.discord_id }).exec();
+			const { id, ...userRest } = req.body;
+			const [ alreadyHaveUser ] = await User.find({ discord_id: userRest.discord_id }).exec();
 
-			if (!req.body.username || !req.body.discord_id || !req.body.roles || alreadyHaveUser) {
+			if (!userRest.username || !userRest.discord_id || !userRest.roles || alreadyHaveUser) {
 				return res.status(500).send([]);
 			}
-			const newUser = new User(req.body);
+			const newUser = new User(userRest);
 			const result = await newUser.save();
 			return res.status(200).send([ result ]);
 		} catch (error) {

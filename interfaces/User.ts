@@ -37,6 +37,7 @@ export interface IUserServerRoleInfo {
 }
 
 export interface IUser {
+	_id: string;
 	username: string;
 	discord_id: string;
 	verbs: number;

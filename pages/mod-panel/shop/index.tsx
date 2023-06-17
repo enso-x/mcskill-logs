@@ -97,11 +97,24 @@ const ItemCardVertical = styled(VerticalLayout)`
 
 const ValueContainer = styled.span`
 	display: inline-flex;
+	align-items: center;
 	gap: 8px;
 
 	span {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
 		color: #58abff;
 	}
+`;
+
+const Currency = styled.i`
+	display: inline-flex;
+	background: url('/pixelmon/price-icon.png') center no-repeat;
+	background-size: cover;
+	image-rendering: pixelated;
+	width: 16px;
+	height: 16px;
 `;
 
 interface IShopGroupItemProps {
@@ -184,16 +197,13 @@ const ShopGroupItem = ({
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					username: user.username,
-					discord_id: user.discord_id,
+					id: user._id,
 					roles: user.roles.map(role => {
 						if (role.server === selectedServer) {
 							role.points -= selectedPrice;
 						}
 						return role;
-					}),
-					verbs: user.verbs,
-					warnings: user.warnings
+					})
 				})
 			}).then(res => res.json());
 
@@ -219,7 +229,7 @@ const ShopGroupItem = ({
 					getPopupContainer={ () => document.body }
 				/>
 				<ValueContainer>
-					Цена (баллы): <span>{ selectedPrice }</span>
+					Цена: <span>{ selectedPrice } <Currency/></span>
 				</ValueContainer>
 			</ItemCardVertical>
 			<ConfirmModal title="Подтвердить заказ?" content={(
@@ -286,16 +296,13 @@ const ShopServiceItem = ({
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					username: user.username,
-					discord_id: user.discord_id,
+					id: user._id,
 					roles: user.roles.map(role => {
 						if (role.server === selectedServer) {
 							role.points -= serviceItem.price;
 						}
 						return role;
-					}),
-					verbs: user.verbs,
-					warnings: user.warnings
+					})
 				})
 			}).then(res => res.json());
 
@@ -311,7 +318,7 @@ const ShopServiceItem = ({
 			<ItemCardName>{ serviceItem.name }</ItemCardName>
 			<ItemCardVertical>
 				<ValueContainer>
-					Цена (баллы): <span>{ serviceItem.price.toFixed(2) }</span>
+					Цена: <span>{ serviceItem.price.toFixed(2) } <Currency/></span>
 				</ValueContainer>
 			</ItemCardVertical>
 			<ConfirmModal title="Подтвердить заказ?" content={(
@@ -388,16 +395,13 @@ const ShopItem = ({
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					username: user.username,
-					discord_id: user.discord_id,
+					id: user._id,
 					roles: user.roles.map(role => {
 						if (role.server === selectedServer) {
 							role.points -= itemPrice;
 						}
 						return role;
-					}),
-					verbs: user.verbs,
-					warnings: user.warnings
+					})
 				})
 			}).then(res => res.json());
 
@@ -414,7 +418,7 @@ const ShopItem = ({
 			<ItemCardVertical>
 				<Input placeholder="Кол-во" value={ amount } onInput={ handleAmountChange } addonBefore="Кол-во" addonAfter={ `x${shopItem.amount}` }/>
 				<ValueContainer>
-					Цена (баллы): <span>{ itemPrice.toFixed(2) }</span>
+					Цена: <span>{ itemPrice.toFixed(2) } <Currency/></span>
 				</ValueContainer>
 			</ItemCardVertical>
 			<ConfirmModal title="Подтвердить заказ?" content={(
@@ -607,8 +611,10 @@ const ModPanelShopPage: NextPage = () => {
 							</HorizontalLayout>
 							<HorizontalLayout>
 								<ValueContainer>
-									Доступные баллы:
-									<span>{ userRoleForSelectedServer?.points }</span>
+									Доступные баллы: (
+										<span>{ userRoleForSelectedServer?.points }</span>
+										<img src="/pixelmon/price-icon.png" alt="Points" title="Баллы"/>
+									)
 								</ValueContainer>
 							</HorizontalLayout>
 						</ModPanelPageControls>

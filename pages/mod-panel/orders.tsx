@@ -30,6 +30,10 @@ const OrderImage = styled.img`
 	height: 64px;
 `;
 
+const PriceContainer = styled(HorizontalLayout)`
+	gap: 8px;
+`;
+
 const ModPanelOrdersPage: NextPage = () => {
 	const { data: session } = useSession();
 	const [ allUsers, setAllUsers ] = useState<IUser[]>([]);
@@ -113,9 +117,17 @@ const ModPanelOrdersPage: NextPage = () => {
 			key: 'count',
 		},
 		{
-			title: 'Цена (баллы)',
+			title: 'Цена',
 			dataIndex: 'price',
 			key: 'price',
+			render: (_: any, record: IOrder) => {
+				return (
+					<PriceContainer>
+						{ record.price }
+						<img src="/pixelmon/price-icon.png" alt="Points" title="Баллы"/>
+					</PriceContainer>
+				);
+			}
 		},
 		{
 			title: 'Статус',
@@ -176,7 +188,7 @@ const ModPanelOrdersPage: NextPage = () => {
 									'Content-Type': 'application/json'
 								},
 								body: JSON.stringify({
-									discord_id: freshUser.discord_id,
+									id: freshUser._id,
 									roles: freshUser.roles.map(role => {
 										if (role.server === record.server) {
 											role.points += record.price;
@@ -280,7 +292,7 @@ const ModPanelOrdersPage: NextPage = () => {
 									onChange={ handleServerSelectChange }
 									options={ Object.values(SERVERS).map((server) => ({
 										label: server.label,
-										value: server.label
+										value: server.value
 									})) }
 								/>
 								<Select

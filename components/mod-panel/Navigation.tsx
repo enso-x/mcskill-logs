@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 
 import { ServerMonitoring } from '@/components/ServerMonitoring';
 import { EUserRoles, IUser } from '@/interfaces/User';
-import { getAverageUserRoleInfo, hasJuniorRole } from '@/helpers/users';
+import { getAverageUserRoleInfo } from '@/helpers/users';
 
 const Sidebar = styled.div`
 	display: flex;
@@ -65,7 +65,7 @@ const ROUTES = [
 		id: 'shop',
 		label: 'Магазин',
 		url: '/mod-panel/shop',
-		filter: getDefaultRouteFilter(EUserRoles.helper)//(user: IUser | null) => user && hasJuniorRole(user)
+		filter: getDefaultRouteFilter(EUserRoles.trainee)//(user: IUser | null) => user && hasJuniorRole(user)
 	},
 	{
 		id: 'orders',

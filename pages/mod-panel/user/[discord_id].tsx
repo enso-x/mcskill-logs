@@ -36,6 +36,10 @@ const TabItemDescriptions = styled.div`
 	}
 `;
 
+const PriceContainer = styled(HorizontalLayout)`
+	gap: 8px;
+`;
+
 const ModPanelUserPage: NextPage = () => {
 	const router = useRouter();
 	const { data: session, update: updateSession } = useSession();
@@ -58,11 +62,14 @@ const ModPanelUserPage: NextPage = () => {
 							<span className={ EUserRoles[role.role] }>{ ROLES[role.role] }</span>
 						</Descriptions.Item>
 						<Descriptions.Item label="Кол-во баллов">
-							{
-								role.points >= 0 ? role.points : (
-									<InfinityIcon/>
-								)
-							}
+							<PriceContainer>
+								{
+									role.points >= 0 ? role.points : (
+										<InfinityIcon/>
+									)
+								}
+								<img src="/pixelmon/price-icon.png" alt="Points" title="Баллы"/>
+							</PriceContainer>
 						</Descriptions.Item>
 					</Descriptions>
 				</TabItemDescriptions>
