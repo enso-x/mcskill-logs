@@ -5,15 +5,15 @@ import { useSession } from 'next-auth/react';
 import { Button, Select, Table } from 'antd';
 import { CheckOutlined, CloseCircleOutlined, } from '@ant-design/icons';
 
+import { HorizontalLayout } from '@/components/Styled';
 import { Loading, LoadingContainer } from '@/components/mod-panel/Loading';
 import { ModPanelPage, ModPanelPageContent, ModPanelPageControls } from '@/components/mod-panel/ModPanelPage';
-import { HorizontalLayout } from '@/components/Styled';
+import { Price } from '@/components/mod-panel/Price';
 import { useDebounce } from '@/helpers';
+import { getUserHasAccessForServer } from '@/helpers/users';
 import { SERVERS } from '@/interfaces/Server';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { EOrderStatus, IOrder, ORDER_STATUSES, ORDER_TYPES } from '@/interfaces/Order';
-import { getUserHasAccessForServer } from '@/helpers/users';
-import { Price } from '@/components/mod-panel/Price';
 
 const ModPageControlsStyled = styled(ModPanelPageControls)`
 	flex-direction: column;
@@ -29,10 +29,6 @@ const OrderImageContaner = styled.div`
 const OrderImage = styled.img`
 	width: 64px;
 	height: 64px;
-`;
-
-const PriceContainer = styled(HorizontalLayout)`
-	gap: 8px;
 `;
 
 const ModPanelOrdersPage: NextPage = () => {

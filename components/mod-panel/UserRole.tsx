@@ -1,6 +1,7 @@
-import { EUserRoles, IUserServerRoleInfo, ROLES } from '@/interfaces/User';
-import { GlitchText } from '@/components/mod-panel/GlitchText';
 import React from 'react';
+
+import { GlitchText } from '@/components/mod-panel/GlitchText';
+import { EUserRoles, IUserServerRoleInfo, ROLES } from '@/interfaces/User';
 
 interface IUSerRoleProps {
 	roleInfo: IUserServerRoleInfo;

@@ -5,14 +5,14 @@ import { PlusOutlined } from '@ant-design/icons';
 
 import { useDebounce } from '@/helpers';
 import { HorizontalLayout, VerticalLayout } from '@/components/Styled';
-import { SERVERS } from '@/interfaces/Server';
-import { EUserRoles, IUser, IUserServerRoleInfo, ROLES } from '@/interfaces/User';
+import { MinecraftSkinViewer3D } from '@/components/mod-panel/MinecraftSkinViewer3D';
 import {
 	getUserHasAccess,
 	getUserHasAccessForServer,
 	getUserRoleInfoForServer
 } from '@/helpers/users';
-import { MinecraftSkinViewer3D } from '@/components/mod-panel/MinecraftSkinViewer3D';
+import { SERVERS } from '@/interfaces/Server';
+import { EUserRoles, IUser, IUserServerRoleInfo, ROLES } from '@/interfaces/User';
 
 const ContentContainer = styled.div`
 	height: 100%;

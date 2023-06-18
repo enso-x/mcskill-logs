@@ -1,20 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import styled, { css } from 'styled-components';
+import Link from 'next/link';
 import { Button } from 'antd';
 import { EditOutlined, FieldTimeOutlined } from '@ant-design/icons';
 
-import { HorizontalLayout, VerticalLayout, OnlineIndicator } from '@/components/Styled';
+import { VerticalLayout, OnlineIndicator } from '@/components/Styled';
 import { ModalAddMember } from '@/components/mod-panel/modals/ModalAddMember';
 import { ModalDeleteMember } from '@/components/mod-panel/modals/ModalDeleteMember';
-import { InfinityIcon } from '@/components/mod-panel/icons/Infinity';
-import { EUserRoles, IUser, ROLES } from '@/interfaces/User';
-import { DURATION_LOGS_STORAGE_KEY, IUserOnlineStatus } from '@/helpers/mod-panel/online';
-import { getAverageUserRoleInfo } from '@/helpers/users';
 import { MinecraftSkinViewer3D } from '@/components/mod-panel/MinecraftSkinViewer3D';
-import { useDebounce } from '@/helpers';
-import Link from 'next/link';
 import { UserRole } from '@/components/mod-panel/UserRole';
 import { Price } from '@/components/mod-panel/Price';
+import { getAverageUserRoleInfo } from '@/helpers/users';
+import { useDebounce } from '@/helpers';
+import { EUserRoles, IUser } from '@/interfaces/User';
+import { DURATION_LOGS_STORAGE_KEY, IUserOnlineStatus } from '@/helpers/mod-panel/online';
 
 const ButtonsContainer = styled(VerticalLayout)`
 	gap: 8px;
@@ -107,14 +106,6 @@ const ModeratorCardContainer = styled.div<IModeratorCardContainerProps>`
 const CardOnlineIndicator = styled(OnlineIndicator)`
 	position: absolute;
 	align-self: flex-start;
-`;
-
-const PointsContainer = styled(HorizontalLayout)`
-	gap: 8px;
-
-	span {
-		line-height: 24px;
-	}
 `;
 
 interface IModeratorCardProps {

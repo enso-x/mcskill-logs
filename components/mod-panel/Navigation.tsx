@@ -5,8 +5,8 @@ import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 
 import { ServerMonitoring } from '@/components/ServerMonitoring';
-import { EUserRoles, IUser } from '@/interfaces/User';
 import { getAverageUserRoleInfo } from '@/helpers/users';
+import { EUserRoles, IUser } from '@/interfaces/User';
 
 const Sidebar = styled.div`
 	display: flex;

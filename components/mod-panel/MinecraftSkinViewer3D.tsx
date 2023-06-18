@@ -1,8 +1,8 @@
 import { useEffect, useState, FC } from 'react';
 import styled from 'styled-components';
 
-import { getImage2DContext, getImageFromBase64, loadImageAsBase64 } from '@/helpers/image';
 import { Loading } from '@/components/mod-panel/Loading';
+import { getImage2DContext, getImageFromBase64, loadImageAsBase64 } from '@/helpers/image';
 
 interface IMinecraftSkinViewerContainerProps {
 	imageData: string;

@@ -5,14 +5,14 @@ import { useSession } from 'next-auth/react';
 import { Button, DatePicker, Select, Table } from 'antd';
 import { CloseCircleOutlined, EditOutlined } from '@ant-design/icons';
 
+import { HorizontalLayout } from '@/components/Styled';
 import { Loading, LoadingContainer } from '@/components/mod-panel/Loading';
 import { ModPanelPage, ModPanelPageContent, ModPanelPageControls } from '@/components/mod-panel/ModPanelPage';
-import { HorizontalLayout } from '@/components/Styled';
-import { useDebounce } from '@/helpers';
-import { EUserRoles, IUser } from '@/interfaces/User';
-import { getUserHasAccess } from '@/helpers/users';
-import { IVacation } from '@/interfaces/Vacation';
 import { ModalAddVacation } from '@/components/mod-panel/modals/ModalAddVacation';
+import { useDebounce } from '@/helpers';
+import { getUserHasAccess } from '@/helpers/users';
+import { EUserRoles, IUser } from '@/interfaces/User';
+import { IVacation } from '@/interfaces/Vacation';
 
 const { RangePicker } = DatePicker;
 

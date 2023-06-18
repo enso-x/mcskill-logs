@@ -4,14 +4,10 @@ import { signOut, useSession } from 'next-auth/react';
 import { Avatar, Button } from 'antd';
 import { LogoutOutlined } from '@ant-design/icons';
 
-import { InfinityIcon } from '@/components/mod-panel/icons/Infinity';
-import { HorizontalLayout } from '@/components/Styled';
-import { EUserRoles, ROLES } from '@/interfaces/User';
-import { getAverageUserRoleInfo } from '@/helpers/users';
 import { MinecraftFaceViewer } from '@/components/mod-panel/MinecraftFaceViewer';
-import { GlitchText } from '@/components/mod-panel/GlitchText';
 import { UserRole } from '@/components/mod-panel/UserRole';
 import { Price } from '@/components/mod-panel/Price';
+import { getAverageUserRoleInfo } from '@/helpers/users';
 
 const HeaderContainer = styled.div`
 	display: grid;
@@ -50,10 +46,6 @@ const HeaderControls = styled.div`
 	justify-content: flex-end;
 	align-items: center;
 	gap: 16px;
-`;
-
-const PointsContainer = styled(HorizontalLayout)`
-	gap: 8px;
 `;
 
 export function Header() {

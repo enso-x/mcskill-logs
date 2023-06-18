@@ -6,19 +6,18 @@ import { useRouter } from 'next/router';
 import { Card, Descriptions, Tabs } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 
-import { LoadingContainer, Loading } from '@/components/mod-panel/Loading';
 import { HorizontalLayout, OnlineIndicator, VerticalLayout } from '@/components/Styled';
+import { LoadingContainer, Loading } from '@/components/mod-panel/Loading';
 import { ModPanelPage, ModPanelPageContent } from '@/components/mod-panel/ModPanelPage';
 import { MinecraftSkinViewer3D } from '@/components/mod-panel/MinecraftSkinViewer3D';
 import { ModalAddMember } from '@/components/mod-panel/modals/ModalAddMember';
-import { InfinityIcon } from '@/components/mod-panel/icons/Infinity';
+import { UserRole } from '@/components/mod-panel/UserRole';
+import { Price } from '@/components/mod-panel/Price';
 import { getUserHasAccess } from '@/helpers/users';
 import { onlineAPI } from '@/helpers/mod-panel';
 import { IUserOnlineStatus, TUserServerOnlineStatus } from '@/helpers/mod-panel/online';
-import { EUserRoles, IUser, ROLES } from '@/interfaces/User';
+import { EUserRoles, IUser } from '@/interfaces/User';
 import { SERVERS } from '@/interfaces/Server';
-import { UserRole } from '@/components/mod-panel/UserRole';
-import { Price } from '@/components/mod-panel/Price';
 
 const SkinContainer = styled.div`
 	display: flex;
@@ -36,10 +35,6 @@ const TabItemDescriptions = styled.div`
 		display: flex;
 		line-height: 24px;
 	}
-`;
-
-const PriceContainer = styled(HorizontalLayout)`
-	gap: 8px;
 `;
 
 const ModPanelUserPage: NextPage = () => {
@@ -64,9 +59,7 @@ const ModPanelUserPage: NextPage = () => {
 							<UserRole roleInfo={ role }/>
 						</Descriptions.Item>
 						<Descriptions.Item label="Кол-во баллов">
-							<PriceContainer>
-								<Price value={ role.points }/>
-							</PriceContainer>
+							<Price value={ role.points }/>
 						</Descriptions.Item>
 					</Descriptions>
 				</TabItemDescriptions>

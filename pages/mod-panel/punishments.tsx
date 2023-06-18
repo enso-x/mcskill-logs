@@ -3,9 +3,9 @@ import styled from 'styled-components';
 import { NextPage } from 'next';
 import { Select, Table, Input, DatePicker } from 'antd';
 
+import { HorizontalLayout } from '@/components/Styled';
 import { Loading, LoadingContainer } from '@/components/mod-panel/Loading';
 import { ModPanelPage, ModPanelPageControls, ModPanelPageContent } from '@/components/mod-panel/ModPanelPage';
-import { HorizontalLayout } from '@/components/Styled';
 import { useDebounce } from '@/helpers';
 import { PUNISHMENT_TYPES } from '@/interfaces/PunishmentType';
 import { SERVERS } from '@/interfaces/Server';

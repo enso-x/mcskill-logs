@@ -3,9 +3,9 @@ import styled from 'styled-components';
 import { NextPage } from 'next';
 import { Button, Input, Tabs, Typography } from 'antd';
 
+import { VerticalLayout } from '@/components/Styled';
 import { ModPanelPage, ModPanelPageContent } from '@/components/mod-panel/ModPanelPage';
 import { Loading, LoadingContainer } from '@/components/mod-panel/Loading';
-import { VerticalLayout } from '@/components/Styled';
 import { EUserRoles } from '@/interfaces/User';
 import { ISettings, IServerSettings } from '@/interfaces/Settings';
 import { SERVERS } from '@/interfaces/Server';

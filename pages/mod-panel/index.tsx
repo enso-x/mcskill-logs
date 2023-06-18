@@ -5,14 +5,12 @@ import { useSession } from 'next-auth/react';
 import { Select, Input, Checkbox } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 
+import { HorizontalLayout } from '@/components/Styled';
 import { Loading, LoadingContainer } from '@/components/mod-panel/Loading';
 import { ModPanelPage, ModPanelPageControls, ModPanelPageContent } from '@/components/mod-panel/ModPanelPage';
-import { HorizontalLayout } from '@/components/Styled';
 import { ModeratorCard } from '@/components/mod-panel/ModeratorCard';
 import { ModalAddMember } from '@/components/mod-panel/modals/ModalAddMember';
 import { useCalculateOnlinePoints } from '@/components/mod-panel/CalculateOnlinePoints';
-import { EUserRoles, IUser } from '@/interfaces/User';
-import { SERVERS } from '@/interfaces/Server';
 import { useDebounce } from '@/helpers';
 import {
 	filterAndSortUsers,
@@ -22,6 +20,8 @@ import {
 } from '@/helpers/users';
 import { onlineAPI } from '@/helpers/mod-panel';
 import { TUserServerOnlineStatus } from '@/helpers/mod-panel/online';
+import { EUserRoles, IUser } from '@/interfaces/User';
+import { SERVERS } from '@/interfaces/Server';
 
 
 const ModPanelPageContentStyled = styled(ModPanelPageContent)`

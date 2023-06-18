@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { useSession } from 'next-auth/react';
 
 import { Page } from '@/components/Page';
 import { LoadingContainer, Loading } from '@/components/mod-panel/Loading';
@@ -7,9 +8,8 @@ import { NotAuthorized } from '@/components/mod-panel/errors/NotAuthorized';
 import { Forbidden } from '@/components/mod-panel/errors/Forbidden';
 import { Header } from '@/components/mod-panel/Header';
 import { Navigation } from '@/components/mod-panel/Navigation';
-import { EUserRoles } from '@/interfaces/User';
-import { useSession } from 'next-auth/react';
 import { getAverageUserRoleInfo } from '@/helpers/users';
+import { EUserRoles } from '@/interfaces/User';
 
 const AppContainer = styled.div`
 	display: flex;
