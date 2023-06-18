@@ -488,7 +488,7 @@ const pathsAnim = keyframes`
 	}
 	
 	98% {
-		clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+		clip-path: polygon(0 0, 0 0, 0 0, 0 0);
 	}
 
 	1%,
@@ -497,7 +497,7 @@ const pathsAnim = keyframes`
 	47%,
 	78%,
 	93% {
-		clip-path: none;
+		clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
 	}
 `;
 
@@ -515,6 +515,7 @@ const GlitchContainer = styled.span`
 	font-size: 16px;
 	font-family: monospace;
 	animation: ${ glitchSkew } 1s infinite linear alternate-reverse, ${ dissolveAnim } 1s infinite ease-out, ${ pathsAnim } 2s step-end infinite;
+	overflow: hidden;
 	
 	&::before {
 		${ GlitchMixin };
@@ -578,7 +579,7 @@ export function GlitchText({
 		const drawText = async () => {
 			if (container.current) {
 				const currentText = container.current.innerText;
-				const randomCharIndex = Math.round(Math.random() * currentText.length);
+				const randomCharIndex = Math.floor(Math.random() * currentText.length);
 				const changedSequence = currentText.replace(currentText[randomCharIndex], getRandomCharSequence(1));
 				setContainerText(changedSequence);
 				await delay(Math.random() * 100);
