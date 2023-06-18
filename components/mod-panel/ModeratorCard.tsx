@@ -14,6 +14,7 @@ import { MinecraftSkinViewer3D } from '@/components/mod-panel/MinecraftSkinViewe
 import { useDebounce } from '@/helpers';
 import Link from 'next/link';
 import { UserRole } from '@/components/mod-panel/UserRole';
+import { Price } from '@/components/mod-panel/Price';
 
 const ButtonsContainer = styled(VerticalLayout)`
 	gap: 8px;
@@ -225,16 +226,7 @@ export function ModeratorCard({
 				</SkinContainer>
 				<UserRole roleInfo={moderatorAverageRoleInfo} />
 				<span>{ moderator.username }</span>
-				<PointsContainer>
-					(
-						{ moderatorAverageRoleInfo.points >= 0 ? (
-							<span>{ moderatorAverageRoleInfo.points }</span>
-						) : (
-							<InfinityIcon/>
-						) }
-						<img src="/pixelmon/price-icon.png" alt="Points" title="Баллы"/>
-					)
-				</PointsContainer>
+				<Price value={ moderatorAverageRoleInfo.points } addonBefore="(" addonAfter=")"/>
 			</ModeratorCardContainer>
 		</Link>
 	);

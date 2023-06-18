@@ -4,18 +4,28 @@ import React from 'react';
 
 interface IUSerRoleProps {
 	roleInfo: IUserServerRoleInfo;
-	before?: React.ReactNode;
-	after?: React.ReactNode;
+	addonBefore?: React.ReactNode;
+	addonAfter?: React.ReactNode;
 }
 
 export function UserRole({
 	roleInfo,
-	before,
-	after
+	addonBefore,
+	addonAfter
 }: IUSerRoleProps) {
 	return (roleInfo.role === EUserRoles.creator ? (
-		<span>{ before }<GlitchText className={ EUserRoles[roleInfo.role] } text={ ROLES[roleInfo.role] }/>{ after }</span>
+		<span>
+			{ addonBefore }
+			<GlitchText className={ EUserRoles[roleInfo.role] } text={ ROLES[roleInfo.role] }/>
+			{ addonAfter }
+		</span>
 	) : (
-		<span>{ before }<span className={ EUserRoles[roleInfo.role] }>{ ROLES[roleInfo.role] }</span>{ after }</span>
+		<span>
+			{ addonBefore }
+			<span className={ EUserRoles[roleInfo.role] }>
+				{ ROLES[roleInfo.role] }
+			</span>
+			{ addonAfter }
+		</span>
 	));
 }

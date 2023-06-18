@@ -242,16 +242,9 @@ const GlitchContainer = styled.span`
 	}
 `;
 
-const getRandomCharSequence = (length: number): string => {
-	let result = '';
-	const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~!-_=?';
-	const charactersLength = characters.length;
-	let counter = 0;
-	while (counter < length) {
-		result += characters.charAt(Math.floor(Math.random() * charactersLength));
-		counter += 1;
-	}
-	return result;
+type TGetRandomCharSequenceFn = (length: number, characters?: string) => string;
+const getRandomCharSequence: TGetRandomCharSequenceFn = (length, characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~!-_=?'): string => {
+	return Array.from({ length }).map(() => characters.charAt(Math.floor(Math.random() * characters.length))).join('');
 };
 
 const delay = async (ms: number) => new Promise(res => setTimeout(res, ms));
@@ -272,8 +265,10 @@ export function GlitchText({
 
 		const drawText = async () => {
 			if (container.current) {
-				container.current.innerText = getRandomCharSequence(text.length);
-				await delay(1000 / 10);
+				const seq = getRandomCharSequence(text.length);
+				container.current.innerText = seq;
+				container.current?.setAttribute('data-text', seq);
+				await delay(1000 / 5);
 				animationFrame = window.requestAnimationFrame(drawText);
 			}
 		};

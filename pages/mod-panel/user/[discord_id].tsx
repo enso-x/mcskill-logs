@@ -18,6 +18,7 @@ import { IUserOnlineStatus, TUserServerOnlineStatus } from '@/helpers/mod-panel/
 import { EUserRoles, IUser, ROLES } from '@/interfaces/User';
 import { SERVERS } from '@/interfaces/Server';
 import { UserRole } from '@/components/mod-panel/UserRole';
+import { Price } from '@/components/mod-panel/Price';
 
 const SkinContainer = styled.div`
 	display: flex;
@@ -60,16 +61,11 @@ const ModPanelUserPage: NextPage = () => {
 						width: 240
 					} }>
 						<Descriptions.Item label="Роль">
-							<UserRole roleInfo={role} />
+							<UserRole roleInfo={ role }/>
 						</Descriptions.Item>
 						<Descriptions.Item label="Кол-во баллов">
 							<PriceContainer>
-								{
-									role.points >= 0 ? role.points : (
-										<InfinityIcon/>
-									)
-								}
-								<img src="/pixelmon/price-icon.png" alt="Points" title="Баллы"/>
+								<Price value={ role.points }/>
 							</PriceContainer>
 						</Descriptions.Item>
 					</Descriptions>
@@ -95,7 +91,7 @@ const ModPanelUserPage: NextPage = () => {
 			for (let server of Object.values(SERVERS)) {
 				serverStatuses[server.value] = await onlineAPI.fetchUsersOnlineStatusForServer(server, [ moderator.username ]);
 			}
-			const status = onlineAPI.getUserOnlineStatus(moderator, serverStatuses)
+			const status = onlineAPI.getUserOnlineStatus(moderator, serverStatuses);
 			setOnlineStatus(status);
 		}
 	};
@@ -158,7 +154,7 @@ const ModPanelUserPage: NextPage = () => {
 													<Descriptions.Item
 														label="Статус">
 														<HorizontalLayout>
-															<OnlineIndicator $online={onlineStatus.isOnline}/>
+															<OnlineIndicator $online={ onlineStatus.isOnline }/>
 															<span>{ onlineStatus.title }</span>
 														</HorizontalLayout>
 													</Descriptions.Item>

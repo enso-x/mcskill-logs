@@ -11,6 +11,7 @@ import { getAverageUserRoleInfo } from '@/helpers/users';
 import { MinecraftFaceViewer } from '@/components/mod-panel/MinecraftFaceViewer';
 import { GlitchText } from '@/components/mod-panel/GlitchText';
 import { UserRole } from '@/components/mod-panel/UserRole';
+import { Price } from '@/components/mod-panel/Price';
 
 const HeaderContainer = styled.div`
 	display: grid;
@@ -79,17 +80,8 @@ export function Header() {
 				{
 					averageUserRoleInfo ? (
 						<>
-							<UserRole roleInfo={averageUserRoleInfo} before="[" after="]"/>
-							<PointsContainer>
-								(
-								<span>
-									{ averageUserRoleInfo.points >= 0 ? averageUserRoleInfo.points : (
-										<InfinityIcon/>
-									) }
-								</span>
-								<img src="/pixelmon/price-icon.png" alt="Points" title="Баллы"/>
-								)
-							</PointsContainer>
+							<UserRole roleInfo={averageUserRoleInfo} addonBefore="[" addonAfter="]"/>
+							<Price value={ averageUserRoleInfo.points } addonBefore="(" addonAfter=")"/>
 						</>
 					) : null
 				}

@@ -7,6 +7,7 @@ import { Input, Select, Tabs } from 'antd';
 import { ModPanelPage, ModPanelPageControls, ModPanelPageContent } from '@/components/mod-panel/ModPanelPage';
 import { Loading, LoadingContainer } from '@/components/mod-panel/Loading';
 import { ConfirmModal } from '@/components/mod-panel/modals/ConfirmModal';
+import { Currency, Price } from '@/components/mod-panel/Price';
 import { HorizontalLayout, VerticalLayout } from '@/components/Styled';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { EOrderType } from '@/interfaces/Order';
@@ -106,15 +107,6 @@ const ValueContainer = styled.span`
 		gap: 4px;
 		color: #58abff;
 	}
-`;
-
-const Currency = styled.i`
-	display: inline-flex;
-	background: url('/pixelmon/price-icon.png') center no-repeat;
-	background-size: cover;
-	image-rendering: pixelated;
-	width: 16px;
-	height: 16px;
 `;
 
 interface IShopGroupItemProps {
@@ -611,10 +603,7 @@ const ModPanelShopPage: NextPage = () => {
 							</HorizontalLayout>
 							<HorizontalLayout>
 								<ValueContainer>
-									Доступные баллы: (
-										<span>{ userRoleForSelectedServer?.points }</span>
-										<img src="/pixelmon/price-icon.png" alt="Points" title="Баллы"/>
-									)
+									Доступные баллы: <Price value={ userRoleForSelectedServer?.points ?? 0 } addonBefore="(" addonAfter=")"/>
 								</ValueContainer>
 							</HorizontalLayout>
 						</ModPanelPageControls>

@@ -13,6 +13,7 @@ import { SERVERS } from '@/interfaces/Server';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { EOrderStatus, IOrder, ORDER_STATUSES, ORDER_TYPES } from '@/interfaces/Order';
 import { getUserHasAccessForServer } from '@/helpers/users';
+import { Price } from '@/components/mod-panel/Price';
 
 const ModPageControlsStyled = styled(ModPanelPageControls)`
 	flex-direction: column;
@@ -122,10 +123,7 @@ const ModPanelOrdersPage: NextPage = () => {
 			key: 'price',
 			render: (_: any, record: IOrder) => {
 				return (
-					<PriceContainer>
-						{ record.price }
-						<img src="/pixelmon/price-icon.png" alt="Points" title="Баллы"/>
-					</PriceContainer>
+					<Price value={ record.price }/>
 				);
 			}
 		},
