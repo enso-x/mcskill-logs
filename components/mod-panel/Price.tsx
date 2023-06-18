@@ -6,6 +6,11 @@ import { InfinityIcon } from '@/components/mod-panel/icons/Infinity';
 
 const PriceContainer = styled(HorizontalLayout)`
 	gap: 8px;
+	
+	span {
+		display: inline-flex;
+		line-height: 24px;
+	}
 `;
 
 export const Currency = styled.i`
@@ -31,11 +36,13 @@ export function Price({
 	return (
 		<PriceContainer>
 			{ addonBefore }
-			{
-				value >= 0 ? value : (
-					<InfinityIcon/>
-				)
-			}
+			<span>
+				{
+					value >= 0 ? value : (
+						<InfinityIcon/>
+					)
+				}
+			</span>
 			<Currency/>
 			{ addonAfter }
 		</PriceContainer>
