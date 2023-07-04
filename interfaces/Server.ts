@@ -12,21 +12,21 @@ export const SERVERS: Record<string, IServer> = {
 		label: 'Pixelmon #1 1.12.2',
 		description: 'Первый сервер',
 		value: 'server1',
-		logs_url: 'https://logs7.mcskill.net/Pixelmon1122_Server_logger_public_logs'
+		logs_url: 'https://logs24.mcskill.net/Pixelmon1122_Server_logger_public_logs'
 	},
 	'server2': {
 		id: 'pixelmon2',
 		label: 'Pixelmon #2 1.12.2',
 		description: 'Второй сервер',
 		value: 'server2',
-		logs_url: 'https://logs7.mcskill.net/Pixelmon1122_Server2_logger_public_logs'
+		logs_url: 'https://logs24.mcskill.net/Pixelmon1122_Server2_logger_public_logs'
 	},
 	'server3': {
 		id: 'pixelmon3',
 		label: 'Pixelmon #3 1.12.2',
 		description: 'Третий сервер',
 		value: 'server3',
-		logs_url: 'https://logs7.mcskill.net/Pixelmon1122_Server3_logger_public_logs'
+		logs_url: 'https://logs24.mcskill.net/Pixelmon1122_Server3_logger_public_logs'
 	},
 	'server4': {
 		id: 'pixelmon4',
