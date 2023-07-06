@@ -1,16 +1,12 @@
 import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
-import { Button, Input, Drawer, Select, Tabs } from 'antd';
+import { Button, Drawer, Input, Select, Tabs } from 'antd';
 import styled from 'styled-components';
 import { PlusOutlined } from '@ant-design/icons';
 
 import { useDebounce } from '@/helpers';
 import { HorizontalLayout, VerticalLayout } from '@/components/Styled';
 import { MinecraftSkinViewer3D } from '@/components/mod-panel/MinecraftSkinViewer3D';
-import {
-	getUserHasAccess,
-	getUserHasAccessForServer,
-	getUserRoleInfoForServer
-} from '@/helpers/users';
+import { getUserHasAccess, getUserHasAccessForServer, getUserRoleInfoForServer } from '@/helpers/users';
 import { SERVERS } from '@/interfaces/Server';
 import { EUserRoles, IUser, IUserServerRoleInfo, ROLES } from '@/interfaces/User';
 
@@ -187,13 +183,14 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 		return serverSelectValues.filter(server => {
 			const hasAccessForServer = getUserHasAccessForServer(user, edit, server);
 
-			return hasAccessForServer(EUserRoles.gm);
+			return hasAccessForServer(EUserRoles.st);
 		}).sort();
 	}, [ serverSelectValues ]);
 
 	const tabItems = useMemo(() => {
 		return allowedServers.map(server => {
 			const userServerRole = getUserRoleInfoForServer(user, server);
+			const hasAccessForServer = getUserHasAccessForServer(user, edit, server);
 
 			const availableRoles = userServerRole ? Object.entries(ROLES).filter(([ key ]) =>
 				userServerRole.role === EUserRoles.creator ||
@@ -212,12 +209,14 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 							key={ server }
 							style={ { width: '100%' } }
 							placeholder={ `Должность` }
+							disabled={ !hasAccessForServer(EUserRoles.gm) }
 							value={ roles[server]?.toString() ?? undefined }
 							onChange={ handleRoleSelectChange(server) }
 							options={ availableRoles }
 						/>
 						<Input placeholder="Кол-во баллов"
 						       value={ points[server]?.toString() ?? '0' }
+						       disabled={ !hasAccessForServer(EUserRoles.st) }
 						       onChange={ handlePointsChange(server) } addonBefore="Кол-во баллов"/>
 						<Hr/>
 					</VerticalLayout>
