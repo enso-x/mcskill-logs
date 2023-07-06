@@ -1,153 +1,191 @@
+@keyframes fade-in {
+	0% {
+		filter: blur(4px);
+	}
+	100% {
+		filter: blur(0px);
+	}
+}
+
+@keyframes glitch {
+	0% {
+		filter: -webkit-shader(url(/shaders/shader.sksl) -webkit-args(calc(1 / 255 * var(--r)) calc(1 / 255 * var(--g)) calc(1 / 255 * var(--b)) var(--a) 0));
+		filter: -opera-shader(url(/shaders/shader.sksl) -opera-args(calc(1 / 255 * var(--r)) calc(1 / 255 * var(--g)) calc(1 / 255 * var(--b)) var(--a) 0));
+	}
+	100% {
+		filter: -webkit-shader(url(/shaders/shader.sksl) -webkit-args(calc(1 / 255 * var(--r)) calc(1 / 255 * var(--g)) calc(1 / 255 * var(--b)) var(--a) 10));
+		filter: -opera-shader(url(/shaders/shader.sksl) -opera-args(calc(1 / 255 * var(--r)) calc(1 / 255 * var(--g)) calc(1 / 255 * var(--b)) var(--a) 10));
+	}
+}
+
+.glitch-content {
+	--r: 0;
+	--g: 0;
+	--b: 0;
+	--a: 1;
+	animation: glitch 60s linear infinite;
+}
+
 :root {
-  --max-width: 1100px;
-  --border-radius: 12px;
-  --font-mono: ui-monospace, Menlo, Monaco, 'Cascadia Mono', 'Segoe UI Mono',
-    'Roboto Mono', 'Oxygen Mono', 'Ubuntu Monospace', 'Source Code Pro',
-    'Fira Mono', 'Droid Sans Mono', 'Courier New', monospace;
+	--max-width: 1100px;
+	--border-radius: 12px;
+	--font-mono: ui-monospace, Menlo, Monaco, 'Cascadia Mono', 'Segoe UI Mono',
+	'Roboto Mono', 'Oxygen Mono', 'Ubuntu Monospace', 'Source Code Pro',
+	'Fira Mono', 'Droid Sans Mono', 'Courier New', monospace;
 
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-  --accent-color: #722ed2;
-  --accent-color-rgb: 114, 46, 210;
-  --border-color: #303030;
+	--foreground-rgb: 0, 0, 0;
+	--background-start-rgb: 214, 219, 220;
+	--background-end-rgb: 255, 255, 255;
+	--accent-color: #722ed2;
+	--accent-color-rgb: 114, 46, 210;
+	--border-color: #303030;
 
-  --primary-glow: conic-gradient(
-    from 180deg at 50% 50%,
-    #16abff33 0deg,
-    #0885ff33 55deg,
-    #54d6ff33 120deg,
-    #0071ff33 160deg,
-    transparent 360deg
-  );
-  --secondary-glow: radial-gradient(
-    rgba(255, 255, 255, 1),
-    rgba(255, 255, 255, 0)
-  );
+	--primary-glow: conic-gradient(
+			from 180deg at 50% 50%,
+			#16abff33 0deg,
+			#0885ff33 55deg,
+			#54d6ff33 120deg,
+			#0071ff33 160deg,
+			transparent 360deg
+	);
+	--secondary-glow: radial-gradient(
+			rgba(255, 255, 255, 1),
+			rgba(255, 255, 255, 0)
+	);
 
-  --tile-start-rgb: 239, 245, 249;
-  --tile-end-rgb: 228, 232, 233;
-  --tile-border: conic-gradient(
-    #00000080,
-    #00000040,
-    #00000030,
-    #00000020,
-    #00000010,
-    #00000010,
-    #00000080
-  );
+	--tile-start-rgb: 239, 245, 249;
+	--tile-end-rgb: 228, 232, 233;
+	--tile-border: conic-gradient(
+			#00000080,
+			#00000040,
+			#00000030,
+			#00000020,
+			#00000010,
+			#00000010,
+			#00000080
+	);
 
-  --callout-rgb: 238, 240, 241;
-  --callout-border-rgb: 172, 175, 176;
-  --card-rgb: 180, 185, 188;
-  --card-border-rgb: 131, 134, 135;
+	--callout-rgb: 238, 240, 241;
+	--callout-border-rgb: 172, 175, 176;
+	--card-rgb: 180, 185, 188;
+	--card-border-rgb: 131, 134, 135;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+	:root {
+		--foreground-rgb: 255, 255, 255;
+		--background-start-rgb: 0, 0, 0;
+		--background-end-rgb: 0, 0, 0;
 
-    --primary-glow: radial-gradient(rgba(1, 65, 255, 0.4), rgba(1, 65, 255, 0));
-    --secondary-glow: linear-gradient(
-      to bottom right,
-      rgba(1, 65, 255, 0),
-      rgba(1, 65, 255, 0),
-      rgba(1, 65, 255, 0.3)
-    );
+		--primary-glow: radial-gradient(rgba(1, 65, 255, 0.4), rgba(1, 65, 255, 0));
+		--secondary-glow: linear-gradient(
+				to bottom right,
+				rgba(1, 65, 255, 0),
+				rgba(1, 65, 255, 0),
+				rgba(1, 65, 255, 0.3)
+		);
 
-    --tile-start-rgb: 2, 13, 46;
-    --tile-end-rgb: 2, 5, 19;
-    --tile-border: conic-gradient(
-      #ffffff80,
-      #ffffff40,
-      #ffffff30,
-      #ffffff20,
-      #ffffff10,
-      #ffffff10,
-      #ffffff80
-    );
+		--tile-start-rgb: 2, 13, 46;
+		--tile-end-rgb: 2, 5, 19;
+		--tile-border: conic-gradient(
+				#ffffff80,
+				#ffffff40,
+				#ffffff30,
+				#ffffff20,
+				#ffffff10,
+				#ffffff10,
+				#ffffff80
+		);
 
-    --callout-rgb: 20, 20, 20;
-    --callout-border-rgb: 108, 108, 108;
-    --card-rgb: 100, 100, 100;
-    --card-border-rgb: 200, 200, 200;
-  }
+		--callout-rgb: 20, 20, 20;
+		--callout-border-rgb: 108, 108, 108;
+		--card-rgb: 100, 100, 100;
+		--card-border-rgb: 200, 200, 200;
+	}
 }
 
 * {
-  box-sizing: border-box;
-  position: relative;
-  padding: 0;
-  margin: 0;
+	box-sizing: border-box;
+	position: relative;
+	padding: 0;
+	margin: 0;
 }
 
 html,
 body,
 #__next {
-  max-width: 100vw;
-  overflow-x: hidden;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+	max-width: 100vw;
+	overflow-x: hidden;
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+	/*animation: fade-in 2s ease-in forwards;*/
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+	color: rgb(var(--foreground-rgb));
+	background: linear-gradient(
+			to bottom,
+			transparent,
+			rgb(var(--background-end-rgb))
+	) rgb(var(--background-start-rgb));
 	color-scheme: dark;
-  background: #141414;
-  color: #fff;
-  font-family: 'Exo 2';
+	background: #141414;
+	color: #fff;
+	font-family: 'Exo 2';
 }
 
 .player {
-  color: #949494;
+	color: #949494;
 }
+
 .trainee {
-  color: #6aff36;
+	color: #6aff36;
 }
+
 .helper {
-  color: #1c6800;
+	color: #1c6800;
 }
+
 .moder {
-  color: #863fff;
+	color: #863fff;
 }
+
 .builder {
-  color: #e556ff;
+	color: #e556ff;
 }
+
 .st {
-  color: #2431a4;
+	color: #2431a4;
 }
+
 .gm {
-  color: #008eff;
+	color: #008eff;
 }
+
 .gd {
-  color: #56b9ff;
+	color: #56b9ff;
 }
+
 .curator {
-  color: #ff4400;
+	color: #ff4400;
 }
+
 .admin {
-  color: #ffffff;
+	color: #ffffff;
 }
+
 .creator {
-  color: #66f3cb;
+	color: #66f3cb;
 }
 
 a {
-  /*color: inherit;*/
-  text-decoration: none;
+	/*color: inherit;*/
+	text-decoration: none;
 }
 
 @media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+	html {
+		color-scheme: dark;
+	}
 }

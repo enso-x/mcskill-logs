@@ -516,6 +516,12 @@ const GlitchContainer = styled.span`
 	font-family: monospace;
 	animation: ${ glitchSkew } 1s infinite linear alternate-reverse, ${ dissolveAnim } 1s infinite ease-out, ${ pathsAnim } 2s step-end infinite;
 	overflow: hidden;
+
+	--r: 0;
+	--g: 0;
+	--b: 0;
+	--a: 0;
+	animation: glitch 60s linear infinite;
 	
 	&::before {
 		${ GlitchMixin };

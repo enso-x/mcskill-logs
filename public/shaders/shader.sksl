@@ -1,0 +1,61 @@
+uniform shader iChunk;
+uniform float2 iChunkSize;
+uniform float2 iChunkOffset;
+uniform float2 iContentSize;
+uniform float iArgs[5];
+
+//1D hash function
+half hash1(half p)
+{
+	return fract(cos(p*12.98)*3956.4);
+}
+//1D hash function
+half hash1(half2 p)
+{
+	return fract(cos(p.x*12.98+p.y*69.42)*3956.4);
+}
+//2D hash function
+half2 hash2(half2 p)
+{
+	return fract(cos(p*float2x2(12.98,78.37,69.42,13.14))*3956.4);
+}
+
+half4 main(float2 xy)
+{
+	const float SCALE = 200;
+
+	const float SHIFT_R =  5;
+	const float SHIFT_G = 10;
+	const float SHIFT_B = 15;
+
+	//Matrix color setup
+    float MATRIX_R = iArgs[0];
+    float MATRIX_G = iArgs[1];
+    float MATRIX_B = iArgs[2];
+    float MATRIX_A = iArgs[3];
+
+    //Matrix color
+    half4 MATRIX_COLOR = half4(MATRIX_R, MATRIX_G, MATRIX_B, MATRIX_A);
+
+	const float MOSH = 100;
+
+	//Generate randomize blocks
+	half2 block0 = hash2(ceil(xy/SCALE)+iArgs[4]);
+	half2 block1 = hash2(ceil(xy/SCALE/max(block0,0.05))+iArgs[4]);
+	half2 block2 = hash2(ceil(xy/SCALE/block1.yx)+iArgs[4]) - 0.5;
+
+	//Sample 3 times for random RGB shifting
+	half4 color_r = iChunk.eval(xy+block1*SHIFT_R);
+	half4 color_g = iChunk.eval(xy+block1*SHIFT_G);
+	half4 color_b = iChunk.eval(xy+block1*SHIFT_B);
+	//Blend colors together
+	half4 color = half4(color_r.r,color_g.g,color_b.b,color_r.a);
+
+	//Sample for datamoshing
+	half4 color_mosh = iChunk.eval(xy+block2*step(block1,block1.yx)*MOSH);
+	//Add in random color shifting
+	color = half4(sin(asin(color.rgb)+floor((block1.x+1)*abs(color-color_mosh).r)/block1.y*half3(60,157,290)),1);
+
+	//Blend with matrix color
+	return color;//color+(MATRIX_COLOR-color*0.8)*0.01;
+}

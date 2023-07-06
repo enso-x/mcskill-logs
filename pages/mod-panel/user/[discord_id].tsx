@@ -7,13 +7,13 @@ import { Card, Descriptions, Tabs } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 
 import { HorizontalLayout, OnlineIndicator, VerticalLayout } from '@/components/Styled';
-import { LoadingContainer, Loading } from '@/components/mod-panel/Loading';
+import { Loading, LoadingContainer } from '@/components/mod-panel/Loading';
 import { ModPanelPage, ModPanelPageContent } from '@/components/mod-panel/ModPanelPage';
 import { MinecraftSkinViewer3D } from '@/components/mod-panel/MinecraftSkinViewer3D';
 import { ModalAddMember } from '@/components/mod-panel/modals/ModalAddMember';
 import { UserRole } from '@/components/mod-panel/UserRole';
 import { Price } from '@/components/mod-panel/Price';
-import { getUserHasAccess } from '@/helpers/users';
+import { getAverageUserRoleInfo, getUserHasAccess } from '@/helpers/users';
 import { onlineAPI } from '@/helpers/mod-panel';
 import { IUserOnlineStatus, TUserServerOnlineStatus } from '@/helpers/mod-panel/online';
 import { EUserRoles, IUser } from '@/interfaces/User';
@@ -114,7 +114,7 @@ const ModPanelUserPage: NextPage = () => {
 					</LoadingContainer>
 				) : (
 					<>
-						<ModPanelPageContentStyled>
+						<ModPanelPageContentStyled className={moderator && getAverageUserRoleInfo(moderator).role === EUserRoles.creator ? 'glitch-content' : ''}>
 							{
 								!moderator ? (
 									<LoadingContainer>
