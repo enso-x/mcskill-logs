@@ -106,10 +106,10 @@ export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernam
 		}
 	}
 
-	const durations: TUsersOnlineDuration = {};
 	const usernamesReg = new RegExp(usernames.map(username => ` ${ username } `).join('|'), 'i');
-	const notEndedModerators: Set<string> = new Set();
+	const durations: TUsersOnlineDuration = {};
 	const durationLogs: Record<string, string[]> = {};
+	const notEndedModerators: Set<string> = new Set();
 
 	const getDurationBetweenMoments = (startMoment: moment.Moment, endMoment: moment.Moment): moment.Duration => {
 		return moment.duration(endMoment.diff(startMoment));
@@ -194,7 +194,7 @@ export const fetchOnlineForRecentWeekForServer = async (server: IServer, usernam
 				}
 			}
 
-			if (lineIndex === lines.length - 1 && logIndex === logs.length - 1 && notEndedModerators.size > 0) {
+			if (lineIndex === lines.length - 1 && logIndex === logs.length - 1 && notEndedModerators.size > 0) { // Надо так же добавлять это в конце дня и в начале дня вход
 				notEndedModerators.forEach(moderatorName => {
 					const logoutMoment = startOfDateMoment(log.date).endOf('day');
 					const duration = getDurationBetweenMoments(durations[moderatorName].lastLogin, logoutMoment);

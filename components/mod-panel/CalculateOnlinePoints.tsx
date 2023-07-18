@@ -40,11 +40,17 @@ export const useCalculateOnlinePoints = ({
 		let clipboardText = `\`\`\`asciidoc\n`;
 
 		for (let server of Object.values(SERVERS)) {
+			// if (isDebugMode && server.value !== 'server1') return;
+
 			const serverSettings = settings.servers.find(serverSettings => serverSettings.server === server.value);
 
 			if (!serverSettings) continue;
 
-			const onlineForRecentWeek = await onlineAPI.fetchOnlineForRecentWeekForServer(server, getJuniorUsernamesForServer(server, users), isDebugMode);
+			const serverJuniors = getJuniorUsernamesForServer(server, users);
+
+			if (!serverJuniors.length) continue;
+
+			const onlineForRecentWeek = await onlineAPI.fetchOnlineForRecentWeekForServer(server, serverJuniors, isDebugMode);
 			clipboardText += `[ ${ server.label } ]\n`;
 
 			for (let [ username, value ] of Object.entries(onlineForRecentWeek)) {
