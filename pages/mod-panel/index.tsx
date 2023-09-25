@@ -94,7 +94,9 @@ const ModPanelIndexPage: NextPage = () => {
 	}, [ user, allUsers ]);
 
 	const hasOnlineStatuses = useMemo(() => {
-		return Object.values(onlineStatus).every(statusValue => Object.keys(statusValue).length > 0);
+		return Object.values(onlineStatus).every(statusValue => {
+			return Object.keys(statusValue).length > 0;
+		});
 	}, [ onlineStatus ]);
 
 	const { canCalculatePoints, calculatePointsControls } = useCalculateOnlinePoints({
@@ -109,6 +111,7 @@ const ModPanelIndexPage: NextPage = () => {
 
 	const fetchOnlineStatuses = async () => {
 		for (let server of Object.values(SERVERS)) {
+			if (!server.active) continue;
 			const statuses = await onlineAPI.fetchUsersOnlineStatusForServer(server, getUsernames(filteredUsers));
 
 			setOnlineStatus((state: any) => ({
@@ -191,7 +194,7 @@ const ModPanelIndexPage: NextPage = () => {
 									defaultValue={ [] }
 									value={ selectedServers }
 									onChange={ handleServerSelectChange }
-									options={ Object.values(SERVERS).map((server) => ({
+									options={ Object.values(SERVERS).filter(server => server.active).map((server) => ({
 										label: server.label,
 										value: server.value
 									})) }
@@ -199,7 +202,7 @@ const ModPanelIndexPage: NextPage = () => {
 								<Input placeholder="Фильтр по нику" value={ userFilter } onChange={ handleUserFilter }/>
 							</HorizontalLayout>
 							<HorizontalLayout>
-								{ hasOnlineStatuses && calculatePointsControls }
+								{ /*hasOnlineStatuses &&*/ calculatePointsControls }
 								{
 									user && hasAccess(EUserRoles.gm) ? (
 										<ModalAddMember user={ user } onSubmit={ updateUserList }/>

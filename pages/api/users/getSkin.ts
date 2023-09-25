@@ -10,6 +10,7 @@ const userSkinsCache = new Map<string, {
 class FetchError extends Error {
 	code: number;
 	data: any;
+
 	constructor(response: Response) {
 		super(response.statusText);
 		this.code = response.status;

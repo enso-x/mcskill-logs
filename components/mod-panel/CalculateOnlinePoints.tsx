@@ -40,7 +40,7 @@ export const useCalculateOnlinePoints = ({
 		let clipboardText = `\`\`\`asciidoc\n`;
 
 		for (let server of Object.values(SERVERS)) {
-			// if (isDebugMode && server.value !== 'server1') return;
+			if (!server.active) continue;
 
 			const serverSettings = settings.servers.find(serverSettings => serverSettings.server === server.value);
 

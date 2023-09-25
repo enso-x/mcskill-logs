@@ -82,6 +82,7 @@ const ModPanelUserPage: NextPage = () => {
 		const serverStatuses: TUserServerOnlineStatus = {};
 		if (moderator) {
 			for (let server of Object.values(SERVERS)) {
+				if (!server.active) continue;
 				serverStatuses[server.value] = await onlineAPI.fetchUsersOnlineStatusForServer(server, [ moderator.username ]);
 			}
 			const status = onlineAPI.getUserOnlineStatus(moderator, serverStatuses);

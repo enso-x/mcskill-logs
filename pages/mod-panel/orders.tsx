@@ -203,7 +203,7 @@ const ModPanelOrdersPage: NextPage = () => {
 					<HorizontalLayout>
 						{
 							hasAccessForServer(EUserRoles.st) ? (
-								< Button onClick={ handleConfirmOrder }>
+								<Button onClick={ handleConfirmOrder }>
 									<CheckOutlined/>
 								</Button>
 							) : null

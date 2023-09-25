@@ -12,6 +12,7 @@ export enum EUserRoles {
 	gm = 55,
 	gd = 70,
 	curator = 99,
+	ta = 250,
 	admin = 500,
 	creator = 999
 }
@@ -26,6 +27,7 @@ export const ROLES: Record<EUserRoles, string> = {
 	[EUserRoles.gm]: 'Гл. Модератор',
 	[EUserRoles.gd]: 'Гейм Дизайнер',
 	[EUserRoles.curator]: 'Куратор',
+	[EUserRoles.ta]: 'Тех. Админ',
 	[EUserRoles.admin]: 'Администратор',
 	[EUserRoles.creator]: '?????????' //Создатель
 };

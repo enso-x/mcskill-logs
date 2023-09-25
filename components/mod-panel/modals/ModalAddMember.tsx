@@ -248,7 +248,7 @@ export const ModalAddMember: React.FC<IModalAddMemberProps> = ({
 						defaultValue={ [] }
 						value={ serverSelectValues }
 						onChange={ handleServerSelectChange }
-						options={ Object.values(SERVERS).map((server) => {
+						options={ Object.values(SERVERS).filter(server => server.active).map((server) => {
 							const hasAccessForServer = getUserHasAccessForServer(user, edit, server.value);
 
 							return {

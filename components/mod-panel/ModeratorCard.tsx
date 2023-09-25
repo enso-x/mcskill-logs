@@ -14,6 +14,7 @@ import { getAverageUserRoleInfo } from '@/helpers/users';
 import { useDebounce } from '@/helpers';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { DURATION_LOGS_STORAGE_KEY, IUserOnlineStatus } from '@/helpers/mod-panel/online';
+import { SERVERS } from '@/interfaces/Server';
 
 const ButtonsContainer = styled(VerticalLayout)`
 	gap: 8px;
@@ -108,6 +109,18 @@ const CardOnlineIndicator = styled(OnlineIndicator)`
 	align-self: flex-start;
 `;
 
+const ModeratorServerList = styled.div`
+	display: flex;
+	position: absolute;
+	align-self: flex-start;
+	bottom: 12px;
+	flex-direction: column;
+	
+	span {
+		color: #949494;
+	}
+`;
+
 interface IModeratorCardProps {
 	user: IUser;
 	moderator: IUser;
@@ -187,6 +200,15 @@ export function ModeratorCard({
 			                        onMouseLeave={ handleMouseOut }
 			                        verbs={ moderator.verbs } warnings={ moderator.warnings }>
 				<CardOnlineIndicator title={ onlineStatus.title } $online={ onlineStatus.isOnline }/>
+				<ModeratorServerList>
+					{
+						moderator.roles.sort((a, b) => {
+							return a.server >= b.server ? 1 : -1;
+						}).map(role => (
+							<span key={role.server}>#{SERVERS[role.server].number}</span>
+						))
+					}
+				</ModeratorServerList>
 				<ButtonsContainer onClick={(e) => {
 					e.preventDefault();
 				}}>

@@ -589,7 +589,7 @@ const ModPanelShopPage: NextPage = () => {
 									placeholder="Сервер"
 									value={ selectedServer }
 									onChange={ handleServerSelectChange }
-									options={ Object.values(SERVERS).map(server => {
+									options={ Object.values(SERVERS).filter(server => server.active).map(server => {
 										const userHasServerRole = user.roles.some(role => role.server === server.value);
 
 										return {
