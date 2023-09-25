@@ -297,7 +297,6 @@ const ModPanelInterviewPage: NextPage = () => {
 				const state = loadSavedState();
 
 				if (state && state.step === 'test') {
-					console.log(state);
 					setGrade(state.grade);
 					setPlayerName(state.playerName);
 					setQuestionsCount(state.questions.length);
