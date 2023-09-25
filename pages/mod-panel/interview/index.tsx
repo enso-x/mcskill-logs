@@ -235,6 +235,11 @@ const ModPanelInterviewPage: NextPage = () => {
 		setCurrentQuestionPointsValue(value.toString());
 	};
 
+	const onClickReset = () => {
+		deleteSavedState();
+		location.reload();
+	};
+
 	const onClickNextQuestion = async () => {
 		if (currentQuestion < (questionsCount - 1)) {
 			addToResults();
@@ -462,6 +467,11 @@ const ModPanelInterviewPage: NextPage = () => {
 															}
 														</Space>
 													</Card>
+													<Button style={{
+														alignSelf: "flex-end"
+													}} danger onClick={ onClickReset }>
+														Отменить интервью
+													</Button>
 												</Space>
 											)
 										}
