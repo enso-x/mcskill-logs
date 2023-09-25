@@ -134,6 +134,7 @@ const deleteSavedState = () => {
 
 const ModPanelInterviewPage: NextPage = () => {
 	const { data: session } = useSession();
+	const [ gradesInited, setGradesInited ] = useState<boolean>(false);
 	const [ step, setStep ] = useState<string>('');
 	const [ grades, setGrades ] = useState<{ name: string; fileName: string; }[]>([]);
 	const [ selectedGrade, setSelectedGrade ] = useState<string>('');
@@ -275,7 +276,7 @@ const ModPanelInterviewPage: NextPage = () => {
 				setTestResults(testResults);
 			}
 
-			if (user) {
+			if (user && !gradesInited) {
 				const availableGrades = await fetch('/api/grades/available', {
 					method: 'POST',
 					headers: {
@@ -290,6 +291,7 @@ const ModPanelInterviewPage: NextPage = () => {
 					setGrades(availableGrades);
 					setStep('init');
 					setSelectedGrade(availableGrades[0].fileName);
+					setGradesInited(true);
 				}
 
 				const state = loadSavedState();
@@ -342,6 +344,12 @@ const ModPanelInterviewPage: NextPage = () => {
 						percent: parseFloat(resultPercent)
 					}
 				})
+			}).then(async () => {
+				const testResults = await fetch('/api/test-results').then<ITestResultsTableData[]>(res => res.json());
+
+				if (testResults) {
+					setTestResults(testResults);
+				}
 			});
 		}
 	}, [ resultPoints, resultPercent, results, grade ]);
