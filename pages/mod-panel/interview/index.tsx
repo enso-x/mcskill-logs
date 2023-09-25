@@ -118,6 +118,20 @@ const ModPanelPageContentStyled = styled(ModPanelPageContent)`
 	gap: 0;
 `;
 
+const SAVE_KEY = 'mod-panel:interview:state';
+
+const loadSavedState = () => {
+	return JSON.parse(localStorage.getItem(SAVE_KEY) || '{}');
+};
+
+const saveState = (data: any) => {
+	localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+};
+
+const deleteSavedState = () => {
+	localStorage.removeItem(SAVE_KEY);
+};
+
 const ModPanelInterviewPage: NextPage = () => {
 	const { data: session } = useSession();
 	const [ step, setStep ] = useState<string>('');
@@ -277,12 +291,42 @@ const ModPanelInterviewPage: NextPage = () => {
 					setStep('init');
 					setSelectedGrade(availableGrades[0].fileName);
 				}
+
+				const state = loadSavedState();
+
+				if (state && state.step === 'test') {
+					console.log(state);
+					setGrade(state.grade);
+					setPlayerName(state.playerName);
+					setQuestionsCount(state.questions.length);
+					setQuestions(state.questions);
+					setCurrentQuestion(state.currentQuestion);
+					setResults(state.results);
+					setStep('test');
+				}
 			}
 		})();
 	}, [ user ]);
 
 	useEffect(() => {
+		if (step === 'test') {
+			const gradeCopy = JSON.parse(JSON.stringify(grade));
+			delete gradeCopy.questions;
+
+			saveState({
+				step,
+				grade: gradeCopy,
+				playerName,
+				questions,
+				currentQuestion,
+				results
+			});
+		}
+	}, [step, grade, playerName, questions, currentQuestion, results]);
+
+	useEffect(() => {
 		if (step === 'results' && results.length === questionsCount) {
+			deleteSavedState();
 			fetch('/api/test-results/add', {
 				method: 'POST',
 				headers: {
