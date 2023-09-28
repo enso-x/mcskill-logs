@@ -130,6 +130,10 @@ const ImageConverterPage: NextPage = () => {
 		setNeedResolutions(e.target.value);
 	};
 
+	const handleBeforeUpload = () => {
+		return false;
+	};
+
 	useEffect(() => {
 		if (canvasContainerRef && canvasContainerRef.current) {
 			canvasContainerRef.current.innerHTML = '';
@@ -196,6 +200,7 @@ const ImageConverterPage: NextPage = () => {
 					action={ async (file) => {
 						return '';
 					} }
+					beforeUpload={ handleBeforeUpload }
 					listType="picture-card"
 					multiple={ true }
 					fileList={ fileList }
