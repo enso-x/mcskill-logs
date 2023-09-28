@@ -73,19 +73,21 @@ const loadImage = (file: TAnyFile): Promise<HTMLImageElement> => new Promise(asy
 });
 
 const getImagePreview = (image: HTMLImageElement, pixelated = false, resolution = 200): HTMLCanvasElement => {
+	const isHorizontal = image.width > image.height;
+	const scaleRatio = isHorizontal ? image.height / image.width : image.width / image.height;
 	const canvas = document.createElement('canvas');
 	if (pixelated) {
 		canvas.style.imageRendering = 'pixelated';
 	}
-	canvas.width = resolution;
-	canvas.height = resolution;
+	canvas.width = isHorizontal ? resolution : resolution * scaleRatio;
+	canvas.height = isHorizontal ? resolution * scaleRatio : resolution;
 
 	const ctx = canvas.getContext('2d');
 	if (ctx) {
 		if (pixelated) {
 			ctx.imageSmoothingEnabled = false;
 		}
-		ctx.drawImage(image, 0, 0, resolution, resolution);
+		ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 	}
 	return canvas;
 };
