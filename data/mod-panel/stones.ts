@@ -1,6 +1,6 @@
 import { IShopItem } from '@/data/mod-panel/shop/interfaces';
 
-export enum STONE_TYPE {
+export enum EStoneType {
 	Functional = 'functional',
 	Form = 'form'
 }
@@ -16,7 +16,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Functional
+			type: EStoneType.Functional
 		}
 	},
 	{
@@ -28,7 +28,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Functional
+			type: EStoneType.Functional
 		}
 	},
 	{
@@ -40,7 +40,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Functional
+			type: EStoneType.Functional
 		}
 	},
 	{
@@ -52,7 +52,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Functional
+			type: EStoneType.Functional
 		}
 	},
 	{
@@ -64,7 +64,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Functional
+			type: EStoneType.Functional
 		}
 	},
 	{
@@ -76,7 +76,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Functional
+			type: EStoneType.Functional
 		}
 	},
 	{
@@ -88,7 +88,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Functional
+			type: EStoneType.Functional
 		}
 	},
 	{
@@ -100,7 +100,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Functional
+			type: EStoneType.Functional
 		}
 	},
 	{
@@ -112,7 +112,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Functional
+			type: EStoneType.Functional
 		}
 	},
 	// Камни смены формы
@@ -125,7 +125,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Form
+			type: EStoneType.Form
 		}
 	},
 	{
@@ -137,7 +137,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Form
+			type: EStoneType.Form
 		}
 	},
 	{
@@ -149,7 +149,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Form
+			type: EStoneType.Form
 		}
 	},
 	{
@@ -161,7 +161,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Form
+			type: EStoneType.Form
 		}
 	},
 	{
@@ -173,7 +173,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Form
+			type: EStoneType.Form
 		}
 	},
 	{
@@ -185,7 +185,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Form
+			type: EStoneType.Form
 		}
 	},
 	{
@@ -197,7 +197,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Form
+			type: EStoneType.Form
 		}
 	},
 	{
@@ -209,7 +209,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Form
+			type: EStoneType.Form
 		}
 	},
 	{
@@ -221,7 +221,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Form
+			type: EStoneType.Form
 		}
 	},
 	{
@@ -233,7 +233,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Form
+			type: EStoneType.Form
 		}
 	},
 	{
@@ -245,7 +245,7 @@ export const STONES: IShopItem[] = [
 		multiple_buy: false,
 		active: true,
 		data: {
-			type: STONE_TYPE.Form
+			type: EStoneType.Form
 		}
 	},
 ];
