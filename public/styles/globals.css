@@ -171,8 +171,14 @@ body {
 	color: #ff4400;
 }
 
+.ta {
+	color: #000;
+	font-weight: bold;
+	filter: drop-shadow(0 0 8px #fff) drop-shadow(0 0 4px #fff) drop-shadow(0 0 4px #fff);
+}
+
 .admin {
-	color: #ffffff;
+	color: #b9e4ff;
 }
 
 .creator {
