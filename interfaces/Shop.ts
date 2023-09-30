@@ -1,4 +1,4 @@
-export interface IShopCategory {
+export interface ISiteShopCategory {
 	enabled: string;
 	id: string;
 	name: string;
@@ -8,7 +8,7 @@ export interface IShopCategory {
 	type: string;
 }
 
-export interface IShopItem {
+export interface ISiteShopItem {
 	id: string;
 	enabled: string;
 	name: string;
@@ -29,7 +29,7 @@ export interface IShopItem {
 	discount: string | null;
 }
 
-export interface IShopGroupItem {
+export interface ISiteShopGroupItem {
 	group_id: number;
 	site_name: string;
 	shortstory: string;

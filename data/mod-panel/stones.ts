@@ -1,17 +1,20 @@
-import { IPanelShopItem } from '@/data/mod-panel/iterfaces';
+import { IShopItem } from '@/data/mod-panel/shop/interfaces';
 
 export enum STONE_TYPE {
 	Functional = 'functional',
 	Form = 'form'
 }
 
-export const STONES: IPanelShopItem[] = [
+export const STONES: IShopItem[] = [
 	// Функциональные камни
 	{
 		id: 'copy-stone',
 		name: 'Камень клонирования',
 		img: '/pixelmon/stones/copy_stone_240x240.png',
 		price: 150,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Functional
 		}
@@ -21,6 +24,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень счастья',
 		img: '/pixelmon/stones/happiness_stone_240x240.png',
 		price: 5,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Functional
 		}
@@ -30,6 +36,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень фиксации IVS',
 		img: '/pixelmon/stones/lock_ivs_stone_240x240.png',
 		price: 200,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Functional
 		}
@@ -39,6 +48,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень повышения EVS',
 		img: '/pixelmon/stones/max_evs_stone_240x240.png',
 		price: 5,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Functional
 		}
@@ -48,6 +60,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень максимального уровня',
 		img: '/pixelmon/stones/max_lvl_stone_240x240.png',
 		price: 10,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Functional
 		}
@@ -57,6 +72,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень сброса EVS',
 		img: '/pixelmon/stones/reset_evs_stone_240x240.png',
 		price: 10,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Functional
 		}
@@ -66,6 +84,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень шайни',
 		img: '/pixelmon/stones/shiny_stone_240x240.png',
 		price: 40,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Functional
 		}
@@ -75,6 +96,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень увеличения размера покемона',
 		img: '/pixelmon/stones/size_stone_bigger_240x240.png',
 		price: 10,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Functional
 		}
@@ -84,6 +108,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень уменьшения размера покемона',
 		img: '/pixelmon/stones/size_stone_smaller_240x240.png',
 		price: 10,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Functional
 		}
@@ -94,6 +121,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень смены формы: Альтер',
 		img: '/pixelmon/stones/form-stones/form_alter_stone_240x240.png',
 		price: 40,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Form
 		}
@@ -103,6 +133,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень смены формы: Эшен',
 		img: '/pixelmon/stones/form-stones/form_ashen_stone_240x240.png',
 		price: 20,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Form
 		}
@@ -112,6 +145,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень смены формы: Утопленная',
 		img: '/pixelmon/stones/form-stones/form_drowned_stone_240x240.png',
 		price: 20,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Form
 		}
@@ -121,6 +157,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень смены формы: Розовая',
 		img: '/pixelmon/stones/form-stones/form_pink_stone_240x240.png',
 		price: 20,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Form
 		}
@@ -130,6 +169,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень смены формы: Радужная',
 		img: '/pixelmon/stones/form-stones/form_rainbow_stone_240x240.png',
 		price: 20,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Form
 		}
@@ -139,6 +181,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень смены формы: Дух',
 		img: '/pixelmon/stones/form-stones/form_spirit_stone_240x240.png',
 		price: 20,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Form
 		}
@@ -148,6 +193,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень смены формы: Ударная',
 		img: '/pixelmon/stones/form-stones/form_strike_stone_240x240.png',
 		price: 40,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Form
 		}
@@ -157,6 +205,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень смены формы: Летняя',
 		img: '/pixelmon/stones/form-stones/form_summer_stone_240x240.png',
 		price: 30,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Form
 		}
@@ -166,6 +217,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень смены формы: Валенсиан',
 		img: '/pixelmon/stones/form-stones/form_valencian_stone_240x240.png',
 		price: 40,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Form
 		}
@@ -175,6 +229,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень смены формы: Валентин',
 		img: '/pixelmon/stones/form-stones/form_valentine_stone_240x240.png',
 		price: 30,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Form
 		}
@@ -184,6 +241,9 @@ export const STONES: IPanelShopItem[] = [
 		name: 'Камень смены формы: Зомби',
 		img: '/pixelmon/stones/form-stones/form_zombie_stone_240x240.png',
 		price: 10,
+		amount: 1,
+		multiple_buy: false,
+		active: true,
 		data: {
 			type: STONE_TYPE.Form
 		}

@@ -6,18 +6,18 @@ import { Input, Select, Tabs } from 'antd';
 
 import { HorizontalLayout, VerticalLayout } from '@/components/Styled';
 import { Loading, LoadingContainer } from '@/components/mod-panel/Loading';
-import { ModPanelPage, ModPanelPageControls, ModPanelPageContent } from '@/components/mod-panel/ModPanelPage';
+import { ModPanelPage, ModPanelPageContent, ModPanelPageControls } from '@/components/mod-panel/ModPanelPage';
 import { ConfirmModal } from '@/components/mod-panel/modals/ConfirmModal';
 import { Currency, Price } from '@/components/mod-panel/Price';
 import { getUserRoleInfoForServer } from '@/helpers/users';
 import { EUserRoles, IUser } from '@/interfaces/User';
 import { EOrderType } from '@/interfaces/Order';
-import { IShopCategory, IShopGroupItem, IShopItem } from '@/interfaces/Shop';
+import { ISiteShopCategory, ISiteShopGroupItem, ISiteShopItem } from '@/interfaces/Shop';
 import { SERVERS } from '@/interfaces/Server';
-
-import { IPanelShopItem } from '@/data/mod-panel/iterfaces';
 import { SERVICES } from '@/data/mod-panel/services';
 import { STONE_TYPE, STONES } from '@/data/mod-panel/stones';
+import { siteShopItemAdapter } from '@/data/mod-panel/shop/adapters';
+import { IShopItem } from '@/data/mod-panel/shop/interfaces';
 
 const ModPanelPageContentStyled = styled(ModPanelPageContent)`
 	height: 100%;
@@ -72,9 +72,9 @@ const ItemGroupCard = styled(ItemCard)`
 	height: 360px;
 `;
 
-const ItemCardImage = styled.img`
-	width: 64px;
-	height: 64px;
+const ItemCardImage = styled.img<{$big?: boolean}>`
+	width: ${props => props.$big ? '128px' : '64px'};
+	height: ${props => props.$big ? '128px' : '64px'};
 	image-rendering: pixelated;
 	align-self: center;
 `;
@@ -113,7 +113,7 @@ const ValueContainer = styled.span`
 
 interface IShopGroupItemProps {
 	user: IUser | null;
-	shopGroup: IShopGroupItem;
+	shopGroup: ISiteShopGroupItem;
 	selectedServer: string;
 	buttonsDisabled: boolean;
 	beforeSubmit?: () => void;
@@ -227,11 +227,20 @@ const ShopGroupItem = ({
 				</ValueContainer>
 			</ItemCardVertical>
 			<ConfirmModal title="Подтвердить заказ?" content={(
-				<p>
-					<span dangerouslySetInnerHTML={{ __html: shopGroup.site_name }} />
-					{' '}
-					({ prices.find(price => price.value === selectedPrice)!.label })
-				</p>
+				<VerticalLayout>
+					<ItemCardGroupImage
+						src={ `https://mcskill.net/templates/shop/assets/images/groups/${ shopGroup.img }` }
+						alt="Group image"/>
+					<HorizontalLayout style={{
+						alignSelf: 'center'
+					}}>
+						<span>
+							<span dangerouslySetInnerHTML={{ __html: shopGroup.site_name }} />
+							{' '}
+							({ prices.find(price => price.value === selectedPrice)!.label })
+						</span>
+					</HorizontalLayout>
+				</VerticalLayout>
 			)} onSubmit={ handleOrderButtonClick } buttonContent="Заказать" buttonProps={{
 				disabled: buttonsDisabled || !userRoleForSelectedServer || (!!selectedPrice && userRoleForSelectedServer.points < selectedPrice)
 			}}/>
@@ -239,96 +248,10 @@ const ShopGroupItem = ({
 	);
 };
 
-interface IPanelShopItemProps {
-	user: IUser | null;
-	item: IPanelShopItem;
-	selectedServer: string;
-	buttonsDisabled: boolean;
-	beforeSubmit?: () => void;
-	onSubmit?: () => void;
-}
-
-const PanelShopItem = ({
-	user,
-	item,
-	selectedServer,
-	buttonsDisabled,
-	beforeSubmit,
-	onSubmit
-}: IPanelShopItemProps) => {
-	const userRoleForSelectedServer = useMemo(() => {
-		return user && getUserRoleInfoForServer(user, selectedServer);
-	}, [ user, selectedServer ]);
-
-	const handleOrderButtonClick = async () => {
-		if (!user || !userRoleForSelectedServer || userRoleForSelectedServer.points < item.price) {
-			return;
-		}
-
-		beforeSubmit?.();
-
-		const [ newOrder ] = await fetch('/api/orders/create', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				username: user.username,
-				server: selectedServer,
-				item: item.name,
-				image: item.img,
-				count: 1,
-				price: item.price,
-				type: EOrderType.service
-			})
-		}).then(res => res.json());
-
-		if (newOrder && user) {
-			const [ newUser ] = await fetch('/api/users/edit', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					id: user._id,
-					roles: user.roles.map(role => {
-						if (role.server === selectedServer) {
-							role.points -= item.price;
-						}
-						return role;
-					})
-				})
-			}).then(res => res.json());
-
-			if (newUser && newUser.roles.length) {
-				onSubmit?.();
-			}
-		}
-	};
-
-	return (
-		<ItemCard key={ item.id }>
-			<ItemCardImage src={ item.img } alt="Service image"/>
-			<ItemCardName>{ item.name }</ItemCardName>
-			<ItemCardVertical>
-				<ValueContainer>
-					Цена: <span>{ item.price.toFixed(2) } <Currency/></span>
-				</ValueContainer>
-			</ItemCardVertical>
-			<ConfirmModal title="Подтвердить заказ?" content={(
-				<p>
-					{item.name} x{1}
-				</p>
-			)} onSubmit={ handleOrderButtonClick } buttonContent="Заказать" buttonProps={{
-				disabled: buttonsDisabled || !userRoleForSelectedServer || userRoleForSelectedServer.points < item.price
-			}}/>
-		</ItemCard>
-	);
-};
-
 interface IShopItemProps {
 	user: IUser | null;
-	shopItem: IShopItem;
+	item: IShopItem;
+	type: EOrderType;
 	selectedServer: string;
 	buttonsDisabled: boolean;
 	beforeSubmit?: () => void;
@@ -337,7 +260,8 @@ interface IShopItemProps {
 
 const ShopItem = ({
 	user,
-	shopItem,
+	item,
+	type,
 	selectedServer,
 	buttonsDisabled,
 	beforeSubmit,
@@ -350,9 +274,9 @@ const ShopItem = ({
 	}, [ user, selectedServer ]);
 
 	const itemPrice = useMemo(() => {
-		const newPrice = parseFloat(shopItem.pricerub) * parseInt(amount, 10);
+		const newPrice = item.price * parseInt(amount, 10);
 
-		return isNaN(newPrice) ? parseFloat(shopItem.pricerub) : newPrice;
+		return isNaN(newPrice) ? item.price : newPrice;
 	}, [ amount ]);
 
 	const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -374,11 +298,11 @@ const ShopItem = ({
 			body: JSON.stringify({
 				username: user.username,
 				server: selectedServer,
-				item: shopItem.name,
-				image: shopItem.img,
-				count: parseInt(amount, 10) * parseInt(shopItem.amount, 10),
+				item: item.name,
+				image: item.img,
+				count: parseInt(amount, 10) * item.amount,
 				price: itemPrice,
-				type: EOrderType.item
+				type: type
 			})
 		}).then(res => res.json());
 
@@ -406,21 +330,30 @@ const ShopItem = ({
 	};
 
 	return (
-		<ItemCard key={ shopItem.id }>
-			<ItemCardImage src={ shopItem.img } alt="Item image"/>
-			<ItemCardName>{ shopItem.name }</ItemCardName>
+		<ItemCard key={ item.id }>
+			<ItemCardImage src={ item.img } alt="Item image"/>
+			<ItemCardName>{ item.name }</ItemCardName>
 			<ItemCardVertical>
-				<Input placeholder="Кол-во" value={ amount } onInput={ handleAmountChange } addonBefore="Кол-во" addonAfter={ `x${shopItem.amount}` }/>
+				{
+					item.multiple_buy && (
+						<Input placeholder="Кол-во" value={ amount } onInput={ handleAmountChange } addonBefore="Кол-во" addonAfter={ `x${item.amount}` }/>
+					)
+				}
 				<ValueContainer>
 					Цена: <span>{ itemPrice.toFixed(2) } <Currency/></span>
 				</ValueContainer>
 			</ItemCardVertical>
 			<ConfirmModal title="Подтвердить заказ?" content={(
-				<p>
-					{shopItem.name} x{amount}
-				</p>
+				<VerticalLayout>
+					<ItemCardImage $big src={item.img} alt="Item image"/>
+					<span style={{
+						alignSelf: 'center'
+					}}>
+						{item.name} x{amount}
+					</span>
+				</VerticalLayout>
 			)} onSubmit={ handleOrderButtonClick } buttonContent="Заказать" buttonProps={{
-				disabled: buttonsDisabled || !userRoleForSelectedServer || userRoleForSelectedServer.points < itemPrice
+				disabled: !item.active || buttonsDisabled || !userRoleForSelectedServer || userRoleForSelectedServer.points < itemPrice
 			}}/>
 		</ItemCard>
 	);
@@ -430,9 +363,9 @@ const ModPanelShopPage: NextPage = () => {
 	const { data: session, update: updateSession } = useSession();
 	const [ selectedServer, setSelectedServer ] = useState<string>(SERVERS.server1.value);
 	const [ filterString, setFilterString ] = useState<string>('');
-	const [ categories, setCategories ] = useState<IShopCategory[]>([]);
-	const [ items, setItems ] = useState<IShopItem[]>([]);
-	const [ groups, setGroups ] = useState<IShopGroupItem[]>([]);
+	const [ categories, setCategories ] = useState<ISiteShopCategory[]>([]);
+	const [ items, setItems ] = useState<ISiteShopItem[]>([]);
+	const [ groups, setGroups ] = useState<ISiteShopGroupItem[]>([]);
 	const [ buttonsDisabled, setButtonsDisabled ] = useState<boolean>(false);
 
 	const user = useMemo(() => {
@@ -447,8 +380,17 @@ const ModPanelShopPage: NextPage = () => {
 		return itemName.toLowerCase().includes(filterString.toLowerCase());
 	};
 
-	const basePanelItemFilter = (items: IPanelShopItem[]) => {
+	const basePanelItemFilter = (items: IShopItem[]) => {
 		return items.filter(item => baseFilter(item.name));
+	};
+
+	const beforeSubmitBuy = () => {
+		setButtonsDisabled(true);
+	};
+
+	const onSubmitBuy = async () => {
+		await updateSession();
+		setButtonsDisabled(false);
 	};
 
 	const tabItems = useMemo(() => {
@@ -468,12 +410,7 @@ const ModPanelShopPage: NextPage = () => {
 						) && baseFilter(shopGroup.site_name)).map(shopGroup => (
 							<ShopGroupItem key={ shopGroup.group_id } user={ user } shopGroup={ shopGroup }
 							               selectedServer={ selectedServer } buttonsDisabled={ buttonsDisabled }
-							               beforeSubmit={ () => {
-								               setButtonsDisabled(true);
-							               } } onSubmit={ async () => {
-								await updateSession();
-								setButtonsDisabled(false);
-							} }/>
+							               beforeSubmit={ beforeSubmitBuy } onSubmit={ onSubmitBuy }/>
 						))
 					}
 				</ItemsContainer>
@@ -485,14 +422,10 @@ const ModPanelShopPage: NextPage = () => {
 				<ItemsContainer>
 					{
 						basePanelItemFilter(SERVICES).map(item => (
-							<PanelShopItem key={ item.id } user={ user } item={ item }
+							<ShopItem key={ item.id } user={ user }
+							          item={ item } type={ EOrderType.service }
 							          selectedServer={ selectedServer } buttonsDisabled={ buttonsDisabled }
-							          beforeSubmit={ () => {
-								          setButtonsDisabled(true);
-							          } } onSubmit={ async () => {
-								await updateSession();
-								setButtonsDisabled(false);
-							} }/>
+							          beforeSubmit={ beforeSubmitBuy } onSubmit={ onSubmitBuy }/>
 						))
 					}
 				</ItemsContainer>
@@ -510,14 +443,10 @@ const ModPanelShopPage: NextPage = () => {
 								<ItemsContainer>
 									{
 										basePanelItemFilter(STONES).filter(item => item.data.type === STONE_TYPE.Functional).map(item => (
-											<PanelShopItem key={ item.id } user={ user } item={ item }
-											               selectedServer={ selectedServer } buttonsDisabled={ buttonsDisabled }
-											               beforeSubmit={ () => {
-												               setButtonsDisabled(true);
-											               } } onSubmit={ async () => {
-												await updateSession();
-												setButtonsDisabled(false);
-											} }/>
+											<ShopItem key={ item.id } user={ user }
+											          item={ item } type={ EOrderType.item }
+											          selectedServer={ selectedServer } buttonsDisabled={ buttonsDisabled }
+											          beforeSubmit={ beforeSubmitBuy } onSubmit={ onSubmitBuy }/>
 										))
 									}
 								</ItemsContainer>
@@ -530,14 +459,10 @@ const ModPanelShopPage: NextPage = () => {
 								<ItemsContainer>
 									{
 										basePanelItemFilter(STONES).filter(item => item.data.type === STONE_TYPE.Form).map(item => (
-											<PanelShopItem key={ item.id } user={ user } item={ item }
-											               selectedServer={ selectedServer } buttonsDisabled={ buttonsDisabled }
-											               beforeSubmit={ () => {
-												               setButtonsDisabled(true);
-											               } } onSubmit={ async () => {
-												await updateSession();
-												setButtonsDisabled(false);
-											} }/>
+											<ShopItem key={ item.id } user={ user }
+											          item={ item } type={ EOrderType.item }
+											          selectedServer={ selectedServer } buttonsDisabled={ buttonsDisabled }
+											          beforeSubmit={ beforeSubmitBuy } onSubmit={ onSubmitBuy }/>
 										))
 									}
 								</ItemsContainer>
@@ -553,14 +478,10 @@ const ModPanelShopPage: NextPage = () => {
 				<ItemsContainer>
 					{
 						items.filter(shopItem => shopItem.catid.includes(shopCategory.id) && parseInt(shopItem.enabled, 10) && baseFilter(shopItem.name)).map(shopItem => (
-							<ShopItem key={ shopItem.id } user={ user } shopItem={ shopItem }
+							<ShopItem key={ shopItem.id } user={ user }
+							          item={ siteShopItemAdapter(shopItem) } type={ EOrderType.item }
 							          selectedServer={ selectedServer } buttonsDisabled={ buttonsDisabled }
-							          beforeSubmit={ () => {
-								          setButtonsDisabled(true);
-							          } } onSubmit={ async () => {
-								await updateSession();
-								setButtonsDisabled(false);
-							} }/>
+							          beforeSubmit={ beforeSubmitBuy } onSubmit={ onSubmitBuy }/>
 						))
 					}
 				</ItemsContainer>
@@ -578,9 +499,9 @@ const ModPanelShopPage: NextPage = () => {
 
 	useEffect(() => {
 		(async () => {
-			const categories = await fetch('/api/shop/getCategories').then<IShopCategory[]>(res => res.json());
-			const items = await fetch('/api/shop/getItems').then<IShopItem[]>(res => res.json());
-			const groups = await fetch('/api/shop/getGroups').then<IShopGroupItem[]>(res => res.json());
+			const categories = await fetch('/api/shop/getCategories').then<ISiteShopCategory[]>(res => res.json());
+			const items = await fetch('/api/shop/getItems').then<ISiteShopItem[]>(res => res.json());
+			const groups = await fetch('/api/shop/getGroups').then<ISiteShopGroupItem[]>(res => res.json());
 
 			if (categories && categories.length) {
 				categories.unshift({
