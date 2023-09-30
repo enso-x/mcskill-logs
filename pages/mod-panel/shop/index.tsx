@@ -15,7 +15,9 @@ import { EOrderType } from '@/interfaces/Order';
 import { IShopCategory, IShopGroupItem, IShopItem } from '@/interfaces/Shop';
 import { SERVERS } from '@/interfaces/Server';
 
-import { IShopServiceItem, SERVICES } from '@/data/mod-panel/services';
+import { IPanelShopItem } from '@/data/mod-panel/iterfaces';
+import { SERVICES } from '@/data/mod-panel/services';
+import { STONE_TYPE, STONES } from '@/data/mod-panel/stones';
 
 const ModPanelPageContentStyled = styled(ModPanelPageContent)`
 	height: 100%;
@@ -237,29 +239,29 @@ const ShopGroupItem = ({
 	);
 };
 
-interface IShopServiceItemProps {
+interface IPanelShopItemProps {
 	user: IUser | null;
-	serviceItem: IShopServiceItem;
+	item: IPanelShopItem;
 	selectedServer: string;
 	buttonsDisabled: boolean;
 	beforeSubmit?: () => void;
 	onSubmit?: () => void;
 }
 
-const ShopServiceItem = ({
+const PanelShopItem = ({
 	user,
-	serviceItem,
+	item,
 	selectedServer,
 	buttonsDisabled,
 	beforeSubmit,
 	onSubmit
-}: IShopServiceItemProps) => {
+}: IPanelShopItemProps) => {
 	const userRoleForSelectedServer = useMemo(() => {
 		return user && getUserRoleInfoForServer(user, selectedServer);
 	}, [ user, selectedServer ]);
 
 	const handleOrderButtonClick = async () => {
-		if (!user || !userRoleForSelectedServer || userRoleForSelectedServer.points < serviceItem.price) {
+		if (!user || !userRoleForSelectedServer || userRoleForSelectedServer.points < item.price) {
 			return;
 		}
 
@@ -273,10 +275,10 @@ const ShopServiceItem = ({
 			body: JSON.stringify({
 				username: user.username,
 				server: selectedServer,
-				item: serviceItem.name,
-				image: serviceItem.img,
+				item: item.name,
+				image: item.img,
 				count: 1,
-				price: serviceItem.price,
+				price: item.price,
 				type: EOrderType.service
 			})
 		}).then(res => res.json());
@@ -291,7 +293,7 @@ const ShopServiceItem = ({
 					id: user._id,
 					roles: user.roles.map(role => {
 						if (role.server === selectedServer) {
-							role.points -= serviceItem.price;
+							role.points -= item.price;
 						}
 						return role;
 					})
@@ -305,20 +307,20 @@ const ShopServiceItem = ({
 	};
 
 	return (
-		<ItemCard key={ serviceItem.id }>
-			<ItemCardImage src={ serviceItem.img } alt="Service image"/>
-			<ItemCardName>{ serviceItem.name }</ItemCardName>
+		<ItemCard key={ item.id }>
+			<ItemCardImage src={ item.img } alt="Service image"/>
+			<ItemCardName>{ item.name }</ItemCardName>
 			<ItemCardVertical>
 				<ValueContainer>
-					Цена: <span>{ serviceItem.price.toFixed(2) } <Currency/></span>
+					Цена: <span>{ item.price.toFixed(2) } <Currency/></span>
 				</ValueContainer>
 			</ItemCardVertical>
 			<ConfirmModal title="Подтвердить заказ?" content={(
 				<p>
-					{serviceItem.name} x{1}
+					{item.name} x{1}
 				</p>
 			)} onSubmit={ handleOrderButtonClick } buttonContent="Заказать" buttonProps={{
-				disabled: buttonsDisabled || !userRoleForSelectedServer || userRoleForSelectedServer.points < serviceItem.price
+				disabled: buttonsDisabled || !userRoleForSelectedServer || userRoleForSelectedServer.points < item.price
 			}}/>
 		</ItemCard>
 	);
@@ -441,6 +443,14 @@ const ModPanelShopPage: NextPage = () => {
 		return user && getUserRoleInfoForServer(user, selectedServer);
 	}, [ user, selectedServer ]);
 
+	const baseFilter = (itemName: string) => {
+		return itemName.toLowerCase().includes(filterString.toLowerCase());
+	};
+
+	const basePanelItemFilter = (items: IPanelShopItem[]) => {
+		return items.filter(item => baseFilter(item.name));
+	};
+
 	const tabItems = useMemo(() => {
 		return categories ? categories.map(shopCategory => shopCategory.id === 'groups' ? ({
 			key: `${ shopCategory.sysname }`,
@@ -455,7 +465,7 @@ const ModPanelShopPage: NextPage = () => {
 							shopGroup.price_year ||
 							shopGroup.price_perm_discount ||
 							shopGroup.price_perm
-						) && shopGroup.site_name.toLowerCase().includes(filterString.toLowerCase())).map(shopGroup => (
+						) && baseFilter(shopGroup.site_name)).map(shopGroup => (
 							<ShopGroupItem key={ shopGroup.group_id } user={ user } shopGroup={ shopGroup }
 							               selectedServer={ selectedServer } buttonsDisabled={ buttonsDisabled }
 							               beforeSubmit={ () => {
@@ -474,8 +484,8 @@ const ModPanelShopPage: NextPage = () => {
 			children: (
 				<ItemsContainer>
 					{
-						SERVICES.filter(serviceItem => serviceItem.name.toLowerCase().includes(filterString.toLowerCase())).map(serviceItem => (
-							<ShopServiceItem key={ serviceItem.id } user={ user } serviceItem={ serviceItem }
+						basePanelItemFilter(SERVICES).map(item => (
+							<PanelShopItem key={ item.id } user={ user } item={ item }
 							          selectedServer={ selectedServer } buttonsDisabled={ buttonsDisabled }
 							          beforeSubmit={ () => {
 								          setButtonsDisabled(true);
@@ -487,13 +497,62 @@ const ModPanelShopPage: NextPage = () => {
 					}
 				</ItemsContainer>
 			)
+		}) : shopCategory.id === 'stones' ? ({
+			key: `${ shopCategory.sysname }`,
+			label: shopCategory.name,
+			children: (
+				<VerticalLayout>
+					<Tabs items={[
+						{
+							key: `${ STONE_TYPE.Functional }`,
+							label: 'Функциональные',
+							children: (
+								<ItemsContainer>
+									{
+										basePanelItemFilter(STONES).filter(item => item.data.type === STONE_TYPE.Functional).map(item => (
+											<PanelShopItem key={ item.id } user={ user } item={ item }
+											               selectedServer={ selectedServer } buttonsDisabled={ buttonsDisabled }
+											               beforeSubmit={ () => {
+												               setButtonsDisabled(true);
+											               } } onSubmit={ async () => {
+												await updateSession();
+												setButtonsDisabled(false);
+											} }/>
+										))
+									}
+								</ItemsContainer>
+							)
+						},
+						{
+							key: `${ STONE_TYPE.Form }`,
+							label: 'Формы',
+							children: (
+								<ItemsContainer>
+									{
+										basePanelItemFilter(STONES).filter(item => item.data.type === STONE_TYPE.Form).map(item => (
+											<PanelShopItem key={ item.id } user={ user } item={ item }
+											               selectedServer={ selectedServer } buttonsDisabled={ buttonsDisabled }
+											               beforeSubmit={ () => {
+												               setButtonsDisabled(true);
+											               } } onSubmit={ async () => {
+												await updateSession();
+												setButtonsDisabled(false);
+											} }/>
+										))
+									}
+								</ItemsContainer>
+							)
+						}
+					]}/>
+				</VerticalLayout>
+			)
 		}) : ({
 			key: `${ shopCategory.sysname }`,
 			label: shopCategory.name,
 			children: (
 				<ItemsContainer>
 					{
-						items.filter(shopItem => shopItem.catid.includes(shopCategory.id) && parseInt(shopItem.enabled, 10) && shopItem.name.toLowerCase().includes(filterString.toLowerCase())).map(shopItem => (
+						items.filter(shopItem => shopItem.catid.includes(shopCategory.id) && parseInt(shopItem.enabled, 10) && baseFilter(shopItem.name)).map(shopItem => (
 							<ShopItem key={ shopItem.id } user={ user } shopItem={ shopItem }
 							          selectedServer={ selectedServer } buttonsDisabled={ buttonsDisabled }
 							          beforeSubmit={ () => {
@@ -529,6 +588,16 @@ const ModPanelShopPage: NextPage = () => {
 					enabled: '1',
 					name: 'Привелегии',
 					sysname: '88.__groupsandpriveleges',
+					type: 'item',
+					tabid: '1',
+					sort: '0'
+				});
+
+				categories.unshift({
+					id: 'stones',
+					enabled: '1',
+					name: 'Камни',
+					sysname: '88.__moderatorstones',
 					type: 'item',
 					tabid: '1',
 					sort: '0'

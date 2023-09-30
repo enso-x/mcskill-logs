@@ -1,11 +1,6 @@
-export interface IShopServiceItem {
-	id: string;
-	name: string;
-	price: number;
-	img?: string;
-}
+import { IPanelShopItem } from '@/data/mod-panel/iterfaces';
 
-export const SERVICES: IShopServiceItem[] = [
+export const SERVICES: IPanelShopItem[] = [
 	{
 		id: 'pokeball-change',
 		name: 'Смена покебола у покемона',
