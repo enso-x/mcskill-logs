@@ -5,8 +5,8 @@ export const getUsernames = (users: IUser[]): string[] => {
 	return users.map(user => user.username);
 };
 
-export const getUserRoleInfoForServer = (user: IUser, server: string): IUserServerRoleInfo | null => {
-	return user.roles.find(role => role.server === server) ?? null;
+export const getUserRoleInfoForServer = (user: IUser | undefined, server: string): IUserServerRoleInfo | null => {
+	return user?.roles.find(role => role.server === server) ?? null;
 };
 
 export const hasJuniorRole = (user: IUser): boolean => {

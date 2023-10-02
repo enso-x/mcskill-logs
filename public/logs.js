@@ -1,7 +1,7 @@
 import './datepicker.js';
 import { detectLogType } from './log-types/index.js';
 
-const USER_NAME = 'GlocTower';
+const USER_NAME = 'EnsoX';
 
 const initLocalStorageCell = (key, initialValue, valueTransformer) => {
 	let value;
@@ -768,7 +768,7 @@ const getDaysBetweenDates = (date1, date2) => {
 				const socketData = [];
 				const requests = days.map(async (date) => ({
 					date: date,
-					response: await fetch(`/api/logs`, {
+					response: await fetch(`/api/v1/logs`, {
 						method: 'POST',
 						headers: {
 							'content-type': 'application/json'
@@ -1027,7 +1027,7 @@ const getDaysBetweenDates = (date1, date2) => {
 				const todayFileName = `${dateFormatter.format(now).replaceAll('.', '-')}.txt`;
 				const fileNameFromURL = window.updateUrl.split("/").pop();
 				const fileName = actualLogsCheck.checked ? todayFileName : fileNameFromURL;
-				const fileURL = '/api/logs-update?url=' + encodeURIComponent(logsURLBase + fileName);
+				const fileURL = '/api/v1/logs-update?url=' + encodeURIComponent(logsURLBase + fileName);
 				const response = await fetch(fileURL);
 				text = await response.text();
 
