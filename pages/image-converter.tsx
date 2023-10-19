@@ -11,7 +11,7 @@ import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { HorizontalLayout, VerticalLayout } from '@/components/Styled';
 
 import { Page } from '@/components/Page';
-import { useDebounce } from '@/helpers.client';
+import { useDebounce } from '@/helpers';
 
 const GlobalStyles = createGlobalStyle`
 	.ant-modal-body {
