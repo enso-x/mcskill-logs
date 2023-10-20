@@ -549,14 +549,21 @@ const ImageConverterPage: NextPage = () => {
 				});
 
 				canvasContainerRef.current!.append(contentContainer);
-				if (withSaveImageRef.current) {
-					withSaveImageRef.current = false;
-					loadedImage.src = getImagePreview(loadedImage, loadedImage.width > loadedImage.height ? loadedImage.width : loadedImage.height, filters).toDataURL();
-					if (filters !== defaultFiltersRef.current) {
-						setFilters(defaultFiltersRef.current);
-					}
-				}
 			});
+
+			if (withSaveImageRef.current) {
+				withSaveImageRef.current = false;
+				for (let image of debouncedImageList) {
+					image.src = getImagePreview(
+						image,
+						image.width > image.height ? image.width : image.height,
+						filters
+					).toDataURL();
+				}
+				if (filters !== defaultFiltersRef.current) {
+					setFilters(defaultFiltersRef.current);
+				}
+			}
 		}
 	}, [ debouncedImageList, debouncedResolutions, filters ]);
 
